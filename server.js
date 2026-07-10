@@ -18,7 +18,7 @@ app.get("/", (_req, res) => res.send("NutriDesi is running."));
 
 // Per-user rate limits, checked BEFORE the LLM call — one spammer must not be
 // able to burn the shared free-tier quota. In-memory: resets on restart, fine for MVP.
-const RATE = { perHour: 15, perDay: 40, maxLen: 300 };
+const RATE = { perHour: 25, perDay: 60, maxLen: 300 };
 const usage = new Map(); // phone -> [timestamps of accepted messages]
 function rateLimitCheck(phone) {
   const now = Date.now();
@@ -31,11 +31,22 @@ function rateLimitCheck(phone) {
   return null;
 }
 
+// Twilio retries the webhook if a reply takes >15s — dedupe by MessageSid so a
+// retry never double-logs a meal.
+const seenSids = new Set();
+
 app.post("/whatsapp", async (req, res) => {
   const twiml = new twilio.twiml.MessagingResponse();
   const from = (req.body.From || "").replace("whatsapp:", "");
   const body = req.body.Body || "";
   const t0 = Date.now();
+
+  const sid = req.body.MessageSid;
+  if (sid) {
+    if (seenSids.has(sid)) return res.type("text/xml").send(twiml.toString());
+    seenSids.add(sid);
+    if (seenSids.size > 1000) seenSids.delete(seenSids.values().next().value);
+  }
   // Twilio drops replies after 15s — log every request's duration to catch it.
   res.on("finish", () => console.log(`${new Date().toISOString()} ${from} "${body.slice(0, 40)}" ${Date.now() - t0}ms`));
 
