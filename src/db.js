@@ -13,7 +13,9 @@ async function ensureUser(phone) {
 
 // Convert a parsed item into a log row with resolved nutrition + 4-tier fallback.
 function resolveItem(item) {
-  const qty = [0.5, 1.0, 1.5, 2.0, 3.0].includes(item.quantity) ? item.quantity : 1.0;
+  // Accept any positive quantity (7 eggs, 4 roti), snapped to 0.5 steps and capped.
+  const q = Number(item.quantity);
+  const qty = Number.isFinite(q) && q > 0 ? Math.min(Math.round(q * 2) / 2, 30) : 1.0;
   const food = item.matched_db_id ? FOOD_BY_ID[item.matched_db_id] : null;
 
   if (food) {
