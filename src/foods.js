@@ -70,6 +70,10 @@ const FOODS = [
   { id: 65, name: "Rasam",                 aliases: ["rasam","charu","saaru","tomato rasam","pepper rasam"], unit: "bowl", kcal: 100, p: 3, c: 18, f: 2 },
   { id: 66, name: "Kadhi",                 aliases: ["kadhi","besan kadhi","kadhi pakoda","punjabi kadhi","gujarati kadhi"], unit: "bowl", kcal: 180, p: 6, c: 14, f: 11 },
   { id: 67, name: "Chole Bhature",         aliases: ["chole bhature","chole bhatura","chana bhatura","chole bhature plate"], unit: "plate", kcal: 650, p: 16, c: 80, f: 28 },
+  { id: 68, name: "Chicken Breast",        aliases: ["chicken breast","grilled chicken","boiled chicken","tandoori chicken breast","skinless chicken","chicken breast piece"], unit: "100g", kcal: 165, p: 31, c: 0, f: 3.6 },
+  { id: 69, name: "Paneer (Raw/Grilled)",  aliases: ["paneer","raw paneer","grilled paneer","tandoori paneer","paneer cubes"], unit: "100g", kcal: 265, p: 18, c: 4, f: 20 },
+  { id: 70, name: "Tofu",                  aliases: ["tofu","soya paneer","bean curd"], unit: "100g", kcal: 145, p: 15, c: 3, f: 8 },
+  { id: 71, name: "Egg Whites",            aliases: ["egg white","egg whites","boiled egg whites","anda safedi"], unit: "3 whites", kcal: 51, p: 11, c: 0.7, f: 0.2 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
