@@ -9,8 +9,8 @@ const fs = require("fs");
 
 const client = require("twilio")(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const PUBLIC_URL = process.env.PUBLIC_URL || "https://carless-dining-croak.ngrok-free.dev";
-const ALERT_TO = "whatsapp:+91XXXXXXXXXX";
-const ALERT_FROM = "whatsapp:+14155238886";
+const ALERT_TO = `whatsapp:${process.env.ALERT_PHONE}`;
+const ALERT_FROM = `whatsapp:${process.env.TWILIO_WHATSAPP_FROM || "+14155238886"}`;
 const STATE = "/tmp/nutridesi-healthcheck-state.json";
 const COOLDOWN_MS = 60 * 60 * 1000;
 
