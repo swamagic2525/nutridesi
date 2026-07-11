@@ -88,6 +88,9 @@ return match_type "none" (the fallback will handle it) rather than forcing a loo
 - "roasted chana"/"bhuna chana" (dry snack) is NOT "chole" (a curry).
 - "rava uttapam" is NOT "idli". "cutlet" is NOT "tikki".
 A piece-food count must never be applied to a bowl/plate/glass item. When unsure, "none" beats a wrong match.
+VARIANT MODIFIERS: if the user states a variant ("low-fat", "high-protein", "grilled", "no oil",
+"whole wheat", "toned/skim"), match the SPECIFIC variant entry in the list, not the plain default.
+"low fat paneer" -> Low-Fat Paneer, NOT Paneer. "high protein peanut butter" -> High-Protein Peanut Butter.
 
 # HARD RULES
 - Never fabricate a matched_db_id that is not in the list above. Unknown food = match_type "none", matched_db_id null.

@@ -112,6 +112,11 @@ const FOODS = [
   { id: 107, name: "Low-Fat Paneer",       aliases: ["low fat paneer","low-fat paneer","diet paneer","toned paneer","skimmed paneer","low fat cottage cheese"], unit: "100g", kcal: 160, p: 20, c: 5, f: 7 },
   { id: 108, name: "Low-Fat Milk",         aliases: ["toned milk","skimmed milk","skim milk","double toned milk","low fat milk","low-fat milk"], unit: "cup", kcal: 100, p: 8, c: 12, f: 2.5 },
   { id: 109, name: "Low-Fat Curd",         aliases: ["low fat curd","low-fat curd","low fat dahi","low fat yogurt","greek yogurt low fat","skimmed curd"], unit: "katori", kcal: 45, p: 4, c: 5, f: 1 },
+  { id: 110, name: "High-Protein Peanut Butter", aliases: ["high protein peanut butter","hp peanut butter","protein peanut butter","pintola high protein","myfitness peanut butter"], unit: "tbsp", kcal: 90, p: 6, c: 3, f: 6 },
+  { id: 111, name: "High-Protein Roti",    aliases: ["high protein roti","protein roti","high protein atta roti","multigrain protein roti"], unit: "piece", kcal: 100, p: 5, c: 15, f: 2 },
+  { id: 112, name: "High-Protein Bread",   aliases: ["high protein bread","protein bread"], unit: "slice", kcal: 80, p: 6, c: 12, f: 1.5 },
+  { id: 113, name: "Protein Chips",        aliases: ["protein chips","protein puffs","roasted protein chips","open secret"], unit: "pack", kcal: 120, p: 10, c: 12, f: 4 },
+  { id: 114, name: "Protein Muesli",       aliases: ["protein muesli","high protein muesli","protein granola"], unit: "bowl", kcal: 200, p: 14, c: 28, f: 5 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
