@@ -59,6 +59,14 @@ function resolveItem(item) {
   // clamped so a hallucinated number can't poison a day. Tier 4: flat 300 floor.
   const est = Number(item.est_kcal);
   const perServing = Number.isFinite(est) && est > 0 ? Math.min(Math.max(Math.round(est), 20), 800) : 300;
+  // Weight-based even for uncurated foods: scale the estimate by grams / ~150g serving.
+  if (grams > 0 && grams <= 2000) {
+    const s = grams / 150;
+    return {
+      food_name: `${grams}g ${item.food_name || "meal"}`, matched_db_id: null, quantity: 1,
+      unit: `${grams}g`, kcal: Math.round(perServing * s), protein: 0, carbs: 0, fat: 0, is_estimate: true,
+    };
+  }
   return {
     food_name: item.food_name || "meal", matched_db_id: null, quantity: qty, unit: "serving",
     kcal: Math.round(perServing * qty), protein: 0, carbs: 0, fat: 0, is_estimate: true,
