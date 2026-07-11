@@ -32,24 +32,11 @@ traced to a repo file. Accurate, but replace with sourced numbers when IFCT land
 
 ---
 
-## 2. LLM estimate as a guardrail on INDB matches (hybrid resolution)
+## 2. LLM estimate as a guardrail on INDB matches (hybrid resolution) — DONE 2026-07-10
 
-**Problem:** the INDB fuzzy match can return a confident-but-wrong recipe for an
-item the databank doesn't really have (seen live: "papad" -> "Raw papaya with
-coconut" 199 kcal; "chicken breast" -> "chicken sandwich"). The bare 0.75
-`word_similarity` threshold catches most, but not all, and a wrong match
-overwrites what would have been a decent LLM estimate.
-
-**Fix:** the parse call already returns the LLM's `est_kcal` for every
-non-curated item, for free, in the same request. Use it as a sanity check:
-accept the INDB match's macros **only if its kcal is within ~0.5x-2x of the LLM
-estimate**; otherwise discard the INDB match and use the LLM estimate. Zero
-extra latency (both numbers already in hand). Makes the LLM a veto *on* INDB
-rather than just a fallback *after* it.
-
-**Where:** `applyReference` / `refLookup` path in `src/db.js`.
-
-**Effort:** ~30 min + testing against the known bad matches (papad, chicken).
+Shipped. `applyReference` in `src/db.js` now rejects an INDB match whose kcal is
+outside ~0.5x-2x of the LLM's own per-serving estimate (a wrong recipe like
+"honey" -> "Honey cake"). Zero extra latency. Left here as a record.
 
 ---
 
@@ -67,13 +54,35 @@ signal for which foods to promote into the curated list next.
 **Where:** `resolveItem` + `applyReference` in `src/db.js` set the tag; the
 request log line in `server.js` prints it.
 
-**Effort:** ~20 min. Good to do alongside #2 since both touch the same code.
+**Effort:** ~20 min. Good to do alongside #3 since both touch the same code.
+
+---
+
+## 4. Per-item kcal sanity cap (catch count-amplified wrong matches)
+
+**Problem:** the quantity fix (real counts, not capped at 3) means a wrong match
+to a bowl/plate item gets multiplied and explodes. Seen in QA: "chicken tikka
+6 pieces" matched a gravy dish and hit **1920 kcal** for one item before it was
+fixed. The NO CROSS-FOOD MATCHING prompt rule (2026-07-10) addresses the cause,
+but a wrong match could still slip through and get Nx'd.
+
+**Fix:** a backstop in `resolveItem` / `logMeal` — if a single logged item
+exceeds a sane ceiling (~1200 kcal), it's almost certainly a count applied to a
+portion-unit food. Options: soften to a flagged estimate, or re-check that a
+large integer count isn't being applied to a bowl/plate/glass/serving unit
+(counts should pair with piece-like units). Don't hard-clamp legit big meals
+(e.g. 20 rotis = 1780 is real) — key on the count x portion-unit mismatch, not
+raw kcal alone.
+
+**Where:** `resolveItem` in `src/db.js` (has both quantity and the food's unit).
+
+**Effort:** ~30 min + testing (chicken-tikka-style inputs vs legit high counts).
 
 ---
 
 ## Ordering note
 
 Do #1 (data sourcing) exploratory first — it's the only one with unknown scope.
-#2 and #3 touch the same resolver code in `db.js`, so batch them in one pass.
-All three are quality/auditability upgrades; ship behind a real-user retention
-signal, not before it (per the D7 kill-criteria in CLAUDE.md).
+#3 and #4 touch the same resolver code in `db.js`, so batch them in one pass.
+All are quality/safety upgrades; ship behind a real-user retention signal, not
+before it (per the D7 kill-criteria in CLAUDE.md).
