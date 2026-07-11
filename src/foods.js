@@ -96,6 +96,9 @@ const FOODS = [
   { id: 91, name: "Paneer Tikka (dry)",    aliases: ["paneer tikka","paneer tikka dry","grilled paneer tikka"], unit: "piece", kcal: 70, p: 4, c: 2, f: 5 },
   { id: 92, name: "Roasted Chana",         aliases: ["roasted chana","bhuna chana","roasted chickpeas","chana snack","phutana"], unit: "handful", kcal: 120, p: 7, c: 20, f: 2 },
   { id: 93, name: "Uttapam",               aliases: ["uttapam","uthappam","rava uttapam","onion uttapam"], unit: "piece", kcal: 175, p: 4, c: 25, f: 6 },
+  { id: 94, name: "Maggi",                 aliases: ["maggi","maggie","masala noodles","instant noodles","2 minute noodles"], unit: "pack", kcal: 350, p: 8, c: 50, f: 13 },
+  { id: 95, name: "Pizza (slice)",         aliases: ["pizza","pizza slice","cheese pizza","veg pizza","margherita"], unit: "slice", kcal: 285, p: 12, c: 36, f: 10 },
+  { id: 96, name: "Ice Cream",             aliases: ["ice cream","icecream","vanilla ice cream","kulfi","scoop of ice cream"], unit: "scoop", kcal: 140, p: 2.5, c: 16, f: 7 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
