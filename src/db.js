@@ -32,7 +32,8 @@ function resolveItem(item) {
     return {
       food_name: `${grams}g ${food.name}`, matched_db_id: food.id, quantity: 1, unit: `${grams}g`,
       kcal: Math.round(food.kcal * s), protein: +(food.p * s).toFixed(1),
-      carbs: +(food.c * s).toFixed(1), fat: +(food.f * s).toFixed(1), is_estimate: true,
+      carbs: +(food.c * s).toFixed(1), fat: +(food.f * s).toFixed(1),
+      fiber: +((food.fb || 0) * s).toFixed(1), is_estimate: true,
     };
   }
 
@@ -52,6 +53,7 @@ function resolveItem(item) {
       food_name: food.name, matched_db_id: food.id, quantity: qty, unit: food.unit,
       kcal: Math.round(food.kcal * qty), protein: +(food.p * qty).toFixed(1),
       carbs: +(food.c * qty).toFixed(1), fat: +(food.f * qty).toFixed(1),
+      fiber: +((food.fb || 0) * qty).toFixed(1),
       is_estimate: item.match_type !== "direct" || item.portion_clarity !== "specified",
     };
   }
@@ -64,12 +66,12 @@ function resolveItem(item) {
     const s = grams / 150;
     return {
       food_name: `${grams}g ${item.food_name || "meal"}`, matched_db_id: null, quantity: 1,
-      unit: `${grams}g`, kcal: Math.round(perServing * s), protein: 0, carbs: 0, fat: 0, is_estimate: true,
+      unit: `${grams}g`, kcal: Math.round(perServing * s), protein: 0, carbs: 0, fat: 0, fiber: 0, is_estimate: true,
     };
   }
   return {
     food_name: item.food_name || "meal", matched_db_id: null, quantity: qty, unit: "serving",
-    kcal: Math.round(perServing * qty), protein: 0, carbs: 0, fat: 0, is_estimate: true,
+    kcal: Math.round(perServing * qty), protein: 0, carbs: 0, fat: 0, fiber: 0, is_estimate: true,
   };
 }
 
@@ -89,14 +91,16 @@ function applyReference(row, ref) {
   const inRange = (k) => Number.isFinite(Number(k)) && k >= 20 && k <= 800;
 
   // Build the INDB candidate at a per-serving (1x) basis first.
-  let perServing, p = 0, c = 0, f = 0, unit = row.unit;
+  let perServing, p = 0, c = 0, f = 0, fb = 0, unit = row.unit;
   if (inRange(Number(ref.serving_kcal))) {
     perServing = Number(ref.serving_kcal);
     p = Number(ref.serving_protein || 0); c = Number(ref.serving_carbs || 0); f = Number(ref.serving_fat || 0);
+    fb = Number(ref.serving_fibre || 0);
     unit = ref.serving_unit || "serving";
   } else if (Number(ref.kcal_100g) > 0) {
     perServing = Math.min(Math.max(Math.round(ref.kcal_100g * 1.5), 20), 800); // ~150g serving
     p = Number(ref.protein_100g || 0) * 1.5; c = Number(ref.carbs_100g || 0) * 1.5; f = Number(ref.fat_100g || 0) * 1.5;
+    fb = Number(ref.fibre_100g || 0) * 1.5;
   } else {
     return; // no usable numbers — keep the LLM estimate
   }
@@ -111,6 +115,7 @@ function applyReference(row, ref) {
   row.protein = +(p * qty).toFixed(1);
   row.carbs = +(c * qty).toFixed(1);
   row.fat = +(f * qty).toFixed(1);
+  row.fiber = +(fb * qty).toFixed(1);
   row.unit = unit;
   row.food_name = ref.food_name;
 }
@@ -137,7 +142,7 @@ async function logMeal(phone, parsed) {
   if (rows.length === 0) {
     rows.push({ phone_number: phone, meal_time: mealTime, food_name: "meal",
       matched_db_id: null, quantity: 1, unit: "serving", kcal: 300,
-      protein: 0, carbs: 0, fat: 0, is_estimate: true });
+      protein: 0, carbs: 0, fat: 0, fiber: 0, is_estimate: true });
   }
 
   const { error } = await supabase.from("user_logs").insert(rows);
@@ -155,23 +160,23 @@ async function logMeal(phone, parsed) {
   return {
     rows,
     meals: meals.map(m => Math.round(m.kcal)),
-    totals: { kcal: sum("kcal"), protein: sum("protein"), carbs: sum("carbs"), fat: sum("fat") },
+    totals: { kcal: sum("kcal"), protein: sum("protein"), carbs: sum("carbs"), fat: sum("fat"), fiber: sum("fiber") },
   };
 }
 
 async function todayTotal(phone) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const { data, error } = await supabase.from("user_logs")
-    .select("kcal, protein, carbs, fat, logged_at").eq("phone_number", phone).eq("date", today)
+    .select("kcal, protein, carbs, fat, fiber, logged_at").eq("phone_number", phone).eq("date", today)
     .order("logged_at", { ascending: true });
   if (error) console.error("SUPABASE SELECT FAILED:", error.message);
   console.log(`todayTotal: phone=${phone} date=${today} rows=${(data||[]).length}`);
   const totals = (data || []).reduce(
     (s, r) => ({
       kcal: s.kcal + Number(r.kcal || 0), protein: s.protein + Number(r.protein || 0),
-      carbs: s.carbs + Number(r.carbs || 0), fat: s.fat + Number(r.fat || 0),
+      carbs: s.carbs + Number(r.carbs || 0), fat: s.fat + Number(r.fat || 0), fiber: s.fiber + Number(r.fiber || 0),
     }),
-    { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+    { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
   );
   // Cluster today's rows into meals: a gap > 45 min starts a new meal (PRD session window).
   const meals = [];

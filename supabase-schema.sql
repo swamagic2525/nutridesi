@@ -35,6 +35,7 @@ create table if not exists user_logs (
   protein numeric,
   carbs numeric,
   fat numeric,
+  fiber numeric default 0,
   meal_time text,
   is_estimate boolean default false,
   logged_at timestamptz default now(),

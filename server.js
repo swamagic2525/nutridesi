@@ -63,7 +63,7 @@ app.post("/whatsapp", async (req, res) => {
       return res.type("text/xml").send(twiml.toString());
     }
 
-    const macros = (o) => `P${Math.round(o.protein)}g C${Math.round(o.carbs)}g F${Math.round(o.fat)}g`;
+    const macros = (o) => `P${Math.round(o.protein)}g C${Math.round(o.carbs)}g F${Math.round(o.fat)}g Fb${Math.round(o.fiber || 0)}g`;
     const fmtItems = (rows) => rows.map(r => {
       const est = r.is_estimate ? " (est.)" : "";
       const qty = r.quantity === 1 ? "" : `${r.quantity}x `;
@@ -134,7 +134,7 @@ app.post("/whatsapp", async (req, res) => {
     twiml.message(
       `✅ Logged:\n${lines.join("\n")}\n\n${mealLine} kcal\n` +
       `Today: ${totals.kcal} kcal · ${macros(totals)}\n` +
-      `_P protein, C carbs, F fat (grams) · same meal if within 45 min_`
+      `_P protein · C carbs · F fat · Fb fibre (grams) · same meal if within 45 min_`
     );
   } catch (err) {
     console.error("handler error:", err);
