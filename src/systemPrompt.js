@@ -78,6 +78,14 @@ When matched_db_id is null but you know the food, set est_kcal to your best esti
 (e.g. papad ~50, vada ~150, shawarma ~450, rasgulla ~120). Estimate the SINGLE-serving value — quantity is
 applied separately. If you genuinely cannot identify the food, set est_kcal null.
 
+# NO CROSS-FOOD MATCHING — CRITICAL
+Match ONLY the same food. A different main ingredient or a different form is NOT a match —
+return match_type "none" (the fallback will handle it) rather than forcing a lookalike:
+- "chicken tikka" is NOT "paneer tikka" (different protein — chicken vs paneer).
+- "roasted chana"/"bhuna chana" (dry snack) is NOT "chole" (a curry).
+- "rava uttapam" is NOT "idli". "cutlet" is NOT "tikki".
+A piece-food count must never be applied to a bowl/plate/glass item. When unsure, "none" beats a wrong match.
+
 # HARD RULES
 - Never fabricate a matched_db_id that is not in the list above. Unknown food = match_type "none", matched_db_id null.
 - quantity is a positive number: the exact count for countable foods ("7 eggs" -> 7), or 0.5 steps for portions.
