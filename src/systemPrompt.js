@@ -25,9 +25,9 @@ PORTION foods (served in a bowl/katori/plate/glass: dal, rice, sabzi, curry, las
 "do", "bada bowl", "full plate", "dabake", "poora" -> 2.0
 "teen", "extra" -> 3.0
 quantity is a positive number: whole counts for countable foods, 0.5 steps for portions.
-GRAMS/ML: a weight like "100g", "200g", "250ml" is NOT a count. Express it as a fraction of that
-food's normal serving (e.g. "200g chicken breast" with a 100g serving = 2; "100g soya chunks" ~= 1 serving).
-NEVER return the gram number (100, 200) as quantity. When unsure of the serving size, use 1.
+GRAMS/ML: if the user gives a weight ("100g", "200g", "250ml"), put that NUMBER in the "grams" field
+and set quantity to 1. The backend converts grams to calories precisely. Do NOT guess a fraction.
+For counts/portions (no weight given), set grams to null and use quantity.
 
 # MODIFIER RULE
 If a food includes a modifier (ghee, butter, oil, dahi, chutney), split it into SEPARATE items.
@@ -102,6 +102,7 @@ A piece-food count must never be applied to a bowl/plate/glass item. When unsure
     {
       "food_name": "Dal Tadka",
       "quantity": 1.0,
+      "grams": null,
       "unit": "bowl",
       "matched_db_id": 17,
       "est_kcal": null,

@@ -11,17 +11,40 @@ async function ensureUser(phone) {
   if (error) console.error("SUPABASE UPSERT USER FAILED:", error.message);
 }
 
+// Approximate grams in one serving of each unit — used to convert weight-based
+// logging ("100g X") into calories when a food has no explicit `g` field.
+const UNIT_GRAMS = {
+  bowl: 150, katori: 120, cup: 150, plate: 200, glass: 200, serving: 150,
+  medium: 150, slice: 30, scoop: 30, tbsp: 15, tsp: 5, handful: 30,
+  fillet: 100, bar: 50, pack: 70, "100g": 100, white: 33,
+};
+
 // Convert a parsed item into a log row with resolved nutrition + 4-tier fallback.
 function resolveItem(item) {
+  const food = item.matched_db_id ? FOOD_BY_ID[item.matched_db_id] : null;
+  const grams = Number(item.grams);
+
+  // Weight-based logging: scale nutrition by exact grams / serving-grams. This is
+  // what makes "40g rice", "100g soya chunks", "200g chicken" accurate.
+  if (food && grams > 0 && grams <= 2000) {
+    const servingG = food.g || UNIT_GRAMS[food.unit] || 150;
+    const s = grams / servingG;
+    return {
+      food_name: `${grams}g ${food.name}`, matched_db_id: food.id, quantity: 1, unit: `${grams}g`,
+      kcal: Math.round(food.kcal * s), protein: +(food.p * s).toFixed(1),
+      carbs: +(food.c * s).toFixed(1), fat: +(food.f * s).toFixed(1), is_estimate: true,
+    };
+  }
+
   // Accept any positive quantity (7 eggs, 4 roti), snapped to 0.5 steps and capped.
   const q = Number(item.quantity);
   let qty = Number.isFinite(q) && q > 0 ? Math.min(Math.round(q * 2) / 2, 30) : 1.0;
-  const food = item.matched_db_id ? FOOD_BY_ID[item.matched_db_id] : null;
   // Guard: a big multiplier on a portion unit (bowl/cup/serving/100g) is almost
   // always a grams/parse misread ("100g" -> qty 100), not a real count. Cap at 5.
   // Countable units (piece/slice/medium/fillet...) keep large counts (20 rotis).
   const PORTION_UNITS = new Set(["bowl", "plate", "glass", "katori", "cup", "serving", "100g"]);
   if (PORTION_UNITS.has(food ? food.unit : "serving") && qty > 5) qty = 5;
+  if (food && qty === 0) qty = 0.5; // a matched food must log something, never 0
 
   if (food) {
     // Tier 1/2: direct or category DB match
