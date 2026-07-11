@@ -36,7 +36,7 @@ const FOODS = [
   { id: 31, name: "Chai (with milk)",      aliases: ["chai","tea","masala chai","adrak chai","cutting chai","ginger tea","milk tea"], unit: "cup", kcal: 60, p: 2, c: 8, f: 2 },
   { id: 32, name: "Lassi (Sweet)",         aliases: ["lassi","sweet lassi","mango lassi","dahi lassi"], unit: "glass", kcal: 180, p: 6, c: 30, f: 4 },
   { id: 33, name: "Buttermilk",            aliases: ["chaas","buttermilk","masala chaas","mattha"], unit: "glass", kcal: 40, p: 3, c: 5, f: 0.5 },
-  { id: 34, name: "Milk",                  aliases: ["milk","doodh","full fat milk","toned milk","skim milk"], unit: "cup", kcal: 150, p: 8, c: 12, f: 8 },
+  { id: 34, name: "Milk (Full Fat)",       aliases: ["milk","doodh","full fat milk","full cream milk","whole milk"], unit: "cup", kcal: 150, p: 8, c: 12, f: 8 },
   { id: 35, name: "Curd / Dahi",           aliases: ["dahi","curd","yoghurt","yogurt","plain dahi"], unit: "katori", kcal: 60, p: 3.5, c: 4.5, f: 3 },
   { id: 36, name: "Raita",                 aliases: ["raita","boondi raita","cucumber raita","dahi raita"], unit: "katori", kcal: 65, p: 3, c: 8, f: 2 },
   { id: 37, name: "Samosa",                aliases: ["samosa","samosa chaat","aloo samosa"], unit: "piece", kcal: 130, p: 2.5, c: 16, f: 6.5 },
@@ -109,6 +109,9 @@ const FOODS = [
   { id: 104, name: "Quinoa",               aliases: ["quinoa","quinoa bowl"], unit: "bowl", kcal: 220, p: 8, c: 39, f: 4 },
   { id: 105, name: "Protein Bar",          aliases: ["protein bar","energy bar","yogabar","protein cookie"], unit: "bar", kcal: 200, p: 20, c: 22, f: 7 },
   { id: 106, name: "Grilled Fish",         aliases: ["grilled fish","fish fillet","basa","tilapia","fish tikka","grilled fish fillet"], unit: "fillet", kcal: 180, p: 30, c: 1, f: 6 },
+  { id: 107, name: "Low-Fat Paneer",       aliases: ["low fat paneer","low-fat paneer","diet paneer","toned paneer","skimmed paneer","low fat cottage cheese"], unit: "100g", kcal: 160, p: 20, c: 5, f: 7 },
+  { id: 108, name: "Low-Fat Milk",         aliases: ["toned milk","skimmed milk","skim milk","double toned milk","low fat milk","low-fat milk"], unit: "cup", kcal: 100, p: 8, c: 12, f: 2.5 },
+  { id: 109, name: "Low-Fat Curd",         aliases: ["low fat curd","low-fat curd","low fat dahi","low fat yogurt","greek yogurt low fat","skimmed curd"], unit: "katori", kcal: 45, p: 4, c: 5, f: 1 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
