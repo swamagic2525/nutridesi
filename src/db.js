@@ -15,8 +15,13 @@ async function ensureUser(phone) {
 function resolveItem(item) {
   // Accept any positive quantity (7 eggs, 4 roti), snapped to 0.5 steps and capped.
   const q = Number(item.quantity);
-  const qty = Number.isFinite(q) && q > 0 ? Math.min(Math.round(q * 2) / 2, 30) : 1.0;
+  let qty = Number.isFinite(q) && q > 0 ? Math.min(Math.round(q * 2) / 2, 30) : 1.0;
   const food = item.matched_db_id ? FOOD_BY_ID[item.matched_db_id] : null;
+  // Guard: a big multiplier on a portion unit (bowl/cup/serving/100g) is almost
+  // always a grams/parse misread ("100g" -> qty 100), not a real count. Cap at 5.
+  // Countable units (piece/slice/medium/fillet...) keep large counts (20 rotis).
+  const PORTION_UNITS = new Set(["bowl", "plate", "glass", "katori", "cup", "serving", "100g"]);
+  if (PORTION_UNITS.has(food ? food.unit : "serving") && qty > 5) qty = 5;
 
   if (food) {
     // Tier 1/2: direct or category DB match
