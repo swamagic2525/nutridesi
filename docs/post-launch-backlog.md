@@ -80,6 +80,30 @@ raw kcal alone.
 
 ---
 
+## 5. Diet / low-fat variant coverage (same food, different macros)
+
+**Problem:** health-conscious users log a *variant* the DB collapses to its
+default, and the error runs in the direction they care about most. Real case:
+"low-fat paneer" matched full-fat Paneer (265 kcal / 20g fat vs ~160 / 7g) — user
+called accuracy "quite low". Also found "toned/skim milk" aliased to full-fat
+milk. Fixed paneer/milk/curd on 2026-07-11, but the pattern is broader.
+
+**Fix:** audit the DB for foods that have meaningfully different diet variants and
+add the common ones: fried vs grilled/tandoori, ghee/butter vs plain, full vs
+low-fat/toned, maida vs whole-wheat, sugar vs sugar-free, thigh vs breast, malai
+vs skimmed. Reinforce in the prompt that a stated modifier ("low-fat", "no oil",
+"grilled") must pick the matching variant, not the default.
+
+**Why it matters most for this audience:** a fat-cutting gym user seeing full-fat
+numbers for their low-fat choice concludes the app is inaccurate and leaves — the
+error is wrong in exactly the dimension they're optimizing.
+
+**Where:** `src/foods.js` (variants) + a prompt note in `src/systemPrompt.js`.
+
+**Effort:** ~30-45 min; demand-driven (add variants users actually log).
+
+---
+
 ## Ordering note
 
 Do #1 (data sourcing) exploratory first — it's the only one with unknown scope.
