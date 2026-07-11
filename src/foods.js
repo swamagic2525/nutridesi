@@ -79,6 +79,19 @@ const FOODS = [
   { id: 74, name: "Jam",                   aliases: ["jam","mixed fruit jam","strawberry jam","marmalade"], unit: "tbsp", kcal: 56, p: 0, c: 14, f: 0 },
   { id: 75, name: "Sugar",                 aliases: ["sugar","cheeni","chini","white sugar"], unit: "tsp", kcal: 16, p: 0, c: 4, f: 0 },
   { id: 76, name: "Lemon Rice",            aliases: ["lemon rice","chitranna","nimmakaya annam"], unit: "bowl", kcal: 250, p: 4, c: 45, f: 7 },
+  { id: 77, name: "Mango",                 aliases: ["mango","aam","mangoes","alphonso"], unit: "medium", kcal: 150, p: 1.4, c: 38, f: 0.6 },
+  { id: 78, name: "Guava",                 aliases: ["guava","amrud","peru"], unit: "medium", kcal: 68, p: 2.6, c: 14, f: 1 },
+  { id: 79, name: "Papaya",                aliases: ["papaya","papita"], unit: "bowl", kcal: 60, p: 0.7, c: 15, f: 0.2 },
+  { id: 80, name: "Watermelon",            aliases: ["watermelon","tarbooz","tarbuj"], unit: "bowl", kcal: 46, p: 0.9, c: 11, f: 0.2 },
+  { id: 81, name: "Grapes",                aliases: ["grapes","angoor","angur"], unit: "bowl", kcal: 70, p: 0.7, c: 18, f: 0.2 },
+  { id: 82, name: "Pomegranate",           aliases: ["pomegranate","anaar","anar"], unit: "bowl", kcal: 100, p: 2, c: 22, f: 1 },
+  { id: 83, name: "Chikoo",                aliases: ["chikoo","sapota","sapodilla","chiku"], unit: "medium", kcal: 83, p: 0.4, c: 20, f: 1 },
+  { id: 84, name: "Pineapple",             aliases: ["pineapple","ananas"], unit: "bowl", kcal: 74, p: 0.8, c: 19, f: 0.2 },
+  { id: 85, name: "Custard Apple",         aliases: ["custard apple","sitaphal","sharifa"], unit: "medium", kcal: 100, p: 2, c: 24, f: 0.3 },
+  { id: 86, name: "Cucumber",              aliases: ["cucumber","kheera","kakdi","kakri"], unit: "bowl", kcal: 16, p: 0.7, c: 4, f: 0.1 },
+  { id: 87, name: "Carrot",                aliases: ["carrot","gajar"], unit: "medium", kcal: 25, p: 0.6, c: 6, f: 0.1 },
+  { id: 88, name: "Tomato",                aliases: ["tomato","tamatar"], unit: "medium", kcal: 22, p: 1, c: 5, f: 0.2 },
+  { id: 89, name: "Green Salad",           aliases: ["green salad","salad","kachumber","veg salad"], unit: "plate", kcal: 40, p: 2, c: 8, f: 0.5 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
