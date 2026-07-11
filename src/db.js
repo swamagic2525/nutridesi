@@ -51,21 +51,31 @@ async function refLookup(name) {
 function applyReference(row, ref) {
   const qty = row.quantity;
   const inRange = (k) => Number.isFinite(Number(k)) && k >= 20 && k <= 800;
+
+  // Build the INDB candidate at a per-serving (1x) basis first.
+  let perServing, p = 0, c = 0, f = 0, unit = row.unit;
   if (inRange(Number(ref.serving_kcal))) {
-    row.kcal = Math.round(ref.serving_kcal * qty);
-    row.protein = +(Number(ref.serving_protein || 0) * qty).toFixed(1);
-    row.carbs = +(Number(ref.serving_carbs || 0) * qty).toFixed(1);
-    row.fat = +(Number(ref.serving_fat || 0) * qty).toFixed(1);
-    row.unit = ref.serving_unit || "serving";
+    perServing = Number(ref.serving_kcal);
+    p = Number(ref.serving_protein || 0); c = Number(ref.serving_carbs || 0); f = Number(ref.serving_fat || 0);
+    unit = ref.serving_unit || "serving";
   } else if (Number(ref.kcal_100g) > 0) {
-    const scale = 1.5 * qty; // assume ~150g serving
-    row.kcal = Math.min(Math.max(Math.round(ref.kcal_100g * scale), 20), 800 * qty);
-    row.protein = +(Number(ref.protein_100g || 0) * scale).toFixed(1);
-    row.carbs = +(Number(ref.carbs_100g || 0) * scale).toFixed(1);
-    row.fat = +(Number(ref.fat_100g || 0) * scale).toFixed(1);
+    perServing = Math.min(Math.max(Math.round(ref.kcal_100g * 1.5), 20), 800); // ~150g serving
+    p = Number(ref.protein_100g || 0) * 1.5; c = Number(ref.carbs_100g || 0) * 1.5; f = Number(ref.fat_100g || 0) * 1.5;
   } else {
     return; // no usable numbers — keep the LLM estimate
   }
+
+  // Guardrail: row.kcal here is the LLM's own per-serving estimate x qty. If the
+  // fuzzy match disagrees wildly (>2x or <0.5x), it's probably a wrong recipe
+  // ("honey" -> "Honey cake", "jam" -> "Jam tart") — keep the LLM estimate.
+  const llmPerServing = row.kcal / qty;
+  if (llmPerServing > 0 && (perServing > llmPerServing * 2 || perServing < llmPerServing * 0.5)) return;
+
+  row.kcal = Math.round(perServing * qty);
+  row.protein = +(p * qty).toFixed(1);
+  row.carbs = +(c * qty).toFixed(1);
+  row.fat = +(f * qty).toFixed(1);
+  row.unit = unit;
   row.food_name = ref.food_name;
 }
 

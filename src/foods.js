@@ -74,6 +74,11 @@ const FOODS = [
   { id: 69, name: "Paneer (Raw/Grilled)",  aliases: ["paneer","raw paneer","grilled paneer","tandoori paneer","paneer cubes"], unit: "100g", kcal: 265, p: 18, c: 4, f: 20 },
   { id: 70, name: "Tofu",                  aliases: ["tofu","soya paneer","bean curd"], unit: "100g", kcal: 145, p: 15, c: 3, f: 8 },
   { id: 71, name: "Egg Whites",            aliases: ["egg white","egg whites","boiled egg whites","anda safedi"], unit: "3 whites", kcal: 51, p: 11, c: 0.7, f: 0.2 },
+  { id: 72, name: "Bread (slice)",         aliases: ["bread","bread slice","white bread","brown bread","toast","slice of bread"], unit: "slice", kcal: 75, p: 3, c: 14, f: 1 },
+  { id: 73, name: "Honey",                 aliases: ["honey","shahad","madh"], unit: "tbsp", kcal: 64, p: 0, c: 17, f: 0 },
+  { id: 74, name: "Jam",                   aliases: ["jam","mixed fruit jam","strawberry jam","marmalade"], unit: "tbsp", kcal: 56, p: 0, c: 14, f: 0 },
+  { id: 75, name: "Sugar",                 aliases: ["sugar","cheeni","chini","white sugar"], unit: "tsp", kcal: 16, p: 0, c: 4, f: 0 },
+  { id: 76, name: "Lemon Rice",            aliases: ["lemon rice","chitranna","nimmakaya annam"], unit: "bowl", kcal: 250, p: 4, c: 45, f: 7 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
