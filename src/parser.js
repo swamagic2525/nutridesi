@@ -56,6 +56,7 @@ async function callGroq(userText) {
     body: JSON.stringify({
       model,
       temperature: 0,
+      max_tokens: 4096, // big meal lists (9+ items) truncate at the default -> invalid JSON
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
@@ -78,7 +79,7 @@ async function callGemini(userText) {
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
       contents: [{ role: "user", parts: [{ text: userText }] }],
-      generationConfig: { temperature: 0, responseMimeType: "application/json" },
+      generationConfig: { temperature: 0, responseMimeType: "application/json", maxOutputTokens: 4096 },
     }),
   });
   const data = await res.json();
@@ -91,7 +92,7 @@ async function callClaude(userText) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const model = process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001";
   const resp = await client.messages.create({
-    model, max_tokens: 1024, system: SYSTEM_PROMPT,
+    model, max_tokens: 4096, system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: userText }],
   });
   return resp.content?.[0]?.text || "{}";

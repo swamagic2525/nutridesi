@@ -119,8 +119,12 @@ app.post("/whatsapp", async (req, res) => {
     }
 
     const systemFailure = /llm_error|parse_failed/.test(parsed.parse_notes || "");
-    if ((parsed.items || []).length === 0 && !systemFailure) {
-      twiml.message("What did you eat? Send me a food name and I'll log it 🙂");
+    if ((parsed.items || []).length === 0) {
+      // System failure on a real meal -> ask to resend rather than logging a wrong
+      // 300 kcal placeholder that pollutes the day. Non-failure -> normal prompt.
+      twiml.message(systemFailure
+        ? "Couldn't read that one 😅 mind sending it again? Splitting a long list into 2 messages helps."
+        : "What did you eat? Send me a food name and I'll log it 🙂");
       return res.type("text/xml").send(twiml.toString());
     }
 
