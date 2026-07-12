@@ -149,9 +149,20 @@ error is wrong in exactly the dimension they're optimizing.
 
 ---
 
-## 6. Raw vs cooked weight logging (BIG differentiator for meal-preppers)
+## 6. Raw vs cooked weight logging — DONE 2026-07-12 (expand coverage as needed)
 
-**Why this matters:** serious fitness users weigh food **raw/dry** while meal-
+**Shipped:** "raw"/"dry"/"uncooked"/"kaccha" sets a `raw` flag; `resolveItem`
+applies a per-food `rawFactor`. Live on rice (2.8x), brown rice (2.6x), dal
+(2.8x), chicken breast (0.73x — meat loses water, so raw is LOWER). "100g rice
+raw" -> 364 kcal; "200g raw chicken" -> 241. Display strips "(Cooked)" when raw.
+**Remaining:** add `rawFactor` to more foods as users log them raw (pasta ~2.3x,
+mutton/fish ~0.7x, poha, quinoa ~2.7x). Demand-driven, ~30 sec each.
+
+---
+
+## (original #6 notes, for reference)
+
+**Why this mattered:** serious fitness users weigh food **raw/dry** while meal-
 prepping (rice, dal, pasta, oats, chicken), but casual users log it **cooked**
 (on the plate). The calorie difference is huge and no mainstream tracker nails
 it. "100g rice" is ~360 kcal raw but ~130 kcal cooked — a **2.7x swing** on the
