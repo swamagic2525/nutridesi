@@ -1,8 +1,42 @@
 # Post-Launch Backlog
 
-Deferred deliberately so launch day stays calm. None of these block the bot —
-they upgrade food-data quality and auditability. Do the data-sourcing legwork
-first on each, so any rabbit holes surface on a quiet day, not mid-traffic.
+Deferred deliberately so launch day stays calm. Most items upgrade food-data
+quality; item #0 is the one hardening/scale item and takes priority before any
+reel that could go big.
+
+---
+
+## 0. Harden + move off the Mac Mini (do before scaling beyond a trial reel)
+
+**Priority:** highest. Fine for a small trial, not for a viral one.
+
+Three linked pieces:
+
+1. **Validate Twilio's request signature** on the `/whatsapp` webhook. It's
+   currently unauthenticated — anyone who finds the URL can POST fake requests
+   (spoof any From number, pollute logs, burn LLM/Twilio balance past the
+   per-phone rate limit). Fix: `twilio.validateRequest(authToken, signature,
+   url, params)` on each request. **Footgun:** behind ngrok the reconstructed
+   URL must exactly match what Twilio signed (use `https://${req.headers.host}
+   ${req.originalUrl}`). Ship it behind an env flag and test with a real message
+   BEFORE enforcing — a wrong URL rejects all real requests and kills the bot.
+   (The hardcoded ngrok URL was removed from the public repo on 2026-07-12.)
+
+2. **Cloud deployment** (Railway/Render) to replace the single Mac Mini + ngrok.
+   Removes the single-point-of-failure (power/net cut = bot down, watchdog can't
+   self-heal) and the tunnel fragility. Repo already pushes to GitHub, so this is
+   mostly a deploy config + moving `.env` to the host's secrets.
+
+3. **Proper WhatsApp Business number** (Meta Cloud API or Twilio WABA) to escape
+   the Sandbox's 72-hour re-join friction — the biggest real UX wart for
+   returning users.
+
+**Why grouped:** all three are the same transition — from "founder's laptop demo"
+to "service other people rely on." Do them together when the retention signal
+says it's worth it, not before.
+
+**Effort:** signature validation ~30 min + careful test; cloud deploy ~half a day;
+WABA number ~1-2 days incl. Meta onboarding.
 
 ---
 
