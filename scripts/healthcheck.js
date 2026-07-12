@@ -8,7 +8,7 @@ require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 const fs = require("fs");
 
 const client = require("twilio")(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-const PUBLIC_URL = process.env.PUBLIC_URL || "https://carless-dining-croak.ngrok-free.dev";
+const PUBLIC_URL = process.env.PUBLIC_URL; // set in .env (kept out of the public repo)
 const ALERT_TO = `whatsapp:${process.env.ALERT_PHONE}`;
 const ALERT_FROM = `whatsapp:${process.env.TWILIO_WHATSAPP_FROM || "+14155238886"}`;
 const STATE = "/tmp/nutridesi-healthcheck-state.json";
