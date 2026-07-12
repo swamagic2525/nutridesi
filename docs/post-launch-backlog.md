@@ -161,6 +161,45 @@ error is wrong in exactly the dimension they're optimizing.
 
 ---
 
+## 6. Raw vs cooked weight logging (BIG differentiator for meal-preppers)
+
+**Why this matters:** serious fitness users weigh food **raw/dry** while meal-
+prepping (rice, dal, pasta, oats, chicken), but casual users log it **cooked**
+(on the plate). The calorie difference is huge and no mainstream tracker nails
+it. "100g rice" is ~360 kcal raw but ~130 kcal cooked — a **2.7x swing** on the
+single most-logged Indian staple. Getting this right is exactly the precision the
+target (macro-counting) audience notices and switches for.
+
+**Current state:** the bot assumes COOKED for rice/dal (correct default — most
+people log the plate), but DRY for oats/soya chunks (correct — those are weighed
+dry). Consistent with real logging habits, but a meal-prepper weighing raw rice
+is undercounted ~2.7x with no way to say so.
+
+**The nuance (conversion goes opposite directions):**
+- Grains/legumes ABSORB water → cooked is *less* calorie-dense per gram. 100g raw
+  rice ≈ 360, cooked ≈ 130 (~2.7x). Dal/lentils ~2.5x, pasta ~2.3x.
+- Meat LOSES water → cooked is *more* dense per gram. 100g raw chicken breast
+  ≈ 120 kcal, cooked ≈ 165 (~1.35x, and note our curated chicken breast is the
+  COOKED 165 value — a raw-weigher is currently overcounted).
+
+**Fix:** treat "raw"/"dry"/"uncooked"/"kaccha" (and "cooked"/"pakaya") as a
+variant modifier (same mechanism as low-fat/high-protein in #5). When the user
+says raw, apply a per-food raw↔cooked calorie factor. Needs a `raw_kcal` (or a
+conversion factor) on the water-absorbing/losing staples: rice, all dals/lentils,
+pasta, chicken/mutton/fish, poha, quinoa. Default stays as-is when unspecified.
+
+**Positioning:** this is a headline feature for the fitness segment, not a bugfix.
+Worth doing well and even calling out in marketing ("weigh it raw or cooked — we
+handle both"). Consider a one-time nudge the first time someone logs rice by grams:
+"was that raw or cooked weight?" — remembered per user, per PRD rule 1.
+
+**Where:** `src/foods.js` (raw factors on staples) + `src/systemPrompt.js`
+(variant rule) + `resolveItem` in `src/db.js` (apply factor on grams path).
+
+**Effort:** ~1 hr + testing across the raw/cooked pairs.
+
+---
+
 ## Ordering note
 
 Do #1 (data sourcing) exploratory first — it's the only one with unknown scope.
