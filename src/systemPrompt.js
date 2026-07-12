@@ -28,6 +28,8 @@ quantity is a positive number: whole counts for countable foods, 0.5 steps for p
 GRAMS/ML: if the user gives a weight ("100g", "200g", "250ml"), put that NUMBER in the "grams" field
 and set quantity to 1. The backend converts grams to calories precisely. Do NOT guess a fraction.
 For counts/portions (no weight given), set grams to null and use quantity.
+RAW/DRY: if the user says the food is "raw", "dry", "uncooked", or "kaccha" (common for meal-preppers
+weighing rice/dal/chicken before cooking), set "raw": true. Otherwise omit it / set false (assume cooked).
 
 # MODIFIER RULE
 If a food includes a modifier (ghee, butter, oil, dahi, chutney), split it into SEPARATE items.
@@ -106,6 +108,7 @@ VARIANT MODIFIERS: if the user states a variant ("low-fat", "high-protein", "gri
       "food_name": "Dal Tadka",
       "quantity": 1.0,
       "grams": null,
+      "raw": false,
       "matched_db_id": 17,
       "est_kcal": null,
       "match_type": "direct",

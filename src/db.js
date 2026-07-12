@@ -23,14 +23,20 @@ const UNIT_GRAMS = {
 function resolveItem(item) {
   const food = item.matched_db_id ? FOOD_BY_ID[item.matched_db_id] : null;
   const grams = Number(item.grams);
+  // Raw/dry-weight logging (meal-preppers weigh uncooked). Grains/legumes gain
+  // water when cooked (raw is denser, factor > 1); meat loses water (factor < 1).
+  const rw = item.raw && food && food.rawFactor ? food.rawFactor : 1;
+  const rawTag = rw !== 1 ? " (raw)" : "";
+  // Display name: strip a baked-in "(Cooked)" when we're showing "(raw)".
+  const dName = food ? (rawTag ? food.name.replace(/\s*\(cooked\)/i, "") : food.name) : "";
 
   // Weight-based logging: scale nutrition by exact grams / serving-grams. This is
   // what makes "40g rice", "100g soya chunks", "200g chicken" accurate.
   if (food && grams > 0 && grams <= 2000) {
     const servingG = food.g || UNIT_GRAMS[food.unit] || 150;
-    const s = grams / servingG;
+    const s = (grams / servingG) * rw;
     return {
-      food_name: `${grams}g ${food.name}`, matched_db_id: food.id, quantity: 1, unit: `${grams}g`,
+      food_name: `${grams}g ${dName}${rawTag}`, matched_db_id: food.id, quantity: 1, unit: `${grams}g`,
       kcal: Math.round(food.kcal * s), protein: +(food.p * s).toFixed(1),
       carbs: +(food.c * s).toFixed(1), fat: +(food.f * s).toFixed(1),
       fiber: +((food.fb || 0) * s).toFixed(1), is_estimate: true,
@@ -49,11 +55,12 @@ function resolveItem(item) {
 
   if (food) {
     // Tier 1/2: direct or category DB match
+    const m = qty * rw;
     return {
-      food_name: food.name, matched_db_id: food.id, quantity: qty, unit: food.unit,
-      kcal: Math.round(food.kcal * qty), protein: +(food.p * qty).toFixed(1),
-      carbs: +(food.c * qty).toFixed(1), fat: +(food.f * qty).toFixed(1),
-      fiber: +((food.fb || 0) * qty).toFixed(1),
+      food_name: `${dName}${rawTag}`, matched_db_id: food.id, quantity: qty, unit: food.unit,
+      kcal: Math.round(food.kcal * m), protein: +(food.p * m).toFixed(1),
+      carbs: +(food.c * m).toFixed(1), fat: +(food.f * m).toFixed(1),
+      fiber: +((food.fb || 0) * m).toFixed(1),
       is_estimate: item.match_type !== "direct" || item.portion_clarity !== "specified",
     };
   }
