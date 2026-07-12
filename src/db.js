@@ -145,8 +145,11 @@ async function logMeal(phone, parsed) {
       protein: 0, carbs: 0, fat: 0, fiber: 0, is_estimate: true });
   }
 
-  const { error } = await supabase.from("user_logs").insert(rows);
-  if (error) console.error("SUPABASE INSERT FAILED:", error.message, error.details || "", error.hint || "");
+  // Fire-and-forget: the reply's totals are computed locally (below), so it need
+  // not wait for the write. Saves ~0.7s of India<->Supabase latency per message.
+  supabase.from("user_logs").insert(rows).then(({ error }) => {
+    if (error) console.error("SUPABASE INSERT FAILED:", error.message, error.details || "", error.hint || "");
+  });
   const sum = (k) => prevTotal[k] + rows.reduce((s, r) => s + Number(r[k] || 0), 0);
 
   // Slot this message into the meal clusters: continues the last meal if within 45 min.

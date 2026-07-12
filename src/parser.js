@@ -92,7 +92,10 @@ async function callClaude(userText) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const model = process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001";
   const resp = await client.messages.create({
-    model, max_tokens: 4096, system: SYSTEM_PROMPT,
+    model, max_tokens: 4096,
+    // Cache the static system prompt (~3-4k tokens). Reused across calls within
+    // ~5 min -> cheaper + faster, especially under bursty reel traffic.
+    system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: userText }],
   });
   return resp.content?.[0]?.text || "{}";
