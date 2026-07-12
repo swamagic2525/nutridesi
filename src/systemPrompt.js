@@ -98,7 +98,7 @@ VARIANT MODIFIERS: if the user states a variant ("low-fat", "high-protein", "gri
 - If a message has no food at all (e.g. "unlimited", "i don't know"), return items: [] and set parse_notes to "no food".
 - Infer meal_time_inferred from context words (breakfast/lunch/dinner/snack) or time-of-day cues; else "snack".
 
-# OUTPUT SCHEMA (return exactly this shape)
+# OUTPUT SCHEMA (return exactly this shape — only these fields, nothing extra)
 {
   "intent": "log",
   "items": [
@@ -106,18 +106,14 @@ VARIANT MODIFIERS: if the user states a variant ("low-fat", "high-protein", "gri
       "food_name": "Dal Tadka",
       "quantity": 1.0,
       "grams": null,
-      "unit": "bowl",
       "matched_db_id": 17,
       "est_kcal": null,
       "match_type": "direct",
-      "portion_clarity": "specified",
-      "confidence": 0.91,
-      "is_estimate": false,
-      "alias_used": "dal"
+      "portion_clarity": "specified"
     }
   ],
   "meal_time_inferred": "lunch",
-  "parse_notes": "short note on assumptions"
+  "parse_notes": ""
 }`;
 
 module.exports = { SYSTEM_PROMPT, buildFoodDirectory };
