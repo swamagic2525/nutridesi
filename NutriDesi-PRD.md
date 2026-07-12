@@ -1,7 +1,28 @@
 # NutriDesi – Product Requirements Document
-**Version:** 0.5 (MVP — no-code stack + two-scenario architecture + quantity schema guardrail)
-**Author:** Working draft
-**Status:** Final — ready for Make.com build sprint
+**Version:** 1.0 (Built — coded backend, single synchronous webhook, live in private beta)
+**Author:** Swapnil
+**Status:** Live. This document reflects what actually shipped, which diverged meaningfully from the original no-code (v0.5) plan — see "Current Build Status" below.
+
+---
+
+## Current Build Status (as of July 2026)
+
+The MVP is **built and live** — a real WhatsApp number that real users are texting. It was built as a coded backend over roughly a week, not the no-code Make.com stack the v0.5 plan assumed (see Technical Architecture for why the plan changed).
+
+**Live today:**
+- WhatsApp bot answering in ~2–5 seconds; no app, no signup, keyed to phone number
+- Natural-language Hinglish parsing via a multi-provider LLM fallback chain (Gemini → Groq → Claude)
+- **114-item curated Indian food database** + a **1,014-recipe INDB reference tier** (lab-derived, open-access) + LLM estimate fallback — four tiers, never a dead end
+- **Unit *and* gram-precise logging**: "4 roti", "100g soya chunks", "200g paneer" all resolve accurately
+- Full macro breakdown per item and per day: **calories, protein, carbs, fat, and fibre**
+- Corrections and undo via LLM intent classification ("sorry it was rajma", "undo")
+- Diet-variant awareness: low-fat paneer/milk/curd, high-protein peanut butter/roti, etc. resolve to the right macros, not the default
+- Rate limiting, prompt-injection handling, webhook dedupe
+- Self-hosted on an always-on Mac Mini, supervised (auto-restart on crash/reboot) with a watchdog that WhatsApp-alerts the founder on downtime
+
+**Deliberately not built yet** (deferred until the retention signal justifies the effort — see Success Metrics): goal-setting, personal katori/roti calibration, scheduled daily summary, streaks, and the guided onboarding flow. These remain the P0/P1 items below; the bet is to prove people come back *before* investing in the accountability layer.
+
+**Distribution channel:** the founder's own Instagram stories/reels (build-in-public), not any partner network.
 
 ---
 
@@ -171,7 +192,7 @@ The rationale for raising the medium floor from 0.50 to 0.65: below 0.65, the LL
 4. **No match:** Conservative 300 kcal placeholder. *"Logged that as a meal (~300 kcal estimate). Reply with the actual number if you know it."* Add raw input to review queue for database expansion.
 
 **System prompt seeding strategy (for tech co-founder):**
-Do not pass the raw 88-item JSON array to the LLM. Format it as a matching-optimised alias list — this is what drives direct match accuracy:
+Do not pass a raw JSON array to the LLM. Format the curated list as a matching-optimised alias list — this is what drives direct match accuracy:
 
 ```
 FOOD DATABASE — match only to items in this list. Return matched_db_id or null.
@@ -193,31 +214,13 @@ Inputs to support: "2 roti", "one bowl dal tadka", "half plate rice with sabzi",
 
 The backend must run a lightweight regex pre-processor on every incoming WhatsApp message *before* passing it to the LLM. Three things to handle:
 
-**(a) Quantity normalisation for loose terms.** Hinglish quantity words are vague and will produce unpredictable fractional outputs if left unresolved. Force discrete multipliers:
+**(a) Quantity — loose portions, real counts, and weights (as built).** Three cases the parser handles:
 
-| User says | Normalised `quantity` |
-|---|---|
-| "thodi si", "half", "chota bowl", "half katori" | `0.5` |
-| "ek", "one", "normal", "standard", "ek katori" | `1.0` |
-| "do", "two", "bada bowl", "full plate", "dabake" | `2.0` |
-| "teen", "three", "extra" | `3.0` |
+- **Loose Hinglish portions** map to fractional multipliers of a serving: "thodi si / adha / half katori" → 0.5, "ek / normal" → 1.0, "sawa" → 1.5, "do / bada / dabake / poora" → 2.0, "teen / extra" → 3.0.
+- **Countable foods keep their real count** — "7 eggs" → 7, "4 roti" → 4, "12 idli" → 12. (The original v0.5 plan capped quantity to a 0.5–3.0 enum; that was a Make.com math-module limitation and was removed on the coded backend.)
+- **Weights are scaled precisely** — "100g soya chunks", "40g rice", "200g paneer" are converted to exact calories using each food's serving-weight, rather than guessed as a fraction.
 
-Include this mapping table explicitly in the system prompt. If a loose term does not match the table, default to `1.0` and set `portion_clarity: "inferred"`. Never allow the LLM to return a non-standard decimal (e.g., `0.35`) for a quantity field.
-
-**Critical for no-code Make.com implementation (added post director review):** In a coded backend, enforcing discrete quantity values is trivial via an `enum` or array lookup. In Make.com, the only enforcement point is the JSON schema passed to Claude Haiku. The `quantity` property must explicitly declare its allowable values inside the schema object sent with every API call:
-
-```json
-{
-  "properties": {
-    "quantity": {
-      "type": "number",
-      "description": "The normalized portion size multiplier. MUST ONLY be one of these exact values: 0.5, 1.0, 1.5, 2.0, or 3.0. Do not return any other decimal value."
-    }
-  }
-}
-```
-
-Without this explicit boundary in the schema, Claude Haiku may return `0.35` or `1.25` for ambiguous inputs — values that Make.com's mathematical routers cannot handle cleanly, causing silent failures in the calorie calculation step. This schema declaration is the no-code equivalent of an enum constraint.
+A guard caps large multipliers on portion-unit foods (a "100g" misread as quantity 100 on a bowl item) so a parse error can't explode a day's total.
 
 **(b) Modifier extraction — main entity and modifiers are separate `items` array objects.** When a user says "2 roti with Amul butter" or "dal with ghee", the parser must not search for a single DB entry called "Roti with Butter." System prompt must instruct: *"If a food contains a modifier (butter, ghee, oil, dahi, chutney), split into two separate items: the base food and the modifier. Match each independently."*
 
@@ -229,7 +232,7 @@ Example: "2 roti with Amul butter" →
 ]
 ```
 
-If the modifier is not in the 88-item database (e.g., a regional pickle), apply the Tier 3 fallback to the modifier only — the confidence of the base food item is unaffected. This prevents one unknown ingredient from downgrading an otherwise clean match.
+If the modifier is not in the curated database (e.g., a regional pickle), apply the fallback to the modifier only — the base food item's match is unaffected. This prevents one unknown ingredient from downgrading an otherwise clean match.
 
 **(c) WhatsApp markdown and emoji stripping.** Users send bold text (`*2 roti*`), underlines, accidental copy-pastes with newlines, and emojis (`2 roti 🫓 + dal 🥣`). A 5-line regex pre-processor (engineer task, not product task) strips WhatsApp markdown characters (`*`, `_`, `~`, `>`) before the string hits the LLM. Emojis should be *preserved* — food emojis are strong contextual anchors that significantly improve match accuracy and cost nothing to pass through.
 
@@ -237,9 +240,9 @@ This pre-processing is a one-time engineering task estimated at half a day. It p
 
 - *Acceptance criteria:* In a test of 50 common Indian meal descriptions, `match_type: "direct"` on ≥ 80% of items. Zero responses that ask the user to estimate calories. All low-confidence items route to macro-category fallback within 2 seconds. `is_estimate: true` appends "(estimate)" tag in every WhatsApp response where it is set.
 
-**3. Indian food database (88+ items, expandable)**
-Minimum viable database covering the foods that constitute 80% of meals for the target user: North + South Indian staples, common snacks, beverages, sweets, restaurant-style dishes.
-- *Acceptance criteria:* Foods from the NutriDesi prototype (88 items) are baseline. All items have calories, protein, carbs, fat per default serving. Database is structured so new items can be added without code changes.
+**3. Indian food database (built: 114 curated items + 1,014-recipe reference tier)**
+Covers the foods that constitute 80% of meals for the target user: North + South Indian staples, snacks, beverages, sweets, plus gym/diet variants (high-protein, low-fat). Beyond the curated list, unknown foods fall through to the imported INDB reference table (1,014 lab-derived Indian recipes), then to an LLM estimate — so coverage is effectively open-ended, with the curated list being the high-accuracy core.
+- *Status:* Live. All curated items have calories, protein, carbs, fat, and fibre per serving (with serving-weights for gram-based logging). New items are added by editing one data file — no schema change. The curated list has grown demand-driven from ~58 to 114 as real users surfaced gaps.
 
 **4. Fragmented message handling — session merging**
 Users text like they think: fragmented and interrupted. "2 roti" at 1:30pm, then "and dal" at 1:55pm are parts of the same meal, not two separate meals.
@@ -337,7 +340,7 @@ First message triggers: ask name (optional), ask goal (weight loss / maintenance
 | Streak distribution | % of active users with a 7-day streak | ≥ 25% by Day 45 |
 | Word-of-mouth NPS proxy | Users who forward the bot number to someone else | Track via referral code in welcome message |
 
-### Accuracy benchmark (new — to validate against FITTR/HealthifyMe data)
+### Accuracy benchmark
 
 | Metric | Definition | Target |
 |---|---|---|
@@ -364,50 +367,44 @@ If parse success rate stays below 70% after database expansion in Week 5, the Hi
 
 | Question | Owner | Blocking? |
 |---|---|---|
-| WhatsApp Business API access: apply for WABA directly (2–4 week approval) or use Twilio Sandbox for testing? | Founder + Tech co-founder | Yes — determines launch timeline by ~4 weeks |
-| What LLM do we use for food parsing, and what is cost-per-message at scale? Claude Haiku is ~$0.0008/message; 200 DAU × 5 messages = ~$2.40/day. Acceptable? | Tech co-founder | No — manageable at MVP scale, revisit at 1K DAU |
-| Is the 88-item food database enough for 80% of meals, or do we need 200+ items before launch? | Founder (user research) | No — ship with 88, add top-requested foods in Week 2 based on parse failures |
+| ~~WABA vs Twilio Sandbox for launch?~~ **Resolved:** shipped on Twilio Sandbox (now pay-as-you-go). WABA + a dedicated number is the post-retention migration, alongside cloud hosting. | Founder | Resolved for beta |
+| ~~What LLM, and cost at scale?~~ **Resolved:** multi-provider fallback (Gemini/Groq free primary, Claude paid insurance). ~₹1 per logged meal all-in. Revisit provider mix at scale. | Founder | Resolved for beta |
+| ~~Is the food database big enough?~~ **Resolved:** 114 curated + 1,014-recipe reference + estimate fallback. Curated list grows demand-driven from real parse gaps. | Founder | Resolved for beta |
 | PCOS WhatsApp groups as distribution: do we need a specific PCOS-aware mode to get traction there, or does generic calorie tracking serve them adequately in v1? | Founder | No — generic v1, PCOS mode is P2; validate via user interviews in first 2 weeks |
 | Data privacy: user food logs are stored linked to phone number. Is this acceptable without explicit consent flow in India's DPDP framework? | Legal (consult before launch) | Yes — must add privacy notice and consent on first message before storing any data |
 | Restaurant / branded food estimates: do we disclaim clearly when returning an estimate vs. a verified entry? | Product + Founder | No — add "(estimate)" tag in responses for restaurant items; design this from Day 1 |
-| What level of calorie inaccuracy is "good enough" for behavior change in a non-clinical, awareness-only context? FITTR coaches likely have direct experience with this. | Validation (Jitendra/FITTR) | No — directional answer shapes onboarding copy and user expectation-setting |
-| Do FITTR users who self-track without a coach show meaningfully different retention than those with a coach from Day 1? This would validate or kill the self-serve assumption. | Validation (Jitendra/FITTR) | No — shapes whether NutriDesi targets pre-FITTR users or truly never-FITTR users |
+| What level of calorie inaccuracy is "good enough" for behavior change in a non-clinical, awareness-only context? | Founder + advisors | No — directional answer shapes onboarding copy and user expectation-setting |
+| Does the food-variant long tail (every high-protein / low-fat / regional SKU) create endless curation work, or does the curated-core + reference-tier + estimate fallback keep it bounded? | Founder | No — early signal is that demand-driven curation stays manageable; watch as users scale |
 
 ---
 
-## Technical Architecture (for conversation with tech co-founder)
+## Technical Architecture (as built)
 
-This is not a requirements section — it is context to help scope the build conversation.
+*The v0.5 plan called for a no-code Make.com stack. In practice it was built as a small coded backend, which turned out simpler and faster. This section describes what actually runs.*
 
-**Recommended MVP stack (no-code solo-founder path — updated post director review):**
-- **WhatsApp interface:** Twilio WhatsApp Sandbox (free; users join once via keyword → fully clean retention signal post-onboarding)
-- **Orchestration:** Make.com (~₹800/month) — visual scenario builder, no code required
-- **Food parsing:** Claude Haiku API or Gemini API (pay-per-use; ~₹300–500/month at 50 DAU)
-- **Food database + user state:** Supabase free tier (phone number → daily log → goal → calibration defaults)
-- **Scheduled summaries:** Make.com time-based trigger scenario
+**Live stack:**
+- **WhatsApp interface:** Twilio (started on the free Sandbox; upgraded to pay-as-you-go once the trial's 9-messages/day cap was hit)
+- **Tunnel:** ngrok exposes the local server to Twilio's webhook (stable free domain)
+- **Backend:** Node.js / Express — a single synchronous webhook handler (~one file)
+- **Food parsing:** multi-provider LLM fallback chain — **Gemini (primary, free) → Groq (free) → Claude Haiku (paid insurance)**. One call returns structured JSON including the parse *and* an intent field (log / correct / undo)
+- **Database + state:** Supabase (tables: `users`, `user_logs`, `foods_reference` = the 1,014-recipe INDB import)
+- **Hosting:** self-hosted on an always-on Mac Mini, supervised by macOS launchd (server + tunnel auto-restart on crash/reboot; a 5-minute healthcheck WhatsApp-alerts the founder if the bot is unreachable or the Twilio balance runs low)
 
-**Critical architecture: two-scenario pattern to avoid Twilio timeout failures (added post director review)**
+**Why the architecture changed from the plan:**
 
-Twilio requires an HTTP `200 OK` response almost instantly after delivering a message. A single Make.com scenario that sequentially calls Claude + reads/writes Supabase + sends a reply can stretch to 4–6 seconds, causing Twilio to time out and drop or duplicate messages — corrupting the user experience silently.
+The v0.5 plan's *two-scenario async pattern* existed purely to work around a no-code limitation: a single Make.com scenario calling Claude + Supabase sequentially takes 4–6s and trips Twilio's timeout. **A coded Node backend replies in 2–5s — comfortably inside Twilio's 15-second window — so the async split was unnecessary.** The whole thing collapses into one synchronous handler that returns the reply inline as TwiML (which also means sending replies needs no Twilio credentials).
 
-The fix — split into two Make.com scenarios:
+Similarly, the **quantity enum (0.5 / 1.0 / … / 3.0) was a Make.com math-module constraint, not a product decision.** On a coded backend it was removed in favour of real integer counts ("7 eggs") and gram-precise scaling ("100g soya chunks" → exact calories via each food's serving-weight).
 
-- **Scenario A (instant):** Receives Twilio webhook → writes the raw message + phone number to a Supabase `pending_jobs` table → returns `200 OK` to Twilio immediately. No AI call. Sub-second.
-- **Scenario B (triggered):** Watches for new rows in `pending_jobs` → calls Claude Haiku with system prompt + alias map → calculates running total → updates user log in Supabase → sends WhatsApp reply via Twilio. All logic lives here.
+**Food resolution — four tiers, never a dead end:**
+1. **Curated list (114 items)** — hand-checked Indian staples + gym/diet variants, seeded into the LLM prompt as an alias map
+2. **INDB reference (1,014 recipes)** — fuzzy-matched in Supabase for foods not in the curated list, with an LLM-estimate guardrail that rejects a confident-but-wrong match
+3. **LLM estimate** — the model's own per-serving guess, clamped to a sane range
+4. **300 kcal placeholder** — last resort; the bot always logs *something*
 
-This pattern completely eliminates timeout failures and is buildable entirely within Make.com with no code.
+**Cost:** free LLM tiers carry normal traffic; Claude (~₹0.35/msg) only bills when it's the fallback. Twilio pay-as-you-go ≈ ₹0.45/msg. Supabase free tier. Net ≈ ₹1 per logged meal, with essentially no fixed cost.
 
-**Note on the regex pre-processor in Make.com:** Stripping WhatsApp markdown (`*`, `_`, `~`) using Make.com's native string functions is doable but produces messy visual scenarios. Recommended: one "clean input" step at the start of Scenario B using Make.com's built-in `replace()` and `trim()` functions chained together. Tedious to test, but a one-time setup cost.
-
-**Estimated build time (solo, no-code, Claude Pro as building partner):**
-- Webhook-to-Claude loop working end-to-end: 2–3 days
-- Supabase state + daily log wired up: +2 days
-- Daily summary trigger + opt-in: +1 day
-- Total to first beta-ready message: ~1 week of focused evenings
-
-**Estimated monthly infra cost at 50-user beta:** Under ₹1,500/month (Make.com + Supabase free tier + Claude API). Same stack can scale to 200 DAU before migrating to coded backend.
-
-**Tech co-founder path (post-PMF):** Node.js or Python (FastAPI) on Railway or Render replaces Make.com after retention is proven. The PRD, alias map, and 50-phrase test suite hand directly to a developer — the no-code beta generates the evidence that makes recruiting a technical partner significantly easier.
+**Known infrastructure limitations** (honest, for a technical reviewer): the Mac Mini is a single point of failure the watchdog can't self-heal (a power/internet cut takes the bot down); free LLM quotas can exhaust on a heavy day and shift load to paid Claude; and the Twilio Sandbox requires users to re-send a join keyword after 72h of silence. All three resolve with the same next step — a cloud deployment (Railway/Render) and a proper WhatsApp Business number — which is the post-retention migration, not a beta blocker.
 
 ---
 
