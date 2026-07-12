@@ -40,26 +40,14 @@ WABA number ~1-2 days incl. Meta onboarding.
 
 ---
 
-## 0b. Enable Anthropic prompt caching (cut Claude cost 50–90%)
+## 0b. Anthropic prompt caching + output-schema trim — DONE 2026-07-12
 
-**Priority:** high, low-effort. Do before/around any traffic spike.
-
-**Problem:** prompt caching is OFF. Every Claude call re-sends the full system
-prompt (~3–4k tokens: 114 foods + all rules) uncached — the bulk of token spend
-(719.6K tokens in one week; $0.85 of the $5 credit). The prompt is static
-between calls, so this is pure waste.
-
-**Fix:** mark the system prompt block as cacheable in `callClaude` (src/parser.js):
-add `cache_control: { type: "ephemeral" }` to the system content block (requires
-passing `system` as a content array, not a string). Anthropic caches the prefix
-for ~5 min. Cache hits are low on sparse traffic but **high during a spike**
-(messages seconds apart) — so it softens exactly the busy-day cost. ~1 line,
-low risk (no-op when it misses).
-
-**Note:** helps Claude only (the paid fallback). Gemini/Groq are free. If steady-
-state shifts Claude off fallback duty, also consider caching there.
-
-**Effort:** ~15 min + a test call.
+Shipped, for latency + cost. (1) `callClaude` marks the system prompt cacheable
+(`cache_control: ephemeral`) — reused within ~5 min, so bursty traffic hits cache.
+(2) Async (fire-and-forget) `user_logs` insert — reply computes totals locally.
+(3) Trimmed 4 unused fields from the LLM output schema (unit/confidence/
+is_estimate/alias_used) — ~35% less output per item. Combined: single-item ~2.4s,
+4-item meal ~2.9s (was 6.8–7.9s). Record left for context.
 
 ---
 
