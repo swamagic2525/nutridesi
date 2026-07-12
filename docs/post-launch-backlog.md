@@ -40,6 +40,29 @@ WABA number ~1-2 days incl. Meta onboarding.
 
 ---
 
+## 0b. Enable Anthropic prompt caching (cut Claude cost 50–90%)
+
+**Priority:** high, low-effort. Do before/around any traffic spike.
+
+**Problem:** prompt caching is OFF. Every Claude call re-sends the full system
+prompt (~3–4k tokens: 114 foods + all rules) uncached — the bulk of token spend
+(719.6K tokens in one week; $0.85 of the $5 credit). The prompt is static
+between calls, so this is pure waste.
+
+**Fix:** mark the system prompt block as cacheable in `callClaude` (src/parser.js):
+add `cache_control: { type: "ephemeral" }` to the system content block (requires
+passing `system` as a content array, not a string). Anthropic caches the prefix
+for ~5 min. Cache hits are low on sparse traffic but **high during a spike**
+(messages seconds apart) — so it softens exactly the busy-day cost. ~1 line,
+low risk (no-op when it misses).
+
+**Note:** helps Claude only (the paid fallback). Gemini/Groq are free. If steady-
+state shifts Claude off fallback duty, also consider caching there.
+
+**Effort:** ~15 min + a test call.
+
+---
+
 ## 1. Import IFCT raw-ingredient data (macros for plain staples)
 
 **Problem:** INDB is a *recipe* database (1,014 cooked dishes) — it has no raw
