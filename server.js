@@ -45,11 +45,14 @@ const WELCOME =
   "Fix mistakes anytime:\n" +
   "\u21A9\uFE0F \"undo\" removes the last entry\n" +
   "\u270F\uFE0F or just correct me \u2014 \"that dosa was 120 calories\"\n\n" +
-  "\u{1F680} This is an early beta on a test number \u2014 a bigger, faster version lands in ~30 days. Your feedback shapes it!";
+  "\u2014 Swapnil \u{1F44B} full-time PM & ex-fitness coach. My clients kept quitting tracking apps, so I'm " +
+  "building this where you already are. Bigger, faster version lands in ~30 days \u2014 and your feedback " +
+  "shapes it: DM me on Instagram @swapnilgore2525, I read everything.";
 
 const FIRST_LOG_FOOTER =
   "\n\n\u{1F64F} _First log \u2014 thanks for testing NutriDesi early! Reply \"undo\" to remove a mistake, " +
-  "or correct me anytime (\"that dosa was 120 calories\"). Bigger update coming in ~30 days._";
+  "or correct me anytime (\"that dosa was 120 calories\"). Feedback? DM @swapnilgore2525 on Instagram \u2014 " +
+  "I read everything. \u2014 Swapnil (PM & ex-fitness coach)_";
 
 app.post("/whatsapp", async (req, res) => {
   const twiml = new twilio.twiml.MessagingResponse();
