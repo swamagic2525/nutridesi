@@ -150,16 +150,10 @@ function applyReference(row, ref) {
   row.food_name = ref.food_name;
 }
 
-async function logMeal(phone, parsed) {
-  // Previous total fetched in parallel with the user upsert (before the insert,
-  // so no double-count); new items are added locally. Saves one DB round-trip.
-  const [prevTotal, isNewUser] = await Promise.all([todayTotal(phone), ensureUser(phone)]);
-  const mealTime = parsed.meal_time_inferred || "snack";
-  const rows = (parsed.items || []).map(it => {
-    const r = resolveItem(it);
-    return { phone_number: phone, meal_time: mealTime, ...r };
-  });
-
+// Resolve parsed items to nutrition rows (curated -> INDB -> estimate) without
+// touching the log — shared by logMeal and query-intent previews.
+async function resolveRows(parsed) {
+  const rows = (parsed.items || []).map(it => resolveItem(it));
   // Cross-reference unmatched foods against INDB (parallel, misses only).
   await Promise.all(rows
     .filter(r => !r.matched_db_id && !r.stated && r.food_name && r.food_name !== "meal")
@@ -167,6 +161,15 @@ async function logMeal(phone, parsed) {
       const ref = await refLookup(r.food_name);
       if (ref) applyReference(r, ref);
     }));
+  return rows;
+}
+
+async function logMeal(phone, parsed) {
+  // Previous total fetched in parallel with the user upsert (before the insert,
+  // so no double-count); new items are added locally. Saves one DB round-trip.
+  const [prevTotal, isNewUser, rows] = await Promise.all([todayTotal(phone), ensureUser(phone), resolveRows(parsed)]);
+  const mealTime = parsed.meal_time_inferred || "snack";
+  rows.forEach(r => Object.assign(r, { phone_number: phone, meal_time: mealTime }));
 
   // If nothing parsed, log a single 300 kcal placeholder (Tier 4).
   if (rows.length === 0) {
@@ -256,4 +259,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { logMeal, todayTotal, deleteLastLog, ensureUser };
+module.exports = { logMeal, todayTotal, deleteLastLog, ensureUser, resolveRows };

@@ -60,6 +60,14 @@ intent:
                    food in items, parsed normally. Only the NEW food goes in items — never the old one.
   "undo"         = user wants the last entry removed with no replacement: "undo", "remove that", "delete last",
                    "galat log hua, hatao", "cancel that". items must be [].
+  "query"        = user is ASKING, not reporting eating. Two forms:
+                   (a) food question: "what is calories of 2 banana", "macros for dal chawal 3 plates",
+                       "how many calories in X", "kitni calories hai X mein" -> parse the food(s) into
+                       items normally (quantities included) so the backend can answer.
+                   (b) day question: "whats my total today", "how much have I eaten", "todays calories",
+                       "how much left", "full day report" -> items [].
+                   Question phrasing ("what/how many/kitni/calories of...?") = query, NEVER "log" —
+                   logging a food the user only asked about corrupts their day.
 Mid-sentence "instead" describing what they ate is NOT a correction: "I had dal instead of rice" = intent "log", items [Dal].
 When unsure between "log" and "replace_last", pick "log" — a duplicate is safer than deleting a real entry.
 

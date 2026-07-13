@@ -6,7 +6,7 @@ require("dotenv").config();
 const express = require("express");
 const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
-const { logMeal, deleteLastLog, todayTotal, ensureUser } = require("./src/db.js");
+const { logMeal, deleteLastLog, todayTotal, ensureUser, resolveRows } = require("./src/db.js");
 
 const app = express();
 app.use(express.urlencoded({ extended: false })); // Twilio sends form-encoded
@@ -34,6 +34,11 @@ function rateLimitCheck(phone) {
 // Twilio retries the webhook if a reply takes >15s — dedupe by MessageSid so a
 // retry never double-logs a meal.
 const seenSids = new Set();
+
+// "calories of X?" answers are stashed so a follow-up "log it" logs them.
+// In-memory, 10-min TTL: resets on restart, fine for MVP.
+const pendingQuery = new Map(); // phone -> { parsed, at }
+const PENDING_TTL_MS = 10 * 60 * 1000;
 
 const WELCOME =
   "\u{1F64F} Hey! Thanks for being an early tester of NutriDesi.\n\n" +
@@ -104,9 +109,49 @@ app.post("/whatsapp", async (req, res) => {
       return res.type("text/xml").send(twiml.toString());
     }
 
+    // "log it" after a food question -> log the stashed items, no LLM call.
+    const pending = pendingQuery.get(from);
+    if (/^(log it|log|ate it|had it|yes log it)$/i.test(trimmed) &&
+        pending && Date.now() - pending.at < PENDING_TTL_MS) {
+      pendingQuery.delete(from);
+      const { rows, meals, totals, isNewUser } = await logMeal(from, pending.parsed);
+      const mealLine = meals.map((k, i) => `Meal ${i + 1}: ${k}`).join(" \u00b7 ");
+      twiml.message(
+        `\u2705 Logged:\n${fmtItems(rows).join("\n")}\n\n${mealLine} kcal\n` +
+        `Today: ${totals.kcal} kcal \u00b7 ${macros(totals)}` +
+        (isNewUser ? FIRST_LOG_FOOTER : "")
+      );
+      return res.type("text/xml").send(twiml.toString());
+    }
+
     const parsed = /^undo$/i.test(body.trim())
       ? { intent: "undo", items: [], parse_notes: "literal undo" }
       : await parseMeal(body);
+
+    if (parsed.intent === "query") {
+      if ((parsed.items || []).length > 0) {
+        // Food question: answer with nutrition, log nothing, stash for "log it".
+        const rows = await resolveRows(parsed);
+        pendingQuery.set(from, { parsed, at: Date.now() });
+        twiml.message(
+          `\u2139\uFE0F ${fmtItems(rows).join("\n")}\n\n` +
+          `_Not logged \u2014 reply "log it" if you ate this_ \u{1F642}`
+        );
+      } else {
+        // Day question: today's running total.
+        const total = await todayTotal(from);
+        if (total.meals.length === 0) {
+          twiml.message("Nothing logged yet today. Send me what you ate and I'll start counting \u{1F642}");
+        } else {
+          const mealLine = total.meals.map((m, i) => `Meal ${i + 1}: ${Math.round(m.kcal)}`).join(" \u00b7 ");
+          twiml.message(
+            `\u{1F4CA} Today so far:\n${mealLine} kcal\n` +
+            `Total: ${Math.round(total.kcal)} kcal \u00b7 ${macros(total)}`
+          );
+        }
+      }
+      return res.type("text/xml").send(twiml.toString());
+    }
 
     if (parsed.intent === "undo") {
       const deleted = await deleteLastLog(from);
