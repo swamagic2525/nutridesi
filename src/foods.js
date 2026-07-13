@@ -121,6 +121,20 @@ const FOODS = [
   { id: 116, name: "BCAA / EAA",           aliases: ["bcaa","eaa","amino acids","intra workout drink"], unit: "scoop", kcal: 10, p: 0, c: 2, f: 0, fb: 0 },
   { id: 117, name: "Black Coffee",         aliases: ["black coffee","americano","espresso","kali coffee","black coffee without sugar"], unit: "cup", kcal: 5, p: 0.3, c: 0, f: 0, fb: 0 },
   { id: 118, name: "Green Tea",            aliases: ["green tea","green chai","matcha","lemon green tea"], unit: "cup", kcal: 2, p: 0, c: 0.5, f: 0, fb: 0 },
+  { id: 119, name: "Chia Seeds",           aliases: ["chia seeds","chia","chiaseeds","chia seed"], unit: "tbsp", kcal: 58, p: 2, c: 5, f: 3.7, fb: 4, g: 12 },
+  { id: 120, name: "Flax Seeds",           aliases: ["flax seeds","flaxseed","alsi","alsi seeds","linseed"], unit: "tbsp", kcal: 55, p: 1.9, c: 3, f: 4.3, fb: 2.8, g: 10 },
+  { id: 121, name: "Pumpkin Seeds",        aliases: ["pumpkin seeds","pepitas","kaddu ke beej"], unit: "tbsp", kcal: 56, p: 3, c: 1, f: 4.9, fb: 0.6, g: 10 },
+  { id: 122, name: "Dates",                aliases: ["dates","khajur","date","medjool dates","khajoor"], unit: "piece", kcal: 66, p: 0.4, c: 18, f: 0, fb: 1.6, g: 24 },
+  { id: 123, name: "Bhakri (Jowar/Bajra)", aliases: ["bhakri","jowar bhakri","jawar bhakri","bajra bhakri","multigrain bhakri","bhakhri","jowar roti","bajra roti"], unit: "piece", kcal: 120, p: 3, c: 25, f: 1, fb: 3 },
+  { id: 124, name: "Paneer Bhurji",        aliases: ["paneer bhurji","paneer burji","scrambled paneer","paneer bhurjee"], unit: "bowl", kcal: 300, p: 15, c: 8, f: 23, fb: 1.5 },
+  { id: 125, name: "Sattu Drink",          aliases: ["sattu drink","sattu","sattu shake","sattu sharbat","sattu water"], unit: "glass", kcal: 110, p: 6.5, c: 16, f: 1.5, fb: 3 },
+  { id: 126, name: "Mutton Biryani",       aliases: ["mutton biryani","mutton biriyani","gosht biryani","lamb biryani"], unit: "plate", kcal: 400, p: 16, c: 42, f: 17, fb: 2.5, g: 250 },
+  { id: 127, name: "Broccoli",             aliases: ["broccoli","steamed broccoli","boiled broccoli"], unit: "cup", kcal: 31, p: 2.5, c: 6, f: 0.3, fb: 2.4, g: 90 },
+  { id: 128, name: "Potato (Boiled)",      aliases: ["potato","boiled potato","aloo boiled","uble aloo","boiled aloo"], unit: "medium", kcal: 115, p: 2.5, c: 26, f: 0.1, fb: 2.4, g: 150 },
+  { id: 129, name: "Muskmelon",            aliases: ["muskmelon","kharbuja","cantaloupe","melon"], unit: "cup", kcal: 53, p: 1.3, c: 13, f: 0.3, fb: 1.4, g: 150 },
+  { id: 130, name: "Clear Whey",           aliases: ["clear whey","clear whey protein","clear protein","juicy whey"], unit: "scoop", kcal: 85, p: 20, c: 1, f: 0.2, fb: 0, g: 30 },
+  { id: 131, name: "Honey Chilli Potato",  aliases: ["honey chilli potato","honey chili potato","chilli potato"], unit: "plate", kcal: 350, p: 4, c: 45, f: 18, fb: 3 },
+  { id: 132, name: "Coffee (with milk)",   aliases: ["coffee","milk coffee","filter coffee","instant coffee","nescafe","coffee with milk"], unit: "cup", kcal: 90, p: 2.5, c: 12, f: 3, fb: 0 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
