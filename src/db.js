@@ -6,9 +6,14 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 const MEAL_GAP_MS = 45 * 60 * 1000; // PRD: messages within 45 min = same meal
 
+// Upserts the user; returns true when the phone number is brand-new (first
+// contact ever) so the caller can show a one-time welcome.
 async function ensureUser(phone) {
-  const { error } = await supabase.from("users").upsert({ phone_number: phone }, { onConflict: "phone_number" });
-  if (error) console.error("SUPABASE UPSERT USER FAILED:", error.message);
+  const { data, error } = await supabase.from("users")
+    .upsert({ phone_number: phone }, { onConflict: "phone_number", ignoreDuplicates: true })
+    .select("phone_number");
+  if (error) { console.error("SUPABASE UPSERT USER FAILED:", error.message); return false; }
+  return (data || []).length > 0;
 }
 
 // Approximate grams in one serving of each unit — used to convert weight-based
@@ -148,7 +153,7 @@ function applyReference(row, ref) {
 async function logMeal(phone, parsed) {
   // Previous total fetched in parallel with the user upsert (before the insert,
   // so no double-count); new items are added locally. Saves one DB round-trip.
-  const [prevTotal] = await Promise.all([todayTotal(phone), ensureUser(phone)]);
+  const [prevTotal, isNewUser] = await Promise.all([todayTotal(phone), ensureUser(phone)]);
   const mealTime = parsed.meal_time_inferred || "snack";
   const rows = (parsed.items || []).map(it => {
     const r = resolveItem(it);
@@ -189,6 +194,7 @@ async function logMeal(phone, parsed) {
     rows,
     meals: meals.map(m => Math.round(m.kcal)),
     totals: { kcal: sum("kcal"), protein: sum("protein"), carbs: sum("carbs"), fat: sum("fat"), fiber: sum("fiber") },
+    isNewUser,
   };
 }
 
@@ -250,4 +256,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { logMeal, todayTotal, deleteLastLog };
+module.exports = { logMeal, todayTotal, deleteLastLog, ensureUser };

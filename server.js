@@ -6,7 +6,7 @@ require("dotenv").config();
 const express = require("express");
 const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
-const { logMeal, deleteLastLog, todayTotal } = require("./src/db.js");
+const { logMeal, deleteLastLog, todayTotal, ensureUser } = require("./src/db.js");
 
 const app = express();
 app.use(express.urlencoded({ extended: false })); // Twilio sends form-encoded
@@ -34,6 +34,22 @@ function rateLimitCheck(phone) {
 // Twilio retries the webhook if a reply takes >15s — dedupe by MessageSid so a
 // retry never double-logs a meal.
 const seenSids = new Set();
+
+const WELCOME =
+  "\u{1F64F} Hey! Thanks for being an early tester of NutriDesi.\n\n" +
+  "I track calories right here in WhatsApp \u2014 no app, no signup. Just text me what you ate:\n" +
+  "\u2022 \"2 roti and dal\"\n" +
+  "\u2022 \"100g rice, 200g chicken\"\n" +
+  "\u2022 \"1 scoop whey\"\n\n" +
+  "I'll reply with calories + protein/carbs/fat/fibre and your day's running total.\n\n" +
+  "Fix mistakes anytime:\n" +
+  "\u21A9\uFE0F \"undo\" removes the last entry\n" +
+  "\u270F\uFE0F or just correct me \u2014 \"that dosa was 120 calories\"\n\n" +
+  "\u{1F680} This is an early beta on a test number \u2014 a bigger, faster version lands in ~30 days. Your feedback shapes it!";
+
+const FIRST_LOG_FOOTER =
+  "\n\n\u{1F64F} _First log \u2014 thanks for testing NutriDesi early! Reply \"undo\" to remove a mistake, " +
+  "or correct me anytime (\"that dosa was 120 calories\"). Bigger update coming in ~30 days._";
 
 app.post("/whatsapp", async (req, res) => {
   const twiml = new twilio.twiml.MessagingResponse();
@@ -71,6 +87,19 @@ app.post("/whatsapp", async (req, res) => {
       const m = (r.matched_db_id || r.protein + r.carbs + r.fat > 0) ? ` (${macros(r)})` : "";
       return `${qty}${r.food_name} — ${r.kcal} kcal${m}${est}`;
     });
+
+    // Sandbox join, greetings, and "what is this" get the intro — no LLM call.
+    const trimmed = body.trim();
+    const isJoin = /^join\b/i.test(trimmed);
+    const isGreeting = /^(hi+|hello+|hey+|namaste|hola|start|yo)[\s!.\u{1F44B}\u{1F64F}]*$/iu.test(trimmed);
+    const isHelp = /^(help|what can you do\??|how does (this|it) work\??|what is this\??)$/i.test(trimmed);
+    if (isJoin || isGreeting || isHelp) {
+      const isNew = await ensureUser(from);
+      twiml.message(isNew || isJoin || isHelp
+        ? WELCOME
+        : "Hey! \u{1F44B} Just tell me what you ate \u2014 e.g. \"2 roti and dal\" \u2014 and I'll log it.");
+      return res.type("text/xml").send(twiml.toString());
+    }
 
     const parsed = /^undo$/i.test(body.trim())
       ? { intent: "undo", items: [], parse_notes: "literal undo" }
@@ -128,13 +157,15 @@ app.post("/whatsapp", async (req, res) => {
       return res.type("text/xml").send(twiml.toString());
     }
 
-    const { rows, meals, totals } = await logMeal(from, parsed);
+    const result = await logMeal(from, parsed);
+    const { rows, meals, totals } = result;
     const lines = fmtItems(rows);
     const mealLine = meals.map((k, i) => `Meal ${i + 1}: ${k}`).join(" · ");
     twiml.message(
       `✅ Logged:\n${lines.join("\n")}\n\n${mealLine} kcal\n` +
       `Today: ${totals.kcal} kcal · ${macros(totals)}\n` +
       `_P protein · C carbs · F fat · Fb fibre (grams) · same meal if within 45 min_`
+      + (result.isNewUser ? FIRST_LOG_FOOTER : "")
     );
   } catch (err) {
     console.error("handler error:", err);
