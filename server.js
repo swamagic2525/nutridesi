@@ -41,18 +41,15 @@ const pendingQuery = new Map(); // phone -> { parsed, at }
 const PENDING_TTL_MS = 10 * 60 * 1000;
 
 const WELCOME =
-  "\u{1F64F} Hey! Thanks for being an early tester of NutriDesi.\n\n" +
-  "I track calories right here in WhatsApp \u2014 no app, no signup. Just text me what you ate:\n" +
-  "\u2022 \"2 roti and dal\"\n" +
-  "\u2022 \"100g rice, 200g chicken\"\n" +
-  "\u2022 \"1 scoop whey\"\n\n" +
-  "I'll reply with calories + protein/carbs/fat/fibre and your day's running total.\n\n" +
-  "Fix mistakes anytime:\n" +
-  "\u21A9\uFE0F \"undo\" removes the last entry\n" +
-  "\u270F\uFE0F or just correct me \u2014 \"that dosa was 120 calories\"\n\n" +
-  "\u2014 Swapnil \u{1F44B} full-time PM & ex-fitness coach. My clients kept quitting tracking apps, so I'm " +
-  "building this where you already are. Bigger, faster version lands in ~30 days \u2014 and your feedback " +
-  "shapes it: DM me on Instagram @swapnilgore2525, I read everything.";
+  "\u{1F64F} Hey! Thanks for being an early tester of NutriDesi. No app, no signup \u2014 I work right here.\n\n" +
+  "\u{1F37D}\uFE0F *Eat something?* Text it: \"2 roti and dal\" \u00b7 \"100g rice, 200g chicken\" \u00b7 \"1 scoop whey\"\n" +
+  "\u{1F50D} *Deciding?* Ask first: \"calories of 2 samosa?\" \u2014 I answer without logging\n" +
+  "\u{1F4CA} *Curious?* \"how much have I eaten today?\"\n" +
+  "\u21A9\uFE0F *Mistake?* \"undo\", or correct me: \"that dosa was 120 calories\"\n\n" +
+  "I reply with calories + protein/carbs/fat/fibre and your day's total.\n\n" +
+  "\u2014 Swapnil \u{1F44B} full-time PM & ex-fitness coach. My clients kept quitting tracking apps, so I " +
+  "built this where you already are. Bigger version in ~30 days \u2014 feedback shapes it: " +
+  "DM @swapnilgore2525 on Instagram, I read everything.";
 
 const FIRST_LOG_FOOTER =
   "\n\n\u{1F64F} _First log \u2014 thanks for testing NutriDesi early! Reply \"undo\" to remove a mistake, " +
