@@ -20,7 +20,8 @@ Three linked pieces:
    URL must exactly match what Twilio signed (use `https://${req.headers.host}
    ${req.originalUrl}`). Ship it behind an env flag and test with a real message
    BEFORE enforcing — a wrong URL rejects all real requests and kills the bot.
-   (The hardcoded ngrok URL was removed from the public repo on 2026-07-12.)
+   (The hardcoded ngrok URL was removed from the public repo on 2026-07-12;
+   the founder's phone number was scrubbed from git history on 2026-07-13.)
 
 2. **Cloud deployment** (Railway/Render) to replace the single Mac Mini + ngrok.
    Removes the single-point-of-failure (power/net cut = bot down, watchdog can't
@@ -48,6 +49,21 @@ Shipped, for latency + cost. (1) `callClaude` marks the system prompt cacheable
 (3) Trimmed 4 unused fields from the LLM output schema (unit/confidence/
 is_estimate/alias_used) — ~35% less output per item. Combined: single-item ~2.4s,
 4-item meal ~2.9s (was 6.8–7.9s). Record left for context.
+
+---
+
+## 0c. User-stated calorie corrections + welcome flow — DONE 2026-07-13
+
+Shipped after the first US beta user hit both failures in one session.
+(1) **User-stated calories are ground truth**: "4 fish sticks have 230 calories"
+sets `stated_kcal` (per-serving), beats the curated DB and skips INDB; macros
+scale to the user's number. Bare "«food» has N cal" classifies as `replace_last`;
+with "I ate/had" it logs. A correction inside a multi-item batch replaces only
+the name-matched item (was: deleted the whole batch). (2) **Supplements curated**
+at true values — creatine 0 kcal, BCAA 10, black coffee 5, green tea 2 (were
+falling to the 300 kcal placeholder). (3) **Welcome flow**: sandbox join /
+greeting / "what can you do" → founder-signed intro with IG-DM feedback routing,
+no LLM call; new user's first food log gets a one-time footer. Record for context.
 
 ---
 

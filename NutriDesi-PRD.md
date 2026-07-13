@@ -10,17 +10,19 @@
 The MVP is **built and live** — a real WhatsApp number that real users are texting. It was built as a coded backend over roughly a week, not the no-code Make.com stack the v0.5 plan assumed (see Technical Architecture for why the plan changed).
 
 **Live today:**
-- WhatsApp bot answering in ~2–5 seconds; no app, no signup, keyed to phone number
+- WhatsApp bot answering in ~2–3 seconds (prompt caching + async DB writes); no app, no signup, keyed to phone number
 - Natural-language Hinglish parsing via a multi-provider LLM fallback chain (Gemini → Groq → Claude)
-- **114-item curated Indian food database** + a **1,014-recipe INDB reference tier** (lab-derived, open-access) + LLM estimate fallback — four tiers, never a dead end
+- **118-item curated Indian food database** + a **1,014-recipe INDB reference tier** (lab-derived, open-access) + LLM estimate fallback — four tiers, never a dead end
 - **Unit *and* gram-precise logging**: "4 roti", "100g soya chunks", "200g paneer" all resolve accurately
+- **Raw vs cooked weight logging**: "100g rice raw" (≈364 kcal) vs cooked (≈130) via per-food conversion factors — grains gain water cooking, meat loses it. A meal-prepper differentiator no mainstream tracker handles
 - Full macro breakdown per item and per day: **calories, protein, carbs, fat, and fibre**
-- Corrections and undo via LLM intent classification ("sorry it was rajma", "undo")
-- Diet-variant awareness: low-fat paneer/milk/curd, high-protein peanut butter/roti, etc. resolve to the right macros, not the default
+- Corrections and undo via LLM intent classification ("sorry it was rajma", "undo") — including **user-stated calories as ground truth** ("that dosa was 120 calories" replaces the estimate, scales macros, and beats every database tier); corrections inside a multi-item log replace only the named item
+- Diet-variant awareness: low-fat paneer/milk/curd, high-protein peanut butter/roti, etc. resolve to the right macros, not the default; supplements (creatine, BCAA, black coffee, green tea) log at their true ~0 kcal instead of a placeholder
+- **Welcome flow**: sandbox joins, greetings, and "what can you do" get a founder-signed intro (with feedback routed to Instagram DMs) without an LLM call; a new user's first food log carries a one-time intro footer
 - Rate limiting, prompt-injection handling, webhook dedupe
 - Self-hosted on an always-on Mac Mini, supervised (auto-restart on crash/reboot) with a watchdog that WhatsApp-alerts the founder on downtime
 
-**Deliberately not built yet** (deferred until the retention signal justifies the effort — see Success Metrics): goal-setting, personal katori/roti calibration, scheduled daily summary, streaks, and the guided onboarding flow. These remain the P0/P1 items below; the bet is to prove people come back *before* investing in the accountability layer.
+**Deliberately not built yet** (deferred until the retention signal justifies the effort — see Success Metrics): goal-setting, personal katori/roti calibration, scheduled daily summary, and streaks. These remain the P0/P1 items below; the bet is to prove people come back *before* investing in the accountability layer.
 
 **Distribution channel:** the founder's own Instagram stories/reels (build-in-public), not any partner network.
 
@@ -108,7 +110,7 @@ Health-conscious urban Indians aged 25–40 want to track what they eat, but dro
 
 ### Correction & editing
 - As a user, I want to say "remove the chai I logged" or "undo last entry" and have it corrected, so a mistake doesn't ruin my day's data.
-- As a user, if the bot doesn't recognise a food, I want it to ask me for the calories so I can continue logging, rather than hitting a dead end.
+- As a user, if the bot doesn't recognise a food, I want it to estimate rather than hit a dead end — and if I know the real calories, I want to state them ("that dosa was 120 calories") and have my number win. *(Shipped: user-stated calories are ground truth; a correction inside a multi-item log replaces only the named item.)*
 
 ### Edge cases
 - As a user who eats restaurant food, I want to log "biryani at Paradise" or "dal makhani, restaurant portion" and get a reasonable estimate with a clear disclaimer that it's an estimate.
@@ -240,9 +242,9 @@ This pre-processing is a one-time engineering task estimated at half a day. It p
 
 - *Acceptance criteria:* In a test of 50 common Indian meal descriptions, `match_type: "direct"` on ≥ 80% of items. Zero responses that ask the user to estimate calories. All low-confidence items route to macro-category fallback within 2 seconds. `is_estimate: true` appends "(estimate)" tag in every WhatsApp response where it is set.
 
-**3. Indian food database (built: 114 curated items + 1,014-recipe reference tier)**
+**3. Indian food database (built: 118 curated items + 1,014-recipe reference tier)**
 Covers the foods that constitute 80% of meals for the target user: North + South Indian staples, snacks, beverages, sweets, plus gym/diet variants (high-protein, low-fat). Beyond the curated list, unknown foods fall through to the imported INDB reference table (1,014 lab-derived Indian recipes), then to an LLM estimate — so coverage is effectively open-ended, with the curated list being the high-accuracy core.
-- *Status:* Live. All curated items have calories, protein, carbs, fat, and fibre per serving (with serving-weights for gram-based logging). New items are added by editing one data file — no schema change. The curated list has grown demand-driven from ~58 to 114 as real users surfaced gaps.
+- *Status:* Live. All curated items have calories, protein, carbs, fat, and fibre per serving (with serving-weights for gram-based logging). New items are added by editing one data file — no schema change. The curated list has grown demand-driven from ~58 to 118 as real users surfaced gaps (latest additions: zero-kcal supplements — creatine, BCAA, black coffee, green tea).
 
 **4. Fragmented message handling — session merging**
 Users text like they think: fragmented and interrupted. "2 roti" at 1:30pm, then "and dal" at 1:55pm are parts of the same meal, not two separate meals.
@@ -369,7 +371,7 @@ If parse success rate stays below 70% after database expansion in Week 5, the Hi
 |---|---|---|
 | ~~WABA vs Twilio Sandbox for launch?~~ **Resolved:** shipped on Twilio Sandbox (now pay-as-you-go). WABA + a dedicated number is the post-retention migration, alongside cloud hosting. | Founder | Resolved for beta |
 | ~~What LLM, and cost at scale?~~ **Resolved:** multi-provider fallback (Gemini/Groq free primary, Claude paid insurance). ~₹1 per logged meal all-in. Revisit provider mix at scale. | Founder | Resolved for beta |
-| ~~Is the food database big enough?~~ **Resolved:** 114 curated + 1,014-recipe reference + estimate fallback. Curated list grows demand-driven from real parse gaps. | Founder | Resolved for beta |
+| ~~Is the food database big enough?~~ **Resolved:** 118 curated + 1,014-recipe reference + estimate fallback. Curated list grows demand-driven from real parse gaps. | Founder | Resolved for beta |
 | PCOS WhatsApp groups as distribution: do we need a specific PCOS-aware mode to get traction there, or does generic calorie tracking serve them adequately in v1? | Founder | No — generic v1, PCOS mode is P2; validate via user interviews in first 2 weeks |
 | Data privacy: user food logs are stored linked to phone number. Is this acceptable without explicit consent flow in India's DPDP framework? | Legal (consult before launch) | Yes — must add privacy notice and consent on first message before storing any data |
 | Restaurant / branded food estimates: do we disclaim clearly when returning an estimate vs. a verified entry? | Product + Founder | No — add "(estimate)" tag in responses for restaurant items; design this from Day 1 |
@@ -397,7 +399,7 @@ The v0.5 plan's *two-scenario async pattern* existed purely to work around a no-
 Similarly, the **quantity enum (0.5 / 1.0 / … / 3.0) was a Make.com math-module constraint, not a product decision.** On a coded backend it was removed in favour of real integer counts ("7 eggs") and gram-precise scaling ("100g soya chunks" → exact calories via each food's serving-weight).
 
 **Food resolution — four tiers, never a dead end:**
-1. **Curated list (114 items)** — hand-checked Indian staples + gym/diet variants, seeded into the LLM prompt as an alias map
+1. **Curated list (118 items)** — hand-checked Indian staples + gym/diet variants + supplements, seeded into the LLM prompt as an alias map
 2. **INDB reference (1,014 recipes)** — fuzzy-matched in Supabase for foods not in the curated list, with an LLM-estimate guardrail that rejects a confident-but-wrong match
 3. **LLM estimate** — the model's own per-serving guess, clamped to a sane range
 4. **300 kcal placeholder** — last resort; the bot always logs *something*
