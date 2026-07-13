@@ -117,6 +117,10 @@ const FOODS = [
   { id: 112, name: "High-Protein Bread",   aliases: ["high protein bread","protein bread"], unit: "slice", kcal: 80, p: 6, c: 12, f: 1.5, fb: 2 },
   { id: 113, name: "Protein Chips",        aliases: ["protein chips","protein puffs","roasted protein chips","open secret"], unit: "pack", kcal: 120, p: 10, c: 12, f: 4, fb: 2 },
   { id: 114, name: "Protein Muesli",       aliases: ["protein muesli","high protein muesli","protein granola"], unit: "bowl", kcal: 200, p: 14, c: 28, f: 5, fb: 5 },
+  { id: 115, name: "Creatine",             aliases: ["creatine","creatine monohydrate","creatine scoop"], unit: "scoop", kcal: 0, p: 0, c: 0, f: 0, fb: 0 },
+  { id: 116, name: "BCAA / EAA",           aliases: ["bcaa","eaa","amino acids","intra workout drink"], unit: "scoop", kcal: 10, p: 0, c: 2, f: 0, fb: 0 },
+  { id: 117, name: "Black Coffee",         aliases: ["black coffee","americano","espresso","kali coffee","black coffee without sugar"], unit: "cup", kcal: 5, p: 0.3, c: 0, f: 0, fb: 0 },
+  { id: 118, name: "Green Tea",            aliases: ["green tea","green chai","matcha","lemon green tea"], unit: "cup", kcal: 2, p: 0, c: 0.5, f: 0, fb: 0 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));

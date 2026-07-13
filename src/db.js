@@ -23,6 +23,24 @@ const UNIT_GRAMS = {
 function resolveItem(item) {
   const food = item.matched_db_id ? FOOD_BY_ID[item.matched_db_id] : null;
   const grams = Number(item.grams);
+
+  // User-stated calories ("4 fish sticks have 230 cal") are ground truth: they
+  // override the DB value and skip the INDB cross-reference (`stated` flag).
+  const statedKcal = Number(item.stated_kcal);
+  if (statedKcal > 0 && statedKcal <= 2000) {
+    const q0 = Number(item.quantity);
+    const qs = Number.isFinite(q0) && q0 > 0 ? Math.min(q0, 30) : 1;
+    // Macros scale with the user's kcal so protein can't stay at the DB's level
+    // when the user says the food is a third of the DB's calories.
+    const ratio = food && food.kcal > 0 ? statedKcal / food.kcal : 0;
+    return {
+      food_name: item.food_name || (food ? food.name : "meal"),
+      matched_db_id: food ? food.id : null, quantity: qs, unit: food ? food.unit : "serving",
+      kcal: Math.round(statedKcal * qs), protein: +((food ? food.p : 0) * ratio * qs).toFixed(1),
+      carbs: +((food ? food.c : 0) * ratio * qs).toFixed(1), fat: +((food ? food.f : 0) * ratio * qs).toFixed(1),
+      fiber: +((food ? food.fb || 0 : 0) * ratio * qs).toFixed(1), is_estimate: false, stated: true,
+    };
+  }
   // Raw/dry-weight logging (meal-preppers weigh uncooked). Grains/legumes gain
   // water when cooked (raw is denser, factor > 1); meat loses water (factor < 1).
   const rw = item.raw && food && food.rawFactor ? food.rawFactor : 1;
@@ -139,7 +157,7 @@ async function logMeal(phone, parsed) {
 
   // Cross-reference unmatched foods against INDB (parallel, misses only).
   await Promise.all(rows
-    .filter(r => !r.matched_db_id && r.food_name && r.food_name !== "meal")
+    .filter(r => !r.matched_db_id && !r.stated && r.food_name && r.food_name !== "meal")
     .map(async r => {
       const ref = await refLookup(r.food_name);
       if (ref) applyReference(r, ref);
@@ -154,7 +172,7 @@ async function logMeal(phone, parsed) {
 
   // Fire-and-forget: the reply's totals are computed locally (below), so it need
   // not wait for the write. Saves ~0.7s of India<->Supabase latency per message.
-  supabase.from("user_logs").insert(rows).then(({ error }) => {
+  supabase.from("user_logs").insert(rows.map(({ stated, ...r }) => r)).then(({ error }) => {
     if (error) console.error("SUPABASE INSERT FAILED:", error.message, error.details || "", error.hint || "");
   });
   const sum = (k) => prevTotal[k] + rows.reduce((s, r) => s + Number(r[k] || 0), 0);
@@ -203,7 +221,7 @@ async function todayTotal(phone) {
   return { ...totals, meals };
 }
 
-async function deleteLastLog(phone) {
+async function deleteLastLog(phone, foodHint) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const { data, error: selErr } = await supabase.from("user_logs")
     .select("id, food_name, kcal, quantity, logged_at")
@@ -214,7 +232,16 @@ async function deleteLastLog(phone) {
   if (!data || data.length === 0) return null;
 
   const lastTs = data[0].logged_at;
-  const batch = data.filter(r => r.logged_at === lastTs);
+  let batch = data.filter(r => r.logged_at === lastTs);
+  // Correction targeting one item inside a multi-item log ("fish sticks were
+  // 230 cal" after logging fish + milk + rice together): delete only the rows
+  // whose name overlaps the corrected food, not the whole batch.
+  if (foodHint && batch.length > 1) {
+    const words = String(foodHint).toLowerCase().split(/[^a-z]+/).filter(w => w.length > 2);
+    const scored = batch.map(r => ({ r, s: words.filter(w => r.food_name.toLowerCase().includes(w)).length }));
+    const best = Math.max(...scored.map(x => x.s));
+    if (best > 0) batch = scored.filter(x => x.s === best).map(x => x.r);
+  }
   const ids = batch.map(r => r.id);
 
   const { error: delErr } = await supabase.from("user_logs").delete().in("id", ids);

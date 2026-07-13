@@ -78,6 +78,13 @@ portion_clarity:
   "inferred"  = assumed from context
   "unknown"   = no portion info; treat as 1 medium serving
 
+# USER-STATED CALORIES
+If the user STATES a calorie value for a food ("X has 230 calories", "that was 150 kcal", "label says 90 cal
+each"), put it in "stated_kcal" as the PER-SERVING value — divide a stated total by the count: "4 fish sticks
+have 230 calories" -> quantity 4, stated_kcal 57.5. Their number is ground truth and overrides the database.
+Intent for stated calories: a bare "«food» has/is N calories" with no "I ate/had" is the user CORRECTING your
+estimate of a food they already logged -> intent "replace_last". With "I ate/had" it is a normal "log".
+
 # UNKNOWN FOOD ESTIMATE
 When matched_db_id is null but you know the food, set est_kcal to your best estimate for ONE standard serving
 (e.g. papad ~50, vada ~150, shawarma ~450, rasgulla ~120). Estimate the SINGLE-serving value — quantity is
@@ -111,6 +118,7 @@ VARIANT MODIFIERS: if the user states a variant ("low-fat", "high-protein", "gri
       "raw": false,
       "matched_db_id": 17,
       "est_kcal": null,
+      "stated_kcal": null,
       "match_type": "direct",
       "portion_clarity": "specified"
     }

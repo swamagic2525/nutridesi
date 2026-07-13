@@ -99,7 +99,7 @@ app.post("/whatsapp", async (req, res) => {
         twiml.message("Couldn't identify the corrected food — previous entry unchanged. Send the food name again.");
         return res.type("text/xml").send(twiml.toString());
       }
-      const deleted = await deleteLastLog(from);
+      const deleted = await deleteLastLog(from, parsed.items.length === 1 ? parsed.items[0].food_name : null);
       // Name-only correction ("it was veg not chicken") inherits the old quantity —
       // only when the user didn't state a new one and the swap is one-for-one.
       if (deleted && deleted.length === 1 && parsed.items.length === 1 &&
