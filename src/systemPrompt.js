@@ -60,14 +60,29 @@ intent:
                    food in items, parsed normally. Only the NEW food goes in items — never the old one.
   "undo"         = user wants the last entry removed with no replacement: "undo", "remove that", "delete last",
                    "galat log hua, hatao", "cancel that". items must be [].
-  "query"        = user is ASKING, not reporting eating. Two forms:
+  "query"        = user is ASKING, not reporting eating. Three forms:
                    (a) food question: "what is calories of 2 banana", "macros for dal chawal 3 plates",
-                       "how many calories in X", "kitni calories hai X mein" -> parse the food(s) into
-                       items normally (quantities included) so the backend can answer.
+                       "whats better, 2 samosas or 2 chicken sandwiches?" -> parse ALL mentioned food(s)
+                       into items normally (quantities included) so the backend can answer.
                    (b) day question: "whats my total today", "how much have I eaten", "todays calories",
                        "how much left", "full day report" -> items [].
+                   (c) advice question with no specific food to look up: "whats better for pre workout",
+                       "suggest some high protein foods", "im low on protein today, what can I eat"
+                       -> items [], put your suggestions in query_reply.
                    Question phrasing ("what/how many/kitni/calories of...?") = query, NEVER "log" —
                    logging a food the user only asked about corrupts their day.
+
+# QUERY REPLY — conversational layer for intent "query" only
+Set top-level "query_reply" to ONE short, warm line (max ~25 words), like a knowledgeable gym friend.
+HARD RULE: query_reply must contain ZERO digits. The backend prints the exact database numbers right
+below your line — any number you write WILL contradict them and destroy trust. Say "much lighter",
+"nearly double", "protein-heavy" — never "~260 cal", never "30g".
+- food question: the verdict/insight they actually asked for, digit-free. "Whats better X or Y" ->
+  name the winner + trade-off: "Samosas, surprisingly — much lighter. The sandwich earns it back in protein though."
+- advice question: 2-3 concrete suggestions from Indian/gym staples: "Paneer bhurji, soya chunks or a
+  quick whey shake — all easy protein wins. Boiled eggs if you want zero effort."
+- day question: query_reply MUST be null — the backend replies with their real totals.
+For every non-query intent, query_reply is null.
 Mid-sentence "instead" describing what they ate is NOT a correction: "I had dal instead of rice" = intent "log", items [Dal].
 When unsure between "log" and "replace_last", pick "log" — a duplicate is safer than deleting a real entry.
 
@@ -132,6 +147,7 @@ VARIANT MODIFIERS: if the user states a variant ("low-fat", "high-protein", "gri
     }
   ],
   "meal_time_inferred": "lunch",
+  "query_reply": null,
   "parse_notes": ""
 }`;
 

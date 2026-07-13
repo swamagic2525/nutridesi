@@ -126,14 +126,42 @@ app.post("/whatsapp", async (req, res) => {
       : await parseMeal(body);
 
     if (parsed.intent === "query") {
+      // LLM's one-line verdict/suggestion. Qualitative only (prompt forbids
+      // numbers) so it can never contradict the DB values printed below it.
+      let note = String(parsed.query_reply || "").trim();
       if ((parsed.items || []).length > 0) {
-        // Food question: answer with nutrition, log nothing, stash for "log it".
+        // Backstop: a verdict with numbers can contradict the DB table below it
+        // (seen: "~260 cal each" when 260 was the total). Drop it; the table answers.
+        if (/\d/.test(note)) note = "";
+        // Food question: verdict + nutrition, log nothing, stash for "log it".
         const rows = await resolveRows(parsed);
+        // Comparison question ("better X or Y"): the verdict is computed from our
+        // own resolved numbers, never the LLM's guess (seen it pick the wrong winner).
+        if (rows.length >= 2 && /\b(better|vs|versus|compare| or )\b/i.test(body)) {
+          const byKcal = [...rows].sort((a, b) => a.kcal - b.kcal);
+          const light = byKcal[0], heavy = byKcal[byKcal.length - 1];
+          note = `\u2696\uFE0F Lighter: ${light.food_name} \u2014 ${light.kcal} vs ${heavy.kcal} kcal`;
+          const topP = [...rows].sort((a, b) => b.protein - a.protein)[0];
+          if (topP !== light && topP.protein > 0) note += `. More protein: ${topP.food_name}.`;
+        }
         pendingQuery.set(from, { parsed, at: Date.now() });
+        const firstName = rows[0].food_name.replace(/^\d+g /, "").toLowerCase();
+        const footer = rows.length === 1
+          ? `reply "log it" if you ate this`
+          : `reply "log it" for all, or name one \u2014 "log ${firstName}"`;
         twiml.message(
+          (note ? `${note}\n\n` : "") +
           `\u2139\uFE0F ${fmtItems(rows).join("\n")}\n\n` +
-          `_Not logged \u2014 reply "log it" if you ate this_ \u{1F642}`
+          `_Not logged \u2014 ${footer}_ \u{1F642}`
         );
+      } else if (note) {
+        // Advice question ("what can I eat for protein?"): suggestions, with
+        // their day so far for context when they've logged anything.
+        const total = await todayTotal(from);
+        const dayLine = total.meals.length
+          ? `\u{1F4CA} Your day so far: ${Math.round(total.kcal)} kcal \u00b7 ${macros(total)}\n\n`
+          : "";
+        twiml.message(`${dayLine}${note}\n\n_Tell me when you eat something and I'll log it_ \u{1F642}`);
       } else {
         // Day question: today's running total.
         const total = await todayTotal(from);
