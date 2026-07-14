@@ -74,7 +74,7 @@ const FOODS = [
   { id: 69, name: "Paneer (Raw/Grilled)",  aliases: ["paneer","raw paneer","grilled paneer","tandoori paneer","paneer cubes"], unit: "100g", kcal: 265, p: 18, c: 4, f: 20, fb: 0 },
   { id: 70, name: "Tofu",                  aliases: ["tofu","soya paneer","bean curd"], unit: "100g", kcal: 145, p: 15, c: 3, f: 8, fb: 1 },
   { id: 71, name: "Egg Whites",            aliases: ["egg white","egg whites","boiled egg whites","anda safedi"], unit: "white", kcal: 17, p: 3.6, c: 0.2, f: 0.1, fb: 0 },
-  { id: 72, name: "Bread (slice)",         aliases: ["bread","bread slice","white bread","brown bread","toast","slice of bread"], unit: "slice", kcal: 75, p: 3, c: 14, f: 1, fb: 1 },
+  { id: 72, name: "Bread (slice)",         aliases: ["bread","bread slice","white bread","brown bread","toast","slice of bread","atta bread","wheat bread","whole wheat bread","multigrain bread"], unit: "slice", kcal: 75, p: 3, c: 14, f: 1, fb: 1 },
   { id: 73, name: "Honey",                 aliases: ["honey","shahad","madh"], unit: "tbsp", kcal: 64, p: 0, c: 17, f: 0, fb: 0 },
   { id: 74, name: "Jam",                   aliases: ["jam","mixed fruit jam","strawberry jam","marmalade"], unit: "tbsp", kcal: 56, p: 0, c: 14, f: 0, fb: 0.3 },
   { id: 75, name: "Sugar",                 aliases: ["sugar","cheeni","chini","white sugar"], unit: "tsp", kcal: 16, p: 0, c: 4, f: 0, fb: 0 },
@@ -135,6 +135,7 @@ const FOODS = [
   { id: 130, name: "Clear Whey",           aliases: ["clear whey","clear whey protein","clear protein","juicy whey"], unit: "scoop", kcal: 85, p: 20, c: 1, f: 0.2, fb: 0, g: 30 },
   { id: 131, name: "Honey Chilli Potato",  aliases: ["honey chilli potato","honey chili potato","chilli potato"], unit: "plate", kcal: 350, p: 4, c: 45, f: 18, fb: 3 },
   { id: 132, name: "Coffee (with milk)",   aliases: ["coffee","milk coffee","filter coffee","instant coffee","nescafe","coffee with milk"], unit: "cup", kcal: 90, p: 2.5, c: 12, f: 3, fb: 0 },
+  { id: 133, name: "Egg (Fried/Half Fry)", aliases: ["fried egg","half fry","egg half fry","half fried egg","anda fry","egg fry","sunny side up","bullseye egg"], unit: "piece", kcal: 90, p: 6.3, c: 0.4, f: 7, fb: 0 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
