@@ -137,6 +137,21 @@ const FOODS = [
   { id: 132, name: "Coffee (with milk)",   aliases: ["coffee","milk coffee","filter coffee","instant coffee","nescafe","coffee with milk"], unit: "cup", kcal: 90, p: 2.5, c: 12, f: 3, fb: 0 },
   { id: 133, name: "Egg (Fried/Half Fry)", aliases: ["fried egg","half fry","egg half fry","half fried egg","anda fry","egg fry","sunny side up","bullseye egg"], unit: "piece", kcal: 90, p: 6.3, c: 0.4, f: 7, fb: 0 },
   { id: 134, name: "High-Protein Oats",    aliases: ["high protein oats","protein oats","yogabar oats","yoga bar oats","whey oats","protein oatmeal"], unit: "bowl", kcal: 145, p: 10.5, c: 22, f: 3.5, fb: 4, g: 40 },
+  { id: 135, name: "Diet Cola",            aliases: ["diet coke","coke zero","diet pepsi","zero coke","diet cola","zero sugar cold drink"], unit: "can", kcal: 1, p: 0, c: 0, f: 0, fb: 0, g: 330 },
+  { id: 136, name: "Cold Drink (Cola)",    aliases: ["coke","coca cola","thums up","pepsi","sprite","cold drink","soft drink","limca","fanta","mountain dew"], unit: "can", kcal: 140, p: 0, c: 35, f: 0, fb: 0, g: 330 },
+  { id: 137, name: "Coconut Water",        aliases: ["coconut water","nariyal pani","daab water","tender coconut water"], unit: "glass", kcal: 40, p: 0.5, c: 9, f: 0, fb: 0, g: 200 },
+  { id: 138, name: "Sauf / Jeera Water",   aliases: ["sauf water","saunf water","jeera water","fennel water","cumin water"], unit: "glass", kcal: 5, p: 0, c: 1, f: 0, fb: 0 },
+  { id: 139, name: "Nimbu Pani (Sweet)",   aliases: ["nimbu pani","shikanji","lemon water with sugar","lemonade","sweet lime water"], unit: "glass", kcal: 60, p: 0, c: 15, f: 0, fb: 0 },
+  { id: 140, name: "Bread Pakoda",         aliases: ["bread pakoda","bread pakora","stuffed bread pakora"], unit: "piece", kcal: 230, p: 6, c: 27, f: 11, fb: 2 },
+  { id: 141, name: "Thalipeeth",           aliases: ["thalipeeth","bhajni thalipeeth","methi thalipeeth"], unit: "piece", kcal: 130, p: 4, c: 20, f: 4, fb: 3 },
+  { id: 142, name: "Fafda",                aliases: ["fafda","fafda gathiya","phaphda"], unit: "piece", kcal: 45, p: 1, c: 5, f: 2.4, fb: 0.5 },
+  { id: 143, name: "Gatte ki Sabzi",       aliases: ["gatte ki sabzi","gatta curry","gatte curry","besan gatta sabzi","gatte ki kadhi"], unit: "bowl", kcal: 250, p: 8, c: 25, f: 13, fb: 3 },
+  { id: 144, name: "Dal Dhokli",           aliases: ["dal dhokli","daal dhokli","varan phal"], unit: "bowl", kcal: 300, p: 11, c: 45, f: 8, fb: 6 },
+  { id: 145, name: "Aamras",               aliases: ["aamras","aam ras","mango pulp","amras"], unit: "katori", kcal: 150, p: 1, c: 35, f: 1, fb: 2, g: 150 },
+  { id: 146, name: "Achar / Pickle",       aliases: ["achar","pickle","aam ka achar","mango pickle","lemon pickle","mixed pickle"], unit: "tbsp", kcal: 30, p: 0.3, c: 3, f: 2, fb: 0.5 },
+  { id: 147, name: "Papad",                aliases: ["papad","papadum","urad papad","roasted papad","urad dal papad","masala papad"], unit: "piece", kcal: 45, p: 2, c: 6, f: 1.5, fb: 0.5 },
+  { id: 148, name: "Rasgulla",             aliases: ["rasgulla","rosogolla","rasgula","sponge rasgulla"], unit: "piece", kcal: 120, p: 2, c: 25, f: 1.5, fb: 0 },
+  { id: 149, name: "Vada (Medu/Batata)",   aliases: ["vada","wada","medu vada","batata vada","aloo vada","urad vada"], unit: "piece", kcal: 140, p: 3, c: 15, f: 7, fb: 1.5 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
