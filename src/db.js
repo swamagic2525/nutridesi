@@ -238,6 +238,33 @@ async function todayTotal(phone) {
   return { ...totals, meals };
 }
 
+// Itemized day report: meals (45-min clusters) with their items + macro totals.
+async function dayReport(phone, daysAgo = 0) {
+  const date = new Date(Date.now() - daysAgo * 86400000)
+    .toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const { data, error } = await supabase.from("user_logs")
+    .select("food_name, quantity, kcal, protein, carbs, fat, fiber, logged_at")
+    .eq("phone_number", phone).eq("date", date).order("logged_at", { ascending: true });
+  if (error) console.error("dayReport:", error.message);
+  const meals = [];
+  const totals = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+  for (const r of data || []) {
+    for (const k of Object.keys(totals)) totals[k] += Number(r[k] || 0);
+    const at = new Date(r.logged_at).getTime();
+    const last = meals[meals.length - 1];
+    const item = Number(r.quantity) === 1 ? r.food_name : `${r.food_name} \u00d7${Number(r.quantity)}`;
+    if (last && at - last.lastAt <= MEAL_GAP_MS) {
+      last.kcal += Number(r.kcal || 0); last.protein += Number(r.protein || 0);
+      last.items.push(item); last.lastAt = at;
+    } else {
+      meals.push({ kcal: Number(r.kcal || 0), protein: Number(r.protein || 0), items: [item], lastAt: at });
+    }
+  }
+  const label = new Date(Date.now() - daysAgo * 86400000)
+    .toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
+  return { label, meals, totals };
+}
+
 async function deleteLastLog(phone, foodHint) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const { data, error: selErr } = await supabase.from("user_logs")
@@ -267,4 +294,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { logMeal, todayTotal, deleteLastLog, ensureUser, resolveRows };
+module.exports = { logMeal, todayTotal, deleteLastLog, ensureUser, resolveRows, dayReport };

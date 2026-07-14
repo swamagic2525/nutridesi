@@ -64,8 +64,14 @@ intent:
                    (a) food question: "what is calories of 2 banana", "macros for dal chawal 3 plates",
                        "whats better, 2 samosas or 2 chicken sandwiches?" -> parse ALL mentioned food(s)
                        into items normally (quantities included) so the backend can answer.
-                   (b) day question: "whats my total today", "how much have I eaten", "todays calories",
-                       "how much left", "full day report" -> items [].
+                   (b) day question -> items []. Two kinds, split by "report_day":
+                       - quick NUMBER: they want an amount — "whats my total today", "total protein
+                         for today", "how much have I eaten", "todays calories", "how much left"
+                         -> report_day null.
+                       - itemized REPORT: they want the LIST of what they ate — "full day report",
+                         "all meal data", "what did I eat today", "day summary", "aaj ka report",
+                         "meals I had yesterday" -> report_day "today" or "yesterday" (their words).
+                         ANY day question about yesterday -> report_day "yesterday".
                    (c) advice question with no specific food to look up: "whats better for pre workout",
                        "suggest some high protein foods", "im low on protein today, what can I eat"
                        -> items [], put your suggestions in query_reply.
@@ -157,6 +163,7 @@ was assumed ("palak sabji" -> logged the closest match, Palak Paneer).
   ],
   "meal_time_inferred": "lunch",
   "query_reply": null,
+  "report_day": null,
   "parse_notes": ""
 }`;
 

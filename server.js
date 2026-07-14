@@ -6,7 +6,7 @@ require("dotenv").config();
 const express = require("express");
 const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
-const { logMeal, deleteLastLog, todayTotal, ensureUser, resolveRows } = require("./src/db.js");
+const { logMeal, deleteLastLog, todayTotal, ensureUser, resolveRows, dayReport } = require("./src/db.js");
 
 const app = express();
 app.use(express.urlencoded({ extended: false })); // Twilio sends form-encoded
@@ -141,6 +141,22 @@ app.post("/whatsapp", async (req, res) => {
       // LLM's one-line verdict/suggestion. Qualitative only (prompt forbids
       // numbers) so it can never contradict the DB values printed below it.
       let note = String(parsed.query_reply || "").trim();
+      if (parsed.report_day === "today" || parsed.report_day === "yesterday") {
+        const rep = await dayReport(from, parsed.report_day === "yesterday" ? 1 : 0);
+        if (rep.meals.length === 0) {
+          twiml.message(parsed.report_day === "yesterday"
+            ? "No logs from yesterday. Today's a fresh page \u{1F642}"
+            : "Nothing logged yet today. Send me what you ate and I'll start the report \u{1F642}");
+        } else {
+          const mealBlocks = rep.meals.map((m, i) =>
+            `*Meal ${i + 1}* \u2014 ${Math.round(m.kcal)} kcal \u00b7 ${Math.round(m.protein)}g protein\n${m.items.join(", ")}`);
+          twiml.message(
+            `\u{1F9FE} *Your day \u2014 ${rep.label}*\n\n${mealBlocks.join("\n\n")}\n\n` +
+            `\u{1F525} *${Math.round(rep.totals.kcal)} kcal \u00b7 ${Math.round(rep.totals.protein)}g protein*\n${cfLine(rep.totals)}`
+          );
+        }
+        return res.type("text/xml").send(twiml.toString());
+      }
       if ((parsed.items || []).length > 0) {
         // Backstop: a verdict with numbers can contradict the DB table below it
         // (seen: "~260 cal each" when 260 was the total). Drop it; the table answers.
