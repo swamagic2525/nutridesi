@@ -100,7 +100,7 @@ const FOODS = [
   { id: 95, name: "Pizza (slice)",         aliases: ["pizza","pizza slice","cheese pizza","veg pizza","margherita"], unit: "slice", kcal: 285, p: 12, c: 36, f: 10, fb: 2 },
   { id: 96, name: "Ice Cream",             aliases: ["ice cream","icecream","vanilla ice cream","kulfi","scoop of ice cream"], unit: "scoop", kcal: 140, p: 2.5, c: 16, f: 7, fb: 0.5 },
   { id: 97, name: "Matar Paneer",          aliases: ["matar paneer","mutter paneer","peas paneer","paneer matar"], unit: "bowl", kcal: 280, p: 14, c: 18, f: 16, fb: 4 },
-  { id: 98, name: "Oats",                  aliases: ["oats","oatmeal","oats bowl","masala oats","overnight oats"], unit: "bowl", kcal: 150, p: 5, c: 27, f: 3, fb: 4, g: 40 },
+  { id: 98, name: "Oats (Plain)",          aliases: ["oats","oatmeal","oats bowl","masala oats","overnight oats","quaker oats","quaker","rolled oats","plain oats"], unit: "bowl", kcal: 150, p: 5, c: 27, f: 3, fb: 4, g: 40 },
   { id: 99, name: "Peanut Butter",         aliases: ["peanut butter","pb","moongfali butter"], unit: "tbsp", kcal: 95, p: 4, c: 3, f: 8, fb: 1.5 },
   { id: 100, name: "Soya Chunks",          aliases: ["soya chunks","soya nuggets","nutrela","meal maker","soya","soyabean chunks"], unit: "bowl", kcal: 170, p: 26, c: 18, f: 1.5, fb: 6, g: 50 },
   { id: 101, name: "Sweet Potato",         aliases: ["sweet potato","shakarkandi","shakarkand"], unit: "medium", kcal: 115, p: 2, c: 27, f: 0.2, fb: 4 },
@@ -136,6 +136,7 @@ const FOODS = [
   { id: 131, name: "Honey Chilli Potato",  aliases: ["honey chilli potato","honey chili potato","chilli potato"], unit: "plate", kcal: 350, p: 4, c: 45, f: 18, fb: 3 },
   { id: 132, name: "Coffee (with milk)",   aliases: ["coffee","milk coffee","filter coffee","instant coffee","nescafe","coffee with milk"], unit: "cup", kcal: 90, p: 2.5, c: 12, f: 3, fb: 0 },
   { id: 133, name: "Egg (Fried/Half Fry)", aliases: ["fried egg","half fry","egg half fry","half fried egg","anda fry","egg fry","sunny side up","bullseye egg"], unit: "piece", kcal: 90, p: 6.3, c: 0.4, f: 7, fb: 0 },
+  { id: 134, name: "High-Protein Oats",    aliases: ["high protein oats","protein oats","yogabar oats","yoga bar oats","whey oats","protein oatmeal"], unit: "bowl", kcal: 145, p: 10.5, c: 22, f: 3.5, fb: 4, g: 40 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
