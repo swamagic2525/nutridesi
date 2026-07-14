@@ -44,6 +44,7 @@ function resolveItem(item) {
       kcal: Math.round(statedKcal * qs), protein: +((food ? food.p : 0) * ratio * qs).toFixed(1),
       carbs: +((food ? food.c : 0) * ratio * qs).toFixed(1), fat: +((food ? food.f : 0) * ratio * qs).toFixed(1),
       fiber: +((food ? food.fb || 0 : 0) * ratio * qs).toFixed(1), is_estimate: false, stated: true,
+      userSaid: item.food_name, assumed: false,
     };
   }
   // Raw/dry-weight logging (meal-preppers weigh uncooked). Grains/legumes gain
@@ -63,6 +64,7 @@ function resolveItem(item) {
       kcal: Math.round(food.kcal * s), protein: +(food.p * s).toFixed(1),
       carbs: +(food.c * s).toFixed(1), fat: +(food.f * s).toFixed(1),
       fiber: +((food.fb || 0) * s).toFixed(1), is_estimate: true,
+      userSaid: item.food_name, assumed: item.match_type !== "direct",
     };
   }
 
@@ -85,6 +87,8 @@ function resolveItem(item) {
       carbs: +(food.c * m).toFixed(1), fat: +(food.f * m).toFixed(1),
       fiber: +((food.fb || 0) * m).toFixed(1),
       is_estimate: item.match_type !== "direct" || item.portion_clarity !== "specified",
+      userSaid: item.food_name, assumed: item.match_type !== "direct",
+      portionNote: item.portion_clarity !== "specified" ? `${qty} ${food.unit}` : null,
     };
   }
   // Tier 3: unknown food but the LLM knows it — use its per-serving estimate,
@@ -97,11 +101,13 @@ function resolveItem(item) {
     return {
       food_name: `${grams}g ${item.food_name || "meal"}`, matched_db_id: null, quantity: 1,
       unit: `${grams}g`, kcal: Math.round(perServing * s), protein: 0, carbs: 0, fat: 0, fiber: 0, is_estimate: true,
+      userSaid: item.food_name, assumed: true,
     };
   }
   return {
     food_name: item.food_name || "meal", matched_db_id: null, quantity: qty, unit: "serving",
     kcal: Math.round(perServing * qty), protein: 0, carbs: 0, fat: 0, fiber: 0, is_estimate: true,
+    userSaid: item.food_name, assumed: true,
   };
 }
 
@@ -180,7 +186,7 @@ async function logMeal(phone, parsed) {
 
   // Fire-and-forget: the reply's totals are computed locally (below), so it need
   // not wait for the write. Saves ~0.7s of India<->Supabase latency per message.
-  supabase.from("user_logs").insert(rows.map(({ stated, ...r }) => r)).then(({ error }) => {
+  supabase.from("user_logs").insert(rows.map(({ stated, userSaid, assumed, portionNote, ...r }) => r)).then(({ error }) => {
     if (error) console.error("SUPABASE INSERT FAILED:", error.message, error.details || "", error.hint || "");
   });
   const sum = (k) => prevTotal[k] + rows.reduce((s, r) => s + Number(r[k] || 0), 0);
@@ -188,14 +194,15 @@ async function logMeal(phone, parsed) {
   // Slot this message into the meal clusters: continues the last meal if within 45 min.
   const meals = prevTotal.meals;
   const newKcal = rows.reduce((s, r) => s + Number(r.kcal || 0), 0);
+  const newProtein = rows.reduce((s, r) => s + Number(r.protein || 0), 0);
   const now = Date.now();
   const last = meals[meals.length - 1];
-  if (last && now - last.lastAt <= MEAL_GAP_MS) last.kcal += newKcal;
-  else meals.push({ kcal: newKcal, lastAt: now });
+  if (last && now - last.lastAt <= MEAL_GAP_MS) { last.kcal += newKcal; last.protein += newProtein; }
+  else meals.push({ kcal: newKcal, protein: newProtein, lastAt: now });
 
   return {
     rows,
-    meals: meals.map(m => Math.round(m.kcal)),
+    meals: meals.map(m => ({ kcal: Math.round(m.kcal), protein: Math.round(m.protein || 0) })),
     totals: { kcal: sum("kcal"), protein: sum("protein"), carbs: sum("carbs"), fat: sum("fat"), fiber: sum("fiber") },
     isNewUser,
   };
@@ -222,9 +229,10 @@ async function todayTotal(phone) {
     const last = meals[meals.length - 1];
     if (last && at - last.lastAt <= MEAL_GAP_MS) {
       last.kcal += Number(r.kcal || 0);
+      last.protein += Number(r.protein || 0);
       last.lastAt = at;
     } else {
-      meals.push({ kcal: Number(r.kcal || 0), lastAt: at });
+      meals.push({ kcal: Number(r.kcal || 0), protein: Number(r.protein || 0), lastAt: at });
     }
   }
   return { ...totals, meals };

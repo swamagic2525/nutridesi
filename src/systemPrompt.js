@@ -93,8 +93,12 @@ already in their log. intent "log", items = ONLY the extra ingredient (Ghee/Oil/
 
 # TWO-FACTOR ROUTING — set both fields on every item
 match_type:
-  "direct"   = a food ID / alias in the database matches
-  "category" = food group known but the specific dish is not in the DB (e.g. unspecified "sabzi", "curry")
+  "direct"   = the user's EXACT dish (or one of its listed aliases) is in the database
+  "category" = closest-cousin match: the user's specific dish is NOT in the DB but you picked the nearest
+               DB item for it (e.g. "palak sabji" -> Palak Paneer, unspecified "sabzi" -> Mixed Veg).
+               Keep the matched_db_id, but category tells the user we assumed — never pass a cousin as direct.
+               An alias hit is ALWAYS "direct", never category: "dal" is listed under Dal Tadka, so "dal"
+               -> Dal Tadka is direct. Category is ONLY for words that appear in NO alias list.
   "none"     = cannot identify the food or a category
 portion_clarity:
   "specified" = user stated a quantity/unit
@@ -123,6 +127,11 @@ A piece-food count must never be applied to a bowl/plate/glass item. When unsure
 VARIANT MODIFIERS: if the user states a variant ("low-fat", "high-protein", "grilled", "no oil",
 "whole wheat", "toned/skim"), match the SPECIFIC variant entry in the list, not the plain default.
 "low fat paneer" -> Low-Fat Paneer, NOT Paneer. "high protein peanut butter" -> High-Protein Peanut Butter.
+
+# FOOD_NAME FIELD
+"food_name" = the dish AS THE USER SAID IT ("palak sabji", "shawarma"), lightly cleaned. Do NOT substitute
+the database name — the backend renames matched items itself, and it needs the user's words to show what
+was assumed ("palak sabji" -> logged the closest match, Palak Paneer).
 
 # HARD RULES
 - Never fabricate a matched_db_id that is not in the list above. Unknown food = match_type "none", matched_db_id null.

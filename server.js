@@ -84,14 +84,25 @@ app.post("/whatsapp", async (req, res) => {
       return res.type("text/xml").send(twiml.toString());
     }
 
-    const macros = (o) => `P${Math.round(o.protein)}g C${Math.round(o.carbs)}g F${Math.round(o.fat)}g Fb${Math.round(o.fiber || 0)}g`;
+    // Reply renderers (beta feedback 2026-07-14: words not codes, no legend line).
+    const dayLine = (t) => `*You're at ${Math.round(t.kcal)} kcal · ${Math.round(t.protein)}g protein today*`;
+    const cfLine = (t) => `Carbs ${Math.round(t.carbs)}g · Fat ${Math.round(t.fat)}g · Fibre ${Math.round(t.fiber || 0)}g`;
     const fmtItems = (rows) => rows.map(r => {
-      const est = r.is_estimate ? " (est.)" : "";
-      const qty = r.quantity === 1 ? "" : `${r.quantity}x `;
-      // Show macros for curated-DB and INDB-reference hits; hide zeros on bare placeholders.
-      const m = (r.matched_db_id || r.protein + r.carbs + r.fat > 0) ? ` (${macros(r)})` : "";
-      return `${qty}${r.food_name} — ${r.kcal} kcal${m}${est}`;
+      const qty = r.quantity === 1 ? "" : ` ×${r.quantity}`;
+      const p = (r.matched_db_id || r.protein > 0) ? ` · ${Math.round(r.protein)}g protein` : "";
+      const note = r.portionNote ? ` (${r.portionNote})` : "";
+      return `*${r.food_name}*${qty} — ${r.kcal} kcal${p}${note}`;
     });
+    // 🤔 callouts for dish-identity guesses (closest match / estimate), capped at 2.
+    const assumptionLines = (rows) => {
+      const guesses = rows.filter(r => r.assumed && r.userSaid);
+      const lines = guesses.slice(0, 2).map(r =>
+        r.food_name.toLowerCase().includes(String(r.userSaid).toLowerCase())
+          ? `\u{1F914} _"${r.userSaid}" isn't in my book yet — logged my best estimate. Know the calories? Reply "it was 200 calories"_`
+          : `\u{1F914} _"${r.userSaid}" — logged the closest match, *${r.food_name}*. Something else? Just reply "it was …"_`);
+      if (guesses.length > 2) lines.push(`_…and ${guesses.length - 2} more guesses in the list below_`);
+      return lines;
+    };
 
     // Sandbox join, greetings, and "what is this" get the intro — no LLM call.
     const trimmed = body.trim();
@@ -112,10 +123,10 @@ app.post("/whatsapp", async (req, res) => {
         pending && Date.now() - pending.at < PENDING_TTL_MS) {
       pendingQuery.delete(from);
       const { rows, meals, totals, isNewUser } = await logMeal(from, pending.parsed);
-      const mealLine = meals.map((k, i) => `Meal ${i + 1}: ${k}`).join(" \u00b7 ");
+      const cur = meals[meals.length - 1];
       twiml.message(
-        `\u2705 Logged:\n${fmtItems(rows).join("\n")}\n\n${mealLine} kcal\n` +
-        `Today: ${totals.kcal} kcal \u00b7 ${macros(totals)}` +
+        `\u2705 Meal ${meals.length} logged \u2014 ${cur.kcal} kcal \u00b7 ${cur.protein}g protein\n` +
+        `${dayLine(totals)}\n\n${fmtItems(rows).join("\n")}\n${cfLine(totals)}` +
         (isNewUser ? FIRST_LOG_FOOTER : "")
       );
       return res.type("text/xml").send(twiml.toString());
@@ -158,10 +169,10 @@ app.post("/whatsapp", async (req, res) => {
         // Advice question ("what can I eat for protein?"): suggestions, with
         // their day so far for context when they've logged anything.
         const total = await todayTotal(from);
-        const dayLine = total.meals.length
-          ? `\u{1F4CA} Your day so far: ${Math.round(total.kcal)} kcal \u00b7 ${macros(total)}\n\n`
+        const dayCtx = total.meals.length
+          ? `\u{1F4CA} Your day so far: ${Math.round(total.kcal)} kcal \u00b7 ${Math.round(total.protein)}g protein\n\n`
           : "";
-        twiml.message(`${dayLine}${note}\n\n_Tell me when you eat something and I'll log it_ \u{1F642}`);
+        twiml.message(`${dayCtx}${note}\n\n_Tell me when you eat something and I'll log it_ \u{1F642}`);
       } else {
         // Day question: today's running total.
         const total = await todayTotal(from);
@@ -171,7 +182,7 @@ app.post("/whatsapp", async (req, res) => {
           const mealLine = total.meals.map((m, i) => `Meal ${i + 1}: ${Math.round(m.kcal)}`).join(" \u00b7 ");
           twiml.message(
             `\u{1F4CA} Today so far:\n${mealLine} kcal\n` +
-            `Total: ${Math.round(total.kcal)} kcal \u00b7 ${macros(total)}`
+            `${dayLine(total)}\n${cfLine(total)}`
           );
         }
       }
@@ -191,7 +202,7 @@ app.post("/whatsapp", async (req, res) => {
         : "";
       twiml.message(
         `↩️ Removed:\n${removedLines}\n\n${mealLine}` +
-        `Today: ${total.kcal} kcal · ${macros(total)}`
+        `${dayLine(total)}`
       );
       return res.type("text/xml").send(twiml.toString());
     }
@@ -212,10 +223,9 @@ app.post("/whatsapp", async (req, res) => {
       const { rows, meals, totals } = await logMeal(from, parsed);
       const removedLines = (deleted || []).map(r => `❌ ${r.food_name} — ${r.kcal} kcal`).join("\n");
       const addedLines = fmtItems(rows).map(l => `✅ ${l}`);
-      const mealLine = meals.map((k, i) => `Meal ${i + 1}: ${k}`).join(" · ");
       twiml.message(
-        `🔄 Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n${mealLine} kcal\n` +
-        `Today: ${totals.kcal} kcal · ${macros(totals)}`
+        `🔄 Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
+        `${dayLine(totals)}\n${cfLine(totals)}`
       );
       return res.type("text/xml").send(twiml.toString());
     }
@@ -232,12 +242,13 @@ app.post("/whatsapp", async (req, res) => {
 
     const result = await logMeal(from, parsed);
     const { rows, meals, totals } = result;
-    const lines = fmtItems(rows);
-    const mealLine = meals.map((k, i) => `Meal ${i + 1}: ${k}`).join(" · ");
+    const cur = meals[meals.length - 1];
+    const ass = assumptionLines(rows);
     twiml.message(
-      `✅ Logged:\n${lines.join("\n")}\n\n${mealLine} kcal\n` +
-      `Today: ${totals.kcal} kcal · ${macros(totals)}\n` +
-      `_P protein · C carbs · F fat · Fb fibre (grams) · same meal if within 45 min_`
+      `✅ Meal ${meals.length} logged — ${cur.kcal} kcal · ${cur.protein}g protein\n` +
+      `${dayLine(totals)}\n\n` +
+      (ass.length ? `${ass.join("\n")}\n\n` : "") +
+      `${fmtItems(rows).join("\n")}\n${cfLine(totals)}`
       + (result.isNewUser ? FIRST_LOG_FOOTER : "")
     );
   } catch (err) {
