@@ -125,8 +125,9 @@ app.post("/whatsapp", async (req, res) => {
       const { rows, meals, totals, isNewUser } = await logMeal(from, pending.parsed);
       const cur = meals[meals.length - 1];
       twiml.message(
-        `\u2705 Meal ${meals.length} logged \u2014 ${cur.kcal} kcal \u00b7 ${cur.protein}g protein\n` +
-        `${dayLine(totals)}\n\n${fmtItems(rows).join("\n")}\n${cfLine(totals)}` +
+        `\u2705 Logged\n${fmtItems(rows).join("\n")}\n\n` +
+        `Meal ${meals.length} \u2014 ${cur.kcal} kcal \u00b7 ${cur.protein}g protein\n` +
+        `${dayLine(totals)}\n${cfLine(totals)}` +
         (isNewUser ? FIRST_LOG_FOOTER : "")
       );
       return res.type("text/xml").send(twiml.toString());
@@ -245,10 +246,10 @@ app.post("/whatsapp", async (req, res) => {
     const cur = meals[meals.length - 1];
     const ass = assumptionLines(rows);
     twiml.message(
-      `✅ Meal ${meals.length} logged — ${cur.kcal} kcal · ${cur.protein}g protein\n` +
-      `${dayLine(totals)}\n\n` +
+      `✅ Logged\n${fmtItems(rows).join("\n")}\n\n` +
       (ass.length ? `${ass.join("\n")}\n\n` : "") +
-      `${fmtItems(rows).join("\n")}\n${cfLine(totals)}`
+      `Meal ${meals.length} — ${cur.kcal} kcal · ${cur.protein}g protein\n` +
+      `${dayLine(totals)}\n${cfLine(totals)}`
       + (result.isNewUser ? FIRST_LOG_FOOTER : "")
     );
   } catch (err) {
