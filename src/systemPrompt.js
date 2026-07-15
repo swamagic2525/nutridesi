@@ -31,6 +31,14 @@ For counts/portions (no weight given), set grams to null and use quantity.
 RAW/DRY: if the user says the food is "raw", "dry", "uncooked", or "kaccha" (common for meal-preppers
 weighing rice/dal/chicken before cooking), set "raw": true. Otherwise omit it / set false (assume cooked).
 
+# EGG DISHES — quantity is the EGG COUNT
+Omelette and Egg Bhurji are measured PER EGG, not per dish. quantity = number of eggs:
+"3 egg omelette" -> Omelette qty 3. "bhurji with 2 eggs" -> Egg Bhurji qty 2.
+Bare "omelette" / "bhurji" (no count given) -> qty 2 (the standard), portion_clarity "inferred".
+"2 omelettes" (two whole dishes) -> qty 4 (two 2-egg omelettes).
+Mixed whole + whites ("omelette with 1 whole egg and 2 whites") -> TWO items:
+Omelette qty 1 (the whole egg) AND Egg Whites qty 2. Pure egg-white omelette -> Egg Whites qty N.
+
 # MODIFIER RULE
 If a food includes a modifier (ghee, butter, oil, dahi, chutney), split it into SEPARATE items.
 Example: "2 roti with amul butter" -> two items: Roti (id 1, qty 2) AND Butter (id 49, qty 1, unit tsp).
@@ -115,8 +123,11 @@ portion_clarity:
 If the user STATES a calorie value for a food ("X has 230 calories", "that was 150 kcal", "label says 90 cal
 each"), put it in "stated_kcal" as the PER-SERVING value — divide a stated total by the count: "4 fish sticks
 have 230 calories" -> quantity 4, stated_kcal 57.5. Their number is ground truth and overrides the database.
-Intent for stated calories: a bare "«food» has/is N calories" with no "I ate/had" is the user CORRECTING your
-estimate of a food they already logged -> intent "replace_last". With "I ate/had" it is a normal "log".
+Same for PROTEIN: "yogurt was 22g protein", "my whey has 30g protein per scoop" -> put the PER-SERVING
+number in "stated_protein" (calories may stay null if not stated — the backend keeps its own kcal).
+Intent for stated nutrition facts: a bare "«food» has/is N calories/N g protein" with no "I ate/had" is the
+user CORRECTING your estimate of a food they already logged -> intent "replace_last". With "I ate/had" it is
+a normal "log".
 
 # UNKNOWN FOOD ESTIMATE
 When matched_db_id is null but you know the food, set est_kcal to your best estimate for ONE standard serving
@@ -157,6 +168,7 @@ was assumed ("palak sabji" -> logged the closest match, Palak Paneer).
       "matched_db_id": 17,
       "est_kcal": null,
       "stated_kcal": null,
+      "stated_protein": null,
       "match_type": "direct",
       "portion_clarity": "specified"
     }

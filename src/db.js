@@ -21,11 +21,26 @@ async function ensureUser(phone) {
 const UNIT_GRAMS = {
   bowl: 150, katori: 120, cup: 150, plate: 200, glass: 200, serving: 150,
   medium: 150, slice: 30, scoop: 30, tbsp: 15, tsp: 5, handful: 30,
-  fillet: 100, bar: 50, pack: 70, "100g": 100, white: 33,
+  fillet: 100, bar: 50, pack: 70, "100g": 100, white: 33, egg: 55, can: 330, piece: 60,
 };
 
 // Convert a parsed item into a log row with resolved nutrition + 4-tier fallback.
+// Wrapper applies user-stated PROTEIN ("yogurt was 22g protein") on top of any
+// resolution path — the user's number replaces ours, kcal and the rest stay.
 function resolveItem(item) {
+  const row = resolveItemBase(item);
+  const statedP = Number(item.stated_protein);
+  if (statedP > 0 && statedP <= 200) {
+    const q = String(row.unit || "").endsWith("g") ? 1 : (Number(row.quantity) || 1);
+    row.protein = +(statedP * q).toFixed(1);
+    row.stated = true;
+    row.assumed = false;
+    row.is_estimate = false;
+  }
+  return row;
+}
+
+function resolveItemBase(item) {
   const food = item.matched_db_id ? FOOD_BY_ID[item.matched_db_id] : null;
   const grams = Number(item.grams);
 
@@ -272,7 +287,7 @@ async function dayReport(phone, daysAgo = 0) {
 async function deleteMatching(phone, foodHints) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const { data, error } = await supabase.from("user_logs")
-    .select("id, food_name, kcal, quantity, logged_at")
+    .select("id, food_name, kcal, quantity, matched_db_id, logged_at")
     .eq("phone_number", phone).eq("date", today)
     .order("logged_at", { ascending: false })
     .limit(30);

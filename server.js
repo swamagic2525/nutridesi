@@ -234,6 +234,21 @@ app.post("/whatsapp", async (req, res) => {
       const aligned = await deleteMatching(from, parsed.items.map(i => i.food_name));
       const deleted = aligned ? aligned.filter(Boolean)
         : await deleteLastLog(from, parsed.items.length === 1 ? parsed.items[0].food_name : null);
+      // Protein-only correction ("yogurt was 22g protein"): keep the replaced
+      // row's identity and calories — only the protein changes. Without this the
+      // parser can re-match the name to a different food (yogurt -> Curd/Dahi).
+      if (aligned) {
+        parsed.items.forEach((it, i) => {
+          const old = aligned[i];
+          if (old && Number(it.stated_protein) > 0 && !Number(it.stated_kcal)) {
+            it.food_name = old.food_name;
+            it.matched_db_id = old.matched_db_id;
+            it.quantity = Number(old.quantity) || 1;
+            it.stated_kcal = Math.round(Number(old.kcal) / (Number(old.quantity) || 1));
+            it.grams = null;
+          }
+        });
+      }
       // "60 calories EACH": the stated value is per piece — carry the replaced
       // row's count so 2 rotis corrected at 60 each land as 120, not 60.
       if (aligned && /\beach\b|\bper piece\b|\bhar ek\b/i.test(body)) {

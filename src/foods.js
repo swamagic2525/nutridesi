@@ -46,7 +46,7 @@ const FOODS = [
   { id: 41, name: "Gulab Jamun",           aliases: ["gulab jamun","gulab jamun mithai"], unit: "piece", kcal: 150, p: 2, c: 27, f: 5, fb: 0 },
   { id: 42, name: "Halwa",                 aliases: ["halwa","sooji halwa","atta halwa","moong dal halwa"], unit: "katori", kcal: 250, p: 4, c: 36, f: 10, fb: 1 },
   { id: 43, name: "Egg (Boiled)",          aliases: ["boiled egg","anda","egg","hard boiled egg","soft boiled egg"], unit: "piece", kcal: 70, p: 6, c: 0.5, f: 5, fb: 0 },
-  { id: 44, name: "Omelette",              aliases: ["omelette","egg omelette","masala omelette","anda omelette"], unit: "piece", kcal: 140, p: 10, c: 1, f: 11, fb: 0 },
+  { id: 44, name: "Omelette",              aliases: ["omelette","egg omelette","masala omelette","anda omelette","omlette","omelet"], unit: "egg", kcal: 90, p: 6.5, c: 0.5, f: 7, fb: 0, g: 55 },
   { id: 45, name: "Khichdi",               aliases: ["khichdi","dal khichdi","masala khichdi","moong khichdi"], unit: "bowl", kcal: 200, p: 8, c: 34, f: 4, fb: 4 },
   { id: 46, name: "Pongal",                aliases: ["pongal","ven pongal","khara pongal","rice pongal"], unit: "bowl", kcal: 220, p: 6, c: 38, f: 5, fb: 2 },
   { id: 47, name: "Curd Rice",             aliases: ["curd rice","dahi chawal","thayir sadam","mosaranna"], unit: "bowl", kcal: 180, p: 6, c: 30, f: 4, fb: 1 },
@@ -152,6 +152,7 @@ const FOODS = [
   { id: 147, name: "Papad",                aliases: ["papad","papadum","urad papad","roasted papad","urad dal papad","masala papad"], unit: "piece", kcal: 45, p: 2, c: 6, f: 1.5, fb: 0.5 },
   { id: 148, name: "Rasgulla",             aliases: ["rasgulla","rosogolla","rasgula","sponge rasgulla"], unit: "piece", kcal: 120, p: 2, c: 25, f: 1.5, fb: 0 },
   { id: 149, name: "Vada (Medu/Batata)",   aliases: ["vada","wada","medu vada","batata vada","aloo vada","urad vada"], unit: "piece", kcal: 140, p: 3, c: 15, f: 7, fb: 1.5 },
+  { id: 150, name: "Egg Bhurji",           aliases: ["egg bhurji","anda bhurji","bhurji","egg bhurji pav","scrambled eggs"], unit: "egg", kcal: 100, p: 6.5, c: 2, f: 7.5, fb: 0.3 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
