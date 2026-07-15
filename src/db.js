@@ -32,7 +32,21 @@ function resolveItem(item) {
   const statedP = Number(item.stated_protein);
   if (statedP > 0 && statedP <= 200) {
     const q = String(row.unit || "").endsWith("g") ? 1 : (Number(row.quantity) || 1);
-    row.protein = +(statedP * q).toFixed(1);
+    const newP = +(statedP * q).toFixed(1);
+    // Keep the 4/4/9 energy identity honest: protein energy changed, so carbs
+    // and fat absorb the remaining calories in their existing ratio. If the
+    // stated protein alone exceeds the calories, the calories were the wrong
+    // number — re-derive kcal from the macros instead.
+    const remaining = row.kcal - 4 * newP;
+    const curCF = 4 * Number(row.carbs || 0) + 9 * Number(row.fat || 0);
+    if (remaining >= 0 && curCF > 0) {
+      const sc = remaining / curCF;
+      row.carbs = +(row.carbs * sc).toFixed(1);
+      row.fat = +(row.fat * sc).toFixed(1);
+    } else if (remaining < 0) {
+      row.kcal = Math.round(4 * newP + curCF);
+    }
+    row.protein = newP;
     row.stated = true;
     row.assumed = false;
     row.is_estimate = false;
