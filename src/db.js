@@ -24,6 +24,14 @@ const UNIT_GRAMS = {
   fillet: 100, bar: 50, pack: 70, "100g": 100, white: 33, egg: 55, can: 330, piece: 60,
 };
 
+// Default macro split for estimated foods where macros are unknown:
+// 50% carbs / 25% protein / 25% fat by energy (user-set policy, 2026-07-15).
+const splitMacros = (kcal) => ({
+  protein: +(kcal * 0.25 / 4).toFixed(1),
+  carbs: +(kcal * 0.5 / 4).toFixed(1),
+  fat: +(kcal * 0.25 / 9).toFixed(1),
+});
+
 // Convert a parsed item into a log row with resolved nutrition + 4-tier fallback.
 // Wrapper applies user-stated PROTEIN ("yogurt was 22g protein") on top of any
 // resolution path — the user's number replaces ours, kcal and the rest stay.
@@ -75,9 +83,12 @@ function resolveItemBase(item) {
     return {
       food_name: item.food_name || (food ? food.name : "meal"),
       matched_db_id: food ? food.id : null, quantity: qs, unit: food ? food.unit : "serving",
-      kcal: Math.round(statedKcal * qs), protein: +((food ? food.p : 0) * ratio * qs).toFixed(1),
-      carbs: +((food ? food.c : 0) * ratio * qs).toFixed(1), fat: +((food ? food.f : 0) * ratio * qs).toFixed(1),
-      fiber: +((food ? food.fb || 0 : 0) * ratio * qs).toFixed(1), is_estimate: false, stated: true,
+      kcal: Math.round(statedKcal * qs),
+      ...(food
+        ? { protein: +(food.p * ratio * qs).toFixed(1), carbs: +(food.c * ratio * qs).toFixed(1),
+            fat: +(food.f * ratio * qs).toFixed(1), fiber: +((food.fb || 0) * ratio * qs).toFixed(1) }
+        : { ...splitMacros(statedKcal * qs), fiber: 0 }),
+      is_estimate: false, stated: true,
       userSaid: item.food_name, assumed: false,
     };
   }
@@ -134,13 +145,13 @@ function resolveItemBase(item) {
     const s = grams / 150;
     return {
       food_name: `${grams}g ${item.food_name || "meal"}`, matched_db_id: null, quantity: 1,
-      unit: `${grams}g`, kcal: Math.round(perServing * s), protein: 0, carbs: 0, fat: 0, fiber: 0, is_estimate: true,
-      userSaid: item.food_name, assumed: true,
+      unit: `${grams}g`, kcal: Math.round(perServing * s), ...splitMacros(perServing * s), fiber: 0,
+      is_estimate: true, userSaid: item.food_name, assumed: true,
     };
   }
   return {
     food_name: item.food_name || "meal", matched_db_id: null, quantity: qty, unit: "serving",
-    kcal: Math.round(perServing * qty), protein: 0, carbs: 0, fat: 0, fiber: 0, is_estimate: true,
+    kcal: Math.round(perServing * qty), ...splitMacros(perServing * qty), fiber: 0, is_estimate: true,
     userSaid: item.food_name, assumed: true,
   };
 }
@@ -215,7 +226,7 @@ async function logMeal(phone, parsed) {
   if (rows.length === 0) {
     rows.push({ phone_number: phone, meal_time: mealTime, food_name: "meal",
       matched_db_id: null, quantity: 1, unit: "serving", kcal: 300,
-      protein: 0, carbs: 0, fat: 0, fiber: 0, is_estimate: true });
+      ...splitMacros(300), fiber: 0, is_estimate: true });
   }
 
   // Fire-and-forget: the reply's totals are computed locally (below), so it need
