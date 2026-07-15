@@ -265,6 +265,40 @@ async function dayReport(phone, daysAgo = 0) {
   return { label, meals, totals };
 }
 
+// Correction targeting: find and delete today's row that best name-matches each
+// corrected food — searches the whole day, not just the last message's batch,
+// so "roti was 60 cal and dal 120" replaces the right rows wherever they were
+// logged. Returns the deleted rows, or null if nothing matched.
+async function deleteMatching(phone, foodHints) {
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const { data, error } = await supabase.from("user_logs")
+    .select("id, food_name, kcal, quantity, logged_at")
+    .eq("phone_number", phone).eq("date", today)
+    .order("logged_at", { ascending: false })
+    .limit(30);
+  if (error) console.error("deleteMatching select:", error.message);
+  if (!data || data.length === 0) return null;
+
+  const taken = new Set();
+  const matched = [];
+  for (const hint of foodHints) {
+    const words = String(hint || "").toLowerCase().split(/[^a-z]+/).filter(w => w.length > 2);
+    let best = null, bestScore = 0;
+    for (const row of data) {
+      if (taken.has(row.id)) continue;
+      const name = row.food_name.toLowerCase();
+      const score = words.filter(w => name.includes(w)).length;
+      if (score > bestScore) { best = row; bestScore = score; }
+    }
+    taken.add(best ? best.id : -1); matched.push(best || null);
+  }
+  const rows = matched.filter(Boolean);
+  if (rows.length === 0) return null;
+  const { error: delErr } = await supabase.from("user_logs").delete().in("id", rows.map(r => r.id));
+  if (delErr) console.error("deleteMatching delete:", delErr.message);
+  return matched; // aligned with foodHints; null entries = no match for that hint
+}
+
 async function deleteLastLog(phone, foodHint) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const { data, error: selErr } = await supabase.from("user_logs")
@@ -294,4 +328,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { logMeal, todayTotal, deleteLastLog, ensureUser, resolveRows, dayReport };
+module.exports = { logMeal, todayTotal, deleteLastLog, deleteMatching, ensureUser, resolveRows, dayReport };

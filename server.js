@@ -6,7 +6,7 @@ require("dotenv").config();
 const express = require("express");
 const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
-const { logMeal, deleteLastLog, todayTotal, ensureUser, resolveRows, dayReport } = require("./src/db.js");
+const { logMeal, deleteLastLog, deleteMatching, todayTotal, ensureUser, resolveRows, dayReport } = require("./src/db.js");
 
 const app = express();
 app.use(express.urlencoded({ extended: false })); // Twilio sends form-encoded
@@ -229,7 +229,19 @@ app.post("/whatsapp", async (req, res) => {
         twiml.message("Couldn't identify the corrected food — previous entry unchanged. Send the food name again.");
         return res.type("text/xml").send(twiml.toString());
       }
-      const deleted = await deleteLastLog(from, parsed.items.length === 1 ? parsed.items[0].food_name : null);
+      // Name-match each corrected food across today's log; fall back to the
+      // last-batch delete only when nothing matches (e.g. "sorry it was rajma").
+      const aligned = await deleteMatching(from, parsed.items.map(i => i.food_name));
+      const deleted = aligned ? aligned.filter(Boolean)
+        : await deleteLastLog(from, parsed.items.length === 1 ? parsed.items[0].food_name : null);
+      // "60 calories EACH": the stated value is per piece — carry the replaced
+      // row's count so 2 rotis corrected at 60 each land as 120, not 60.
+      if (aligned && /\beach\b|\bper piece\b|\bhar ek\b/i.test(body)) {
+        parsed.items.forEach((it, i) => {
+          const old = aligned[i];
+          if (old && Number(old.quantity) > 1 && Number(it.quantity) === 1) it.quantity = Number(old.quantity);
+        });
+      }
       // Name-only correction ("it was veg not chicken") inherits the old quantity —
       // only when the user didn't state a new one and the swap is one-for-one.
       if (deleted && deleted.length === 1 && parsed.items.length === 1 &&
