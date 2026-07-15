@@ -234,27 +234,34 @@ app.post("/whatsapp", async (req, res) => {
       const aligned = await deleteMatching(from, parsed.items.map(i => i.food_name));
       const deleted = aligned ? aligned.filter(Boolean)
         : await deleteLastLog(from, parsed.items.length === 1 ? parsed.items[0].food_name : null);
-      // Unnamed correction ("it was 220 cals 25g protein"): restore the food's
-      // name from the row being replaced instead of logging "Unknown".
-      if (deleted && deleted.length === 1 && parsed.items.length === 1 &&
-          /^(unknown|meal|it|food|item)?$/i.test(String(parsed.items[0].food_name || "").trim())) {
-        parsed.items[0].food_name = deleted[0].food_name;
-      }
-      // Protein-only correction ("yogurt was 22g protein"): keep the replaced
-      // row's identity and calories — only the protein changes. Without this the
-      // parser can re-match the name to a different food (yogurt -> Curd/Dahi).
-      if (aligned) {
-        parsed.items.forEach((it, i) => {
-          const old = aligned[i];
-          if (old && Number(it.stated_protein) > 0 && !Number(it.stated_kcal)) {
-            it.food_name = old.food_name;
-            it.matched_db_id = old.matched_db_id;
-            it.quantity = Number(old.quantity) || 1;
-            it.stated_kcal = Math.round(Number(old.kcal) / (Number(old.quantity) || 1));
-            it.grams = null;
-          }
-        });
-      }
+      // Correction inheritance: any value the user did NOT restate carries over
+      // from the row being replaced — name ("it was 220 cals" keeps the dish),
+      // per-serving kcal/protein ("I had 3 of them" keeps the corrected values,
+      // scaled by the new count), and identity on protein-only corrections.
+      // A rename to a DIFFERENT dish (word overlap < 60%) inherits nothing.
+      const inheritFromOld = (it, old) => {
+        if (!old) return;
+        const oq = Number(old.quantity) || 1;
+        const generic = /^(unknown|meal|it|that|this|food|item)?$/i.test(String(it.food_name || "").trim());
+        if (generic) it.food_name = old.food_name;
+        if (!generic) {
+          const words = String(it.food_name || "").toLowerCase().split(/[^a-z]+/).filter(w => w.length > 2);
+          const hit = words.filter(w => old.food_name.toLowerCase().includes(w)).length;
+          if (!words.length || hit / words.length < 0.6) return; // different dish — fresh values
+        }
+        const protOnly = Number(it.stated_protein) > 0 && !Number(it.stated_kcal);
+        if (protOnly) { it.quantity = oq; it.grams = null; }
+        if (!Number(it.stated_kcal) && !Number(it.grams) && (!it.matched_db_id || protOnly)) {
+          it.food_name = old.food_name;
+          it.matched_db_id = old.matched_db_id || null;
+          it.stated_kcal = Math.round(Number(old.kcal) / oq);
+          if (!Number(it.stated_protein) && Number(old.protein) > 0)
+            it.stated_protein = +(Number(old.protein) / oq).toFixed(1);
+        }
+      };
+      if (aligned) parsed.items.forEach((it, i) => inheritFromOld(it, aligned[i]));
+      else if (deleted && deleted.length === 1 && parsed.items.length === 1)
+        inheritFromOld(parsed.items[0], deleted[0]);
       // "60 calories EACH": the stated value is per piece — carry the replaced
       // row's count so 2 rotis corrected at 60 each land as 120, not 60.
       if (aligned && /\beach\b|\bper piece\b|\bhar ek\b/i.test(body)) {

@@ -39,7 +39,7 @@ function resolveItem(item) {
   const row = resolveItemBase(item);
   const statedP = Number(item.stated_protein);
   if (statedP > 0 && statedP <= 200) {
-    const q = String(row.unit || "").endsWith("g") ? 1 : (Number(row.quantity) || 1);
+    const q = /\d\s*(g|ml)$/.test(String(row.unit || "")) ? 1 : (Number(row.quantity) || 1);
     const newP = +(statedP * q).toFixed(1);
     // Keep the 4/4/9 energy identity honest: protein energy changed, so carbs
     // and fat absorb the remaining calories in their existing ratio. If the
@@ -317,7 +317,7 @@ async function dayReport(phone, daysAgo = 0) {
 async function deleteMatching(phone, foodHints) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const { data, error } = await supabase.from("user_logs")
-    .select("id, food_name, kcal, quantity, matched_db_id, logged_at")
+    .select("id, food_name, kcal, protein, quantity, matched_db_id, logged_at")
     .eq("phone_number", phone).eq("date", today)
     .order("logged_at", { ascending: false })
     .limit(30);
@@ -347,7 +347,7 @@ async function deleteMatching(phone, foodHints) {
 async function deleteLastLog(phone, foodHint) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const { data, error: selErr } = await supabase.from("user_logs")
-    .select("id, food_name, kcal, quantity, logged_at")
+    .select("id, food_name, kcal, protein, quantity, matched_db_id, logged_at")
     .eq("phone_number", phone).eq("date", today)
     .order("logged_at", { ascending: false })
     .limit(20);

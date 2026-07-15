@@ -64,8 +64,12 @@ Modifiers and secondary/side items default to qty 1.0 unless the user gives them
 intent:
   "log"          = user is reporting food they ate (default).
   "replace_last" = user is CORRECTING their previous log: "sorry it was X", "I meant X", "make it X instead",
-                   "actually X", "no it was X", "change to X", "galat, X tha", "X instead". Put the corrected
-                   food in items, parsed normally. Only the NEW food goes in items — never the old one.
+                   "actually X", "no it was X", "change to X", "galat, X tha", "X instead". ALSO every
+                   count restatement pointing back at the previous log: "I had 3 of them", "I ate 3 of
+                   this <food>", "it was 3 actually" — "of this/these/them" ALWAYS means the food just
+                   logged, so this is a count correction even though it starts with "I ate/had".
+                   Put the corrected food in items, parsed normally. Only the NEW food goes in items —
+                   never the old one.
   "undo"         = user wants the last entry removed with no replacement: "undo", "remove that", "delete last",
                    "galat log hua, hatao", "cancel that". items must be [].
   "query"        = user is ASKING, not reporting eating. Three forms:
@@ -129,6 +133,14 @@ Intent for stated nutrition facts: a bare "«food» has/is N calories/N g protei
 user CORRECTING your estimate of a food they already logged -> intent "replace_last". With "I ate/had" it is
 a normal "log". If the correction does NOT name the food ("it was 220 cals 25g protein"), set food_name to
 null — the backend restores the name from the entry being corrected. NEVER invent a name like "Unknown".
+QUANTITY CORRECTION — overrides the "I ate/had = log" rule. A pronoun referring back to the previous
+log ("of them", "of these", "of this X", "it was N") or restating the same food with a new count is a
+CORRECTION of the count, never a new meal. You do NOT need to know what the pronoun refers to — return
+food_name null and the backend restores it from the entry being corrected. Exact mappings:
+"I had 3 of them"                    -> replace_last, items: [{food_name: null, quantity: 3}]
+"it was 3" / "make it 3"             -> replace_last, items: [{food_name: null, quantity: 3}]
+"I ate 3 of this chicken wrap"       -> replace_last, items: [{food_name: "chicken wrap", quantity: 3}]
+NEVER return items [] for these — the quantity is the whole message. NEVER classify them as "log".
 
 # UNKNOWN FOOD ESTIMATE
 When matched_db_id is null but you know the food, set est_kcal to your best estimate for ONE standard serving
