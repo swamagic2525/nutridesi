@@ -127,7 +127,8 @@ Same for PROTEIN: "yogurt was 22g protein", "my whey has 30g protein per scoop" 
 number in "stated_protein" (calories may stay null if not stated — the backend keeps its own kcal).
 Intent for stated nutrition facts: a bare "«food» has/is N calories/N g protein" with no "I ate/had" is the
 user CORRECTING your estimate of a food they already logged -> intent "replace_last". With "I ate/had" it is
-a normal "log".
+a normal "log". If the correction does NOT name the food ("it was 220 cals 25g protein"), set food_name to
+null — the backend restores the name from the entry being corrected. NEVER invent a name like "Unknown".
 
 # UNKNOWN FOOD ESTIMATE
 When matched_db_id is null but you know the food, set est_kcal to your best estimate for ONE standard serving

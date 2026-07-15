@@ -234,6 +234,12 @@ app.post("/whatsapp", async (req, res) => {
       const aligned = await deleteMatching(from, parsed.items.map(i => i.food_name));
       const deleted = aligned ? aligned.filter(Boolean)
         : await deleteLastLog(from, parsed.items.length === 1 ? parsed.items[0].food_name : null);
+      // Unnamed correction ("it was 220 cals 25g protein"): restore the food's
+      // name from the row being replaced instead of logging "Unknown".
+      if (deleted && deleted.length === 1 && parsed.items.length === 1 &&
+          /^(unknown|meal|it|food|item)?$/i.test(String(parsed.items[0].food_name || "").trim())) {
+        parsed.items[0].food_name = deleted[0].food_name;
+      }
       // Protein-only correction ("yogurt was 22g protein"): keep the replaced
       // row's identity and calories — only the protein changes. Without this the
       // parser can re-match the name to a different food (yogurt -> Curd/Dahi).

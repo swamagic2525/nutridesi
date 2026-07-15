@@ -43,6 +43,11 @@ function resolveItem(item) {
       const sc = remaining / curCF;
       row.carbs = +(row.carbs * sc).toFixed(1);
       row.fat = +(row.fat * sc).toFixed(1);
+    } else if (remaining > 0 && curCF === 0) {
+      // Unknown food with stated kcal + protein: the leftover energy is real —
+      // fill carbs/fat at a typical 60/40 energy split rather than zeros.
+      row.carbs = +(remaining * 0.6 / 4).toFixed(1);
+      row.fat = +(remaining * 0.4 / 9).toFixed(1);
     } else if (remaining < 0) {
       row.kcal = Math.round(4 * newP + curCF);
     }
