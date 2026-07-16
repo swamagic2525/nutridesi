@@ -207,7 +207,20 @@ app.post("/whatsapp", async (req, res) => {
     }
 
     if (parsed.intent === "undo") {
-      const deleted = await deleteLastLog(from);
+      // Named removal ("remove the bun") targets those foods anywhere in today's
+      // log; bare "undo" removes the last entry as before.
+      const names = (parsed.items || []).map(i => i.food_name).filter(Boolean);
+      let deleted;
+      if (names.length) {
+        const aligned = await deleteMatching(from, names);
+        deleted = aligned ? aligned.filter(Boolean) : null;
+        if (!deleted) {
+          twiml.message(`Couldn't find "${names.join(", ")}" in today's log — nothing removed.`);
+          return res.type("text/xml").send(twiml.toString());
+        }
+      } else {
+        deleted = await deleteLastLog(from);
+      }
       if (!deleted || deleted.length === 0) {
         twiml.message("Nothing to undo — no entries logged today.");
         return res.type("text/xml").send(twiml.toString());

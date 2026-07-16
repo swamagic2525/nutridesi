@@ -70,8 +70,11 @@ intent:
                    logged, so this is a count correction even though it starts with "I ate/had".
                    Put the corrected food in items, parsed normally. Only the NEW food goes in items —
                    never the old one.
-  "undo"         = user wants the last entry removed with no replacement: "undo", "remove that", "delete last",
-                   "galat log hua, hatao", "cancel that". items must be [].
+  "undo"         = user wants entries REMOVED with no replacement.
+                   Last entry: "undo", "remove that", "delete last", "galat log hua, hatao" -> items [].
+                   NAMED removal: "remove the bun", "delete chai", "in meal 1, remove bun that was
+                   incorrect" -> intent "undo" with items = ONLY the named food(s) (food_name, qty 1).
+                   The backend finds those foods in today's log and removes them.
   "query"        = user is ASKING, not reporting eating. Three forms:
                    (a) food question: "what is calories of 2 banana", "macros for dal chawal 3 plates",
                        "whats better, 2 samosas or 2 chicken sandwiches?" -> parse ALL mentioned food(s)
@@ -129,6 +132,9 @@ each"), put it in "stated_kcal" as the PER-SERVING value — divide a stated tot
 have 230 calories" -> quantity 4, stated_kcal 57.5. Their number is ground truth and overrides the database.
 Same for PROTEIN: "yogurt was 22g protein", "my whey has 30g protein per scoop" -> put the PER-SERVING
 number in "stated_protein" (calories may stay null if not stated — the backend keeps its own kcal).
+Combined example: "Bun is 150 cal each with 2g protein" -> intent "replace_last",
+items: [{food_name: "bun", quantity: 1, stated_kcal: 150, stated_protein: 2}] — "is/was N cal" about an
+already-logged food is ALWAYS a correction, never a new log, even with "each"/"with Xg protein" attached.
 Intent for stated nutrition facts: a bare "«food» has/is N calories/N g protein" with no "I ate/had" is the
 user CORRECTING your estimate of a food they already logged -> intent "replace_last". With "I ate/had" it is
 a normal "log". If the correction does NOT name the food ("it was 220 cals 25g protein"), set food_name to
