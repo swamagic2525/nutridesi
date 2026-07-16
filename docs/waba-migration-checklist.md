@@ -66,7 +66,7 @@ the core loop (users text first) is unlimited from day one.
 - [ ] C1. New webhook: `GET /meta-whatsapp` verify-token handshake +
   `POST /meta-whatsapp` parsing Meta's JSON payload (replaces Twilio's
   form-encoded body).
-- [ ] C2. Replies via Graph API `POST /v21.0/{phone_number_id}/messages`
+- [ ] C2. Replies via Graph API `POST /v23.0/{phone_number_id}/messages`
   (replaces inline TwiML). Same parser/DB/reply pipeline, transport only.
 - [ ] C3. Healthcheck alert ported to Graph API send.
 - [ ] C4. Webhook signature validation (`X-Hub-Signature-256` with the app
