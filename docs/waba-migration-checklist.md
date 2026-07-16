@@ -88,10 +88,56 @@ the core loop (users text first) is unlimited from day one.
 
 ---
 
-## Cost reality check (300 DAU target)
+## Cost & time per move
 
-- Core loop (user-initiated + replies within 24h window): **free, unlimited**
-- Utility templates outside the window (future daily summaries to lapsed
-  users): ₹0.145/msg, volume-tiered
-- Hosting: ~$5–10/mo · LLM parsing: the dominant cost, ~₹4–8K/mo at 300 DAU
-- What this avoids: Twilio's $0.005/msg × ~72K msgs ≈ ₹30K/mo platform fee
+| Move | Your time | Wait | Cash |
+|---|---|---|---|
+| A. Meta Business verification | ~30 min | 1–3 days review | ₹0 |
+| B1. Permanent number (new SIM) | ~1 hr | — | ₹100–300 one-time |
+| B2–B6. App, number reg, token | ~1–2 hrs | display name: hours | ₹0 |
+| C1–C4. Code migration (Claude) | review only | ~1 day of work | ₹0 |
+| C5. Cloud deploy (Railway) | ~1 hr | — | ~$5/mo (~₹450) |
+| D. Migration week comms | ~2 hrs spread | 2-week overlap | ₹0 |
+| **Total** | **~1 working day** | **~1 week elapsed** | **~₹300 + ₹450/mo** |
+
+## Monthly run-rate at scale (LLM included)
+
+WhatsApp itself: ~₹0 (service messages free; utility templates ₹0.145 only
+outside the 24h window). Hosting ~₹450/mo. The dominant cost is LLM parsing:
+
+| Volume | Claude Haiku (w/ caching) | Gemini 2.5 Flash-Lite (paid) |
+|---|---|---|
+| Today (~70 users, ~6K parses/mo) | ~₹500–1,500/mo | ~₹200–400/mo |
+| 300 DAU (~36K parses/mo) | ~₹5,000–12,000/mo* | ~₹2,000–3,500/mo |
+
+*Range depends on prompt-cache hit rate (5-min TTL — bursty dinner traffic
+hits cache, sparse daytime traffic misses). The ~8K-token system prompt
+(food directory) is the whole cost; output is trivial.
+
+**Plan:** stay on Claude Haiku now (quality + current credits), move primary
+to Gemini paid tier at ~150 DAU when the bill crosses ~₹3K/mo, keep Claude
+as fallback. Total run-rate at 300 DAU: **₹3–13K/mo** vs ₹30K+ platform fee
+alone on Twilio.
+
+## Marketing plan — IG page strategy
+
+**Distribution stays on the personal fitness page. NutriDesi gets a business
+page as home base, not as the growth engine.**
+
+Why: 100% of current traction came from the personal page — warm audience,
+coach credibility, the algorithm already knows the reels perform. A new page
+starts from zero reach; moving distribution there would kill the funnel.
+
+- **Personal page (unchanged):** reels, stories, daily build-in-public,
+  DM funnel. This is where growth happens for the next 3–6 months.
+- **NutriDesi business page (create during migration — same Meta Business
+  Manager):**
+  - Pinned how-to guide (Kshitij's ask: "I can't recall all its features")
+  - Testimonial/screenshot highlights, changelog-style update posts
+  - Bio = wa.me link to the permanent number (one tap, no join code)
+  - Unlocks later: click-to-WhatsApp ads, IG DM automation, a handle to
+    put on the LinkedIn post and reel watermarks
+- **Wiring:** every personal reel tags @nutridesi + link in story;
+  business page reposts. Personal drives reach, business converts and
+  retains the knowledge base.
+- **Effort:** ~2 hrs to set up, ~30 min/week to maintain.
