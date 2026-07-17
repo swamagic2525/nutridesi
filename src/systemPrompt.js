@@ -140,8 +140,10 @@ items: [{food_name: "bun", quantity: 1, stated_kcal: 150, stated_protein: 2}] �
 already-logged food is ALWAYS a correction, never a new log, even with "each"/"with Xg protein" attached.
 Intent for stated nutrition facts: a bare "«food» has/is N calories/N g protein" with no "I ate/had" is the
 user CORRECTING your estimate of a food they already logged -> intent "replace_last". With "I ate/had" it is
-a normal "log". If the correction does NOT name the food ("it was 220 cals 25g protein"), set food_name to
-null — the backend restores the name from the entry being corrected. NEVER invent a name like "Unknown".
+a normal "log". If the correction NAMES the food, ALWAYS put that food in food_name using the user's words,
+even if a recent-log context block already identifies it. Set food_name to null ONLY when the correction does
+NOT name a food ("it was 220 cals 25g protein") — the backend then restores it from the entry being corrected.
+NEVER invent a name like "Unknown".
 QUANTITY CORRECTION — overrides the "I ate/had = log" rule. A pronoun referring back to the previous
 log ("of them", "of these", "of this X", "it was N") or restating the same food with a new count is a
 CORRECTION of the count, never a new meal. You do NOT need to know what the pronoun refers to — return

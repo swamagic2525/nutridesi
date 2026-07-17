@@ -28,4 +28,17 @@ const multiItemBatch = [
 ];
 const [matchedChicken] = matchRows(multiItemBatch, [{ food_name: null, matched_db_id: 68 }]);
 assert.strictEqual(matchedChicken.id, 1);
-console.log("Correction context tests: passed (8 cases)");
+
+// Regression: the model may return food_name null for a named correction of an
+// estimated food. The raw user message must still target Cake slice safely.
+const cakeBatch = [
+  { id: 11, food_name: "Cake slice", matched_db_id: null },
+  { id: 12, food_name: "Roti / Chapati", matched_db_id: 1 },
+  { id: 13, food_name: "Dal Tadka", matched_db_id: 17 },
+  { id: 14, food_name: "Chai (with milk)", matched_db_id: 12 },
+];
+const [matchedCake] = matchRows(cakeBatch, [{ food_name: null, matched_db_id: null }], "Cake slice was 150 cals, 5g protein");
+assert.strictEqual(matchedCake.id, 11);
+const [ambiguousPronoun] = matchRows(cakeBatch, [{ food_name: null, matched_db_id: null }], "it was 150 cals");
+assert.strictEqual(ambiguousPronoun, null);
+console.log("Correction context tests: passed (10 cases)");

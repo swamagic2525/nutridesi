@@ -58,12 +58,39 @@ function formatLastLogContext(batch) {
 // Match correction targets inside one already-selected log batch. Curated IDs
 // win over text because the parser can preserve an ID even when food_name is
 // intentionally null for a correction.
-function matchRows(rows, foodHints) {
+function normalizedPhrase(value) {
+  return String(value || "").toLowerCase()
+    .replace(/^\d+(?:\.\d+)?\s*(?:g|ml)\s*/, "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Only a full, display-name phrase is strong enough to recover a target from
+// the raw message. This deliberately does not fuzzy-match one common word.
+function rawMessageMatchesRow(rawMessage, row) {
+  const text = String(rawMessage || "").toLowerCase();
+  const phrase = normalizedPhrase(row.food_name);
+  return phrase.length >= 4 && text.includes(phrase);
+}
+
+function matchRows(rows, foodHints, rawMessage = "") {
   const taken = new Set();
   return (foodHints || []).map(hint => {
     const target = hint && typeof hint === "object" ? hint : { food_name: hint };
     const hintWords = words(target.food_name);
     const targetId = Number(target.matched_db_id) || null;
+    // The LLM sometimes returns null for a named correction when recent-log
+    // context is present. Recover only when the raw message contains exactly
+    // one complete batch item name; otherwise preserve the ambiguity refusal.
+    if (!targetId && hintWords.length === 0 && rawMessage) {
+      const exact = rows.filter(row => !taken.has(row.id) && rawMessageMatchesRow(rawMessage, row));
+      if (exact.length === 1) {
+        taken.add(exact[0].id);
+        return exact[0];
+      }
+      if (exact.length > 1) return null;
+    }
     let best = null, bestScore = 0;
     for (const row of rows) {
       if (taken.has(row.id)) continue;

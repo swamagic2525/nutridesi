@@ -336,11 +336,11 @@ async function deleteRows(rows) {
 // Named correction targets must be in the immediately preceding message batch.
 // This intentionally does not scan the whole day: an implicit correction should
 // never surprise-delete a food from an earlier meal.
-async function deleteMatchingLastLog(phone, foodHints, batch = null) {
+async function deleteMatchingLastLog(phone, foodHints, batch = null, rawMessage = "") {
   // [] is truthy in JavaScript. Treat an empty context as absent so a
   // correction that was not pre-classified still looks up the latest batch.
   const latest = batch && batch.length ? batch : await lastLogBatch(phone);
-  const matched = matchRows(latest, foodHints);
+  const matched = matchRows(latest, foodHints, rawMessage);
   // Multi-item corrections are atomic: if one stated item cannot be found in
   // the most recent batch, leave everything untouched rather than half-editing
   // a meal and creating a worse trust failure.

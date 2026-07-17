@@ -223,7 +223,7 @@ app.post("/whatsapp", async (req, res) => {
       const names = (parsed.items || []).map(i => i.food_name).filter(Boolean);
       let deleted;
       if (names.length) {
-        const aligned = await deleteMatchingLastLog(from, names, recentBatch);
+        const aligned = await deleteMatchingLastLog(from, names, recentBatch, body);
         deleted = aligned ? aligned.filter(Boolean) : null;
         if (!deleted) {
           twiml.message(`Couldn't find "${names.join(", ")}" in today's log — nothing removed.`);
@@ -256,7 +256,7 @@ app.post("/whatsapp", async (req, res) => {
       // Layer 1: corrections can touch only the immediately preceding log
       // message. Never search through today's / 45-minute meal history.
       const latest = recentBatch.length ? recentBatch : await lastLogBatch(from);
-      const aligned = await deleteMatchingLastLog(from, parsed.items, latest);
+      const aligned = await deleteMatchingLastLog(from, parsed.items, latest, body);
       let deleted = aligned ? aligned.filter(Boolean) : null;
       // A rename with no word overlap ("sorry, it was rajma") can safely
       // replace a one-item last batch. A multi-item batch is ambiguous: do not

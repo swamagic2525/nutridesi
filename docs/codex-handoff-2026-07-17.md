@@ -56,6 +56,24 @@ LLM intent miss:
 - Treat an empty pre-fetched batch as absent and re-query the latest batch. This
   fixes JavaScript's `[]`-is-truthy edge case that initially blocked the lookup.
 
+### Follow-up: named estimated-food correction in a multi-item log
+
+After the initial release, a live regression exposed a remaining gap:
+`Cake slice was 150 cals, 5g protein` after a multi-item log safely refused
+instead of correcting. The model classified `replace_last` correctly but returned
+`food_name: null`; because Cake slice is an estimate, it also had no curated ID.
+
+The follow-up fix is deliberately two-layered:
+
+- The parser prompt now says `food_name` must echo the user whenever the current
+  correction names a dish. `null` is reserved for genuine pronouns such as
+  `it was 150 calories`.
+- As a deterministic fallback, when an item has neither a name nor a curated ID,
+  the matcher checks the raw current message for exactly one complete display
+  name from the latest batch. `Cake slice was …` can therefore target Cake
+  slice. A vague `it was …` against a multi-item batch remains ambiguous and is
+  still refused.
+
 ## Files changed
 
 | File | Change |
@@ -65,7 +83,7 @@ LLM intent miss:
 | `src/systemPrompt.js` | Tells the model how to treat trusted recent-log context and limits its correction scope. |
 | `src/db.js` | Adds `lastLogBatch` and latest-batch-only matching/deletion helpers. |
 | `src/correctionContext.js` | New pure correction detection, context formatting, and stable target matching helpers. |
-| `test/correction-context-test.js` | Eight offline regression cases. |
+| `test/correction-context-test.js` | Ten offline regression cases. |
 | `package.json` | Adds `npm run test:corrections`. |
 
 ## Validation completed
@@ -74,8 +92,8 @@ LLM intent miss:
 npm run test:corrections
 ```
 
-Passes eight offline cases, including target matching by curated food ID inside a
-multi-item batch.
+Passes ten offline cases, including target matching by curated food ID inside a
+multi-item batch and raw-message recovery for a named estimated item.
 
 Live parser checks (using the configured provider) also passed:
 
@@ -83,11 +101,16 @@ Live parser checks (using the configured provider) also passed:
 - `it was 170 calories` → `replace_last`
 - `I had 2 eggs and toast` → normal `log`
 - `Chicken breast was 50g` → `replace_last`, `grams: 50`, Chicken Breast ID
+- `Cake slice was 150 cals, 5g protein` → `replace_last`, Cake slice name,
+  stated values preserved
 
 ## Commits already on `main`
 
 - `2a83102` — Fix corrections with last-log context
 - `e8519ac` — Target gram corrections inside latest log
+
+The latest follow-up correction commit is recorded in git history after this
+document update.
 
 The supervised Mac Mini service was restarted after `e8519ac`, so these changes
 are live.
