@@ -103,13 +103,16 @@ async function callClaude(userText) {
 
 const CALLERS = { groq: callGroq, gemini: callGemini, claude: callClaude };
 
-async function parseMeal(rawMessage) {
+async function parseMeal(rawMessage, recentLogContext = "") {
   const cleaned = preprocess(rawMessage);
   if (!cleaned) return { items: [], meal_time_inferred: "snack", parse_notes: "empty" };
+  const contextualMessage = recentLogContext
+    ? `${recentLogContext}\n\nCURRENT USER MESSAGE:\n${cleaned}`
+    : cleaned;
 
   for (const name of CHAIN) {
     try {
-      const raw = await CALLERS[name](cleaned);
+      const raw = await CALLERS[name](contextualMessage);
       const parsed = extractJson(raw);
       if (name !== CHAIN[0]) console.warn(`parser: ${CHAIN[0]} down, served by ${name}`);
       return parsed;

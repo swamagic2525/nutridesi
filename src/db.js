@@ -311,6 +311,59 @@ async function dayReport(phone, daysAgo = 0) {
   return { label, meals, totals };
 }
 
+// The immediately preceding inbound log. This is intentionally narrower than a
+// 45-minute meal: implicit corrections may only affect this one message batch.
+async function lastLogBatch(phone) {
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const { data, error } = await supabase.from("user_logs")
+    .select("id, food_name, kcal, protein, quantity, matched_db_id, is_estimate, logged_at")
+    .eq("phone_number", phone).eq("date", today)
+    .order("logged_at", { ascending: false })
+    .limit(30);
+  if (error) console.error("lastLogBatch select:", error.message);
+  if (!data || data.length === 0) return [];
+  const lastTs = data[0].logged_at;
+  return data.filter(r => r.logged_at === lastTs);
+}
+
+function matchRows(rows, foodHints) {
+  const taken = new Set();
+  return (foodHints || []).map(hint => {
+    const hintWords = String(hint || "").toLowerCase().split(/[^a-z]+/).filter(w => w.length > 2);
+    let best = null, bestScore = 0;
+    for (const row of rows) {
+      if (taken.has(row.id)) continue;
+      const name = row.food_name.toLowerCase();
+      const score = hintWords.filter(w => name.includes(w)).length;
+      if (score > bestScore) { best = row; bestScore = score; }
+    }
+    if (best) taken.add(best.id);
+    return best;
+  });
+}
+
+async function deleteRows(rows) {
+  if (!rows || rows.length === 0) return;
+  const { error } = await supabase.from("user_logs").delete().in("id", rows.map(r => r.id));
+  if (error) console.error("delete rows:", error.message);
+}
+
+// Named correction targets must be in the immediately preceding message batch.
+// This intentionally does not scan the whole day: an implicit correction should
+// never surprise-delete a food from an earlier meal.
+async function deleteMatchingLastLog(phone, foodHints, batch = null) {
+  const latest = batch || await lastLogBatch(phone);
+  const matched = matchRows(latest, foodHints);
+  // Multi-item corrections are atomic: if one stated item cannot be found in
+  // the most recent batch, leave everything untouched rather than half-editing
+  // a meal and creating a worse trust failure.
+  if (matched.some(row => !row)) return null;
+  const rows = matched.filter(Boolean);
+  if (rows.length === 0) return null;
+  await deleteRows(rows);
+  return matched;
+}
+
 // Correction targeting: find and delete today's row that best name-matches each
 // corrected food — searches the whole day, not just the last message's batch,
 // so "roti was 60 cal and dal 120" replaces the right rows wherever they were
@@ -346,17 +399,8 @@ async function deleteMatching(phone, foodHints) {
 }
 
 async function deleteLastLog(phone, foodHint) {
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-  const { data, error: selErr } = await supabase.from("user_logs")
-    .select("id, food_name, kcal, protein, quantity, matched_db_id, logged_at")
-    .eq("phone_number", phone).eq("date", today)
-    .order("logged_at", { ascending: false })
-    .limit(20);
-  if (selErr) console.error("deleteLastLog select:", selErr.message);
-  if (!data || data.length === 0) return null;
-
-  const lastTs = data[0].logged_at;
-  let batch = data.filter(r => r.logged_at === lastTs);
+  let batch = await lastLogBatch(phone);
+  if (batch.length === 0) return null;
   // Correction targeting one item inside a multi-item log ("fish sticks were
   // 230 cal" after logging fish + milk + rice together): delete only the rows
   // whose name overlaps the corrected food, not the whole batch.
@@ -366,12 +410,8 @@ async function deleteLastLog(phone, foodHint) {
     const best = Math.max(...scored.map(x => x.s));
     if (best > 0) batch = scored.filter(x => x.s === best).map(x => x.r);
   }
-  const ids = batch.map(r => r.id);
-
-  const { error: delErr } = await supabase.from("user_logs").delete().in("id", ids);
-  if (delErr) console.error("deleteLastLog delete:", delErr.message);
-
+  await deleteRows(batch);
   return batch;
 }
 
-module.exports = { logMeal, todayTotal, deleteLastLog, deleteMatching, ensureUser, resolveRows, dayReport };
+module.exports = { logMeal, todayTotal, deleteLastLog, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, resolveRows, dayReport };

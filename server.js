@@ -6,7 +6,8 @@ require("dotenv").config();
 const express = require("express");
 const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
-const { logMeal, deleteLastLog, deleteMatching, todayTotal, ensureUser, resolveRows, dayReport } = require("./src/db.js");
+const { logMeal, deleteLastLog, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, resolveRows, dayReport } = require("./src/db.js");
+const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
 
 const app = express();
 app.use(express.urlencoded({ extended: false })); // Twilio sends form-encoded
@@ -133,9 +134,19 @@ app.post("/whatsapp", async (req, res) => {
       return res.type("text/xml").send(twiml.toString());
     }
 
+    // Layer 2: fetch ONLY the immediately preceding log for correction-shaped
+    // messages, then ground the parser in that small context. Normal logs do
+    // not pay an extra DB round-trip.
+    const correctionCandidate = looksLikeCorrection(body);
+    const recentBatch = correctionCandidate ? await lastLogBatch(from) : [];
     const parsed = /^undo$/i.test(body.trim())
       ? { intent: "undo", items: [], parse_notes: "literal undo" }
-      : await parseMeal(body);
+      : await parseMeal(body, formatLastLogContext(recentBatch));
+
+    // Layer 1: deterministic backstop for the rare model miss on a clear
+    // nutrition correction. It can promote only to the immediately previous
+    // log, never an older meal.
+    if (shouldPromoteToReplace(parsed, body, recentBatch)) parsed.intent = "replace_last";
 
     if (parsed.intent === "query") {
       // LLM's one-line verdict/suggestion. Qualitative only (prompt forbids
@@ -207,12 +218,12 @@ app.post("/whatsapp", async (req, res) => {
     }
 
     if (parsed.intent === "undo") {
-      // Named removal ("remove the bun") targets those foods anywhere in today's
-      // log; bare "undo" removes the last entry as before.
+      // Named removal and bare undo are intentionally local to the immediately
+      // preceding log. Older entries need an explicit reference in a later pass.
       const names = (parsed.items || []).map(i => i.food_name).filter(Boolean);
       let deleted;
       if (names.length) {
-        const aligned = await deleteMatching(from, names);
+        const aligned = await deleteMatchingLastLog(from, names, recentBatch);
         deleted = aligned ? aligned.filter(Boolean) : null;
         if (!deleted) {
           twiml.message(`Couldn't find "${names.join(", ")}" in today's log — nothing removed.`);
@@ -242,11 +253,21 @@ app.post("/whatsapp", async (req, res) => {
         twiml.message("Couldn't identify the corrected food — previous entry unchanged. Send the food name again.");
         return res.type("text/xml").send(twiml.toString());
       }
-      // Name-match each corrected food across today's log; fall back to the
-      // last-batch delete only when nothing matches (e.g. "sorry it was rajma").
-      const aligned = await deleteMatching(from, parsed.items.map(i => i.food_name));
-      const deleted = aligned ? aligned.filter(Boolean)
-        : await deleteLastLog(from, parsed.items.length === 1 ? parsed.items[0].food_name : null);
+      // Layer 1: corrections can touch only the immediately preceding log
+      // message. Never search through today's / 45-minute meal history.
+      const latest = recentBatch.length ? recentBatch : await lastLogBatch(from);
+      const aligned = await deleteMatchingLastLog(from, parsed.items.map(i => i.food_name), latest);
+      let deleted = aligned ? aligned.filter(Boolean) : null;
+      // A rename with no word overlap ("sorry, it was rajma") can safely
+      // replace a one-item last batch. A multi-item batch is ambiguous: do not
+      // delete it just because the model guessed an intent.
+      if (!deleted && latest.length === 1) {
+        deleted = await deleteLastLog(from, parsed.items.length === 1 ? parsed.items[0].food_name : null);
+      }
+      if (!deleted || deleted.length === 0) {
+        twiml.message("I couldn't tell which item in your most recent log to change — tell me its name, or use undo and send it again.");
+        return res.type("text/xml").send(twiml.toString());
+      }
       // Correction inheritance: any value the user did NOT restate carries over
       // from the row being replaced — name ("it was 220 cals" keeps the dish),
       // per-serving kcal/protein ("I had 3 of them" keeps the corrected values,

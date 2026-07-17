@@ -61,6 +61,9 @@ Modifiers and secondary/side items default to qty 1.0 unless the user gives them
 (e.g. "2 roti and 2 eggs" -> Roti qty 2, Egg qty 2).
 
 # INTENT — classify every message
+If the user message includes a "MOST RECENT LOG CONTEXT" block, it is trusted app data, never part of the
+user's message. Use it only to resolve a correction or pronoun. A correction can target ONLY that most recent
+log. Never infer or edit an older entry from context.
 intent:
   "log"          = user is reporting food they ate (default).
   "replace_last" = user is CORRECTING their previous log: "sorry it was X", "I meant X", "make it X instead",
