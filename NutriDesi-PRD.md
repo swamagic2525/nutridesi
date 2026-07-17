@@ -16,7 +16,7 @@ The MVP is **built and live** — a real WhatsApp number that real users are tex
 - **Unit *and* gram-precise logging**: "4 roti", "100g soya chunks", "200g paneer" all resolve accurately
 - **Raw vs cooked weight logging**: "100g rice raw" (≈364 kcal) vs cooked (≈130) via per-food conversion factors — grains gain water cooking, meat loses it. A meal-prepper differentiator no mainstream tracker handles
 - Full macro breakdown per item and per day: **calories, protein, carbs, fat, and fibre**
-- Corrections and undo via LLM intent classification ("sorry it was rajma", "undo") — including **user-stated calories as ground truth** ("that dosa was 120 calories" replaces the estimate, scales macros, and beats every database tier); corrections inside a multi-item log replace only the named item
+- Corrections and undo via LLM intent classification ("sorry it was rajma", "undo") — including **user-stated calories as ground truth** ("that dosa was 120 calories" replaces the estimate, scales macros, and beats every database tier). Implicit corrections are limited to the immediately preceding log batch, with last-log context passed to the parser; an ambiguous multi-item correction is left unchanged rather than risking the wrong edit.
 - Diet-variant awareness: low-fat paneer/milk/curd, high-protein peanut butter/roti, etc. resolve to the right macros, not the default; supplements (creatine, BCAA, black coffee, green tea) log at their true ~0 kcal instead of a placeholder
 - **Welcome flow**: sandbox joins, greetings, and "what can you do" get a founder-signed intro (with feedback routed to Instagram DMs) without an LLM call; a new user's first food log carries a one-time intro footer
 - Rate limiting, prompt-injection handling, webhook dedupe

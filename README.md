@@ -21,7 +21,8 @@ already are. Built by a PM & ex-fitness coach who watched clients quit every tra
 - **Full macros** — calories, protein, carbs, fat, and fibre per item and per day
 - **Never a dead end** — 4-tier fallback: curated DB → INDB reference → LLM estimate → placeholder
 - **Corrections & undo** — "undo", "sorry it was rajma", or state the truth: "that dosa was
-  120 calories" (user-stated calories override everything)
+  120 calories" (user-stated calories override everything). Implicit corrections are safely scoped to
+  the immediately preceding log, never an older item in the same 45-minute meal window.
 - **Meal clustering** — messages within 45 min group into one meal in the daily total
 - **Diet variants** — low-fat paneer/milk/curd, high-protein PB/roti/bread resolve to *their*
   macros, not the full-fat default; supplements (creatine, BCAA, black coffee) at true ~0 kcal
@@ -93,6 +94,7 @@ Text the sandbox number `2 roti and dal` → calories + running daily total.
 | `supabase-schema.sql` | Database tables |
 | `NutriDesi-PRD.md` | PRD v1.0 (as-built) |
 | `docs/post-launch-backlog.md` | Prioritized backlog with shipped-item records |
+| `docs/codex-handoff-2026-07-17.md` | Correction-safety implementation handoff and validation notes |
 
 ## What's deliberately not built
 
