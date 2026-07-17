@@ -22,6 +22,7 @@ const UNIT_GRAMS = {
   bowl: 150, katori: 120, cup: 150, plate: 200, glass: 200, serving: 150,
   medium: 150, slice: 30, scoop: 30, tbsp: 15, tsp: 5, handful: 30,
   fillet: 100, bar: 50, pack: 70, "100g": 100, white: 33, egg: 55, can: 330, piece: 60,
+  half: 2, stick: 70,
 };
 
 // Default macro split for estimated foods where macros are unknown:
