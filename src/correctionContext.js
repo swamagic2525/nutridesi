@@ -6,7 +6,7 @@ function looksLikeCorrection(text) {
   const t = String(text || "").toLowerCase().trim();
   return /\b(undo|remove|delete|sorry|actually|instead|correct|change|make it|galat|wrong)\b/.test(t) ||
     /\b(it|that|this|them|these)\s+(was|is|has|had|were|are|be|to)\b/.test(t) ||
-    /\b(was|is|has|had|were|are)\s+\d+(?:\.\d+)?\s*(?:kcal|cal(?:ories)?|g\s*(?:protein|prot))\b/.test(t) ||
+    /\b(was|is|has|had|were|are)\s+\d+(?:\.\d+)?\s*(?:g|ml|kcal|cal(?:ories)?|g\s*(?:protein|prot))\b/.test(t) ||
     /\b\d+(?:\.\d+)?\s*(?:kcal|cal(?:ories)?|g\s*(?:protein|prot))\b/.test(t) ||
     /\b(?:i )?(?:had|ate)\s+\d+(?:\.\d+)?\s+of\s+(?:them|these|this)\b/.test(t);
 }
@@ -55,4 +55,27 @@ function formatLastLogContext(batch) {
   ].join("\n");
 }
 
-module.exports = { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext };
+// Match correction targets inside one already-selected log batch. Curated IDs
+// win over text because the parser can preserve an ID even when food_name is
+// intentionally null for a correction.
+function matchRows(rows, foodHints) {
+  const taken = new Set();
+  return (foodHints || []).map(hint => {
+    const target = hint && typeof hint === "object" ? hint : { food_name: hint };
+    const hintWords = words(target.food_name);
+    const targetId = Number(target.matched_db_id) || null;
+    let best = null, bestScore = 0;
+    for (const row of rows) {
+      if (taken.has(row.id)) continue;
+      const name = String(row.food_name || "").toLowerCase();
+      const score = targetId && Number(row.matched_db_id) === targetId
+        ? 100
+        : hintWords.filter(word => name.includes(word)).length;
+      if (score > bestScore) { best = row; bestScore = score; }
+    }
+    if (best) taken.add(best.id);
+    return best;
+  });
+}
+
+module.exports = { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext, matchRows };

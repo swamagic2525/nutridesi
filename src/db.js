@@ -1,6 +1,7 @@
 // Supabase helpers: ensure user, log items, compute today's total.
 const { createClient } = require("@supabase/supabase-js");
 const { FOOD_BY_ID } = require("./foods.js");
+const { matchRows } = require("./correctionContext.js");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -326,22 +327,6 @@ async function lastLogBatch(phone) {
   return data.filter(r => r.logged_at === lastTs);
 }
 
-function matchRows(rows, foodHints) {
-  const taken = new Set();
-  return (foodHints || []).map(hint => {
-    const hintWords = String(hint || "").toLowerCase().split(/[^a-z]+/).filter(w => w.length > 2);
-    let best = null, bestScore = 0;
-    for (const row of rows) {
-      if (taken.has(row.id)) continue;
-      const name = row.food_name.toLowerCase();
-      const score = hintWords.filter(w => name.includes(w)).length;
-      if (score > bestScore) { best = row; bestScore = score; }
-    }
-    if (best) taken.add(best.id);
-    return best;
-  });
-}
-
 async function deleteRows(rows) {
   if (!rows || rows.length === 0) return;
   const { error } = await supabase.from("user_logs").delete().in("id", rows.map(r => r.id));
@@ -352,7 +337,9 @@ async function deleteRows(rows) {
 // This intentionally does not scan the whole day: an implicit correction should
 // never surprise-delete a food from an earlier meal.
 async function deleteMatchingLastLog(phone, foodHints, batch = null) {
-  const latest = batch || await lastLogBatch(phone);
+  // [] is truthy in JavaScript. Treat an empty context as absent so a
+  // correction that was not pre-classified still looks up the latest batch.
+  const latest = batch && batch.length ? batch : await lastLogBatch(phone);
   const matched = matchRows(latest, foodHints);
   // Multi-item corrections are atomic: if one stated item cannot be found in
   // the most recent batch, leave everything untouched rather than half-editing

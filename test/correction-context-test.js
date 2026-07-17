@@ -1,5 +1,5 @@
 const assert = require("assert");
-const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("../src/correctionContext.js");
+const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext, matchRows } = require("../src/correctionContext.js");
 
 const cake = [{ id: 12, food_name: "Cake slice", quantity: 1, kcal: 220, protein: 3, is_estimate: true }];
 const breakfast = [
@@ -8,6 +8,7 @@ const breakfast = [
 ];
 
 assert(looksLikeCorrection("cake slice was 150 kcal, 5g protein"));
+assert(looksLikeCorrection("Chicken breast was 50g"));
 assert(looksLikeCorrection("I had 3 of them"));
 assert(!looksLikeCorrection("I had 3 eggs and toast"));
 
@@ -19,4 +20,12 @@ assert(!shouldPromoteToReplace({ intent: "log", items: [{ food_name: "roti", sta
 const context = formatLastLogContext(breakfast);
 assert(context.includes("Roti / Chapati ×2"));
 assert(context.includes("Dal Tadka"));
-console.log("Correction context tests: passed (6 cases)");
+
+const multiItemBatch = [
+  { id: 1, food_name: "150g Chicken Breast", matched_db_id: 68 },
+  { id: 2, food_name: "Roti / Chapati", matched_db_id: 1 },
+  { id: 3, food_name: "Bhel Puri", matched_db_id: 59 },
+];
+const [matchedChicken] = matchRows(multiItemBatch, [{ food_name: null, matched_db_id: 68 }]);
+assert.strictEqual(matchedChicken.id, 1);
+console.log("Correction context tests: passed (8 cases)");
