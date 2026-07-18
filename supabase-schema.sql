@@ -13,6 +13,12 @@ create table if not exists users (
   created_at timestamptz default now()
 );
 
+-- Additive migration for databases created before the goal loop shipped.
+-- Safe to run repeatedly in Supabase SQL Editor.
+alter table users add column if not exists name text;
+alter table users add column if not exists goal_protein int;
+alter table users add column if not exists nudge_count int default 0;
+
 -- Food database: the 58-item alias table (seeded by scripts, see src/foods.js)
 create table if not exists foods (
   id int primary key,

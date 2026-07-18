@@ -6,11 +6,53 @@ require("dotenv").config();
 const express = require("express");
 const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
+const { loadMetrics } = require("./src/metrics.js");
+const { metricsPage } = require("./src/metricsPage.js");
 const { logMeal, deleteLastLog, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
 
 const app = express();
 app.use(express.urlencoded({ extended: false })); // Twilio sends form-encoded
+
+function metricsAuth(req, res, next) {
+  const expectedUser = process.env.METRICS_USER;
+  const expectedPassword = process.env.METRICS_PASSWORD;
+  const fail = () => {
+    res.set("WWW-Authenticate", 'Basic realm="NutriDesi Metrics"');
+    return res.status(401).send("Authentication required.");
+  };
+  if (!expectedUser || !expectedPassword) return res.status(503).send("Metrics authentication is not configured.");
+  const header = req.headers.authorization || "";
+  if (!header.startsWith("Basic ")) return fail();
+  const decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
+  const separator = decoded.indexOf(":");
+  if (separator < 0) return fail();
+  const user = decoded.slice(0, separator);
+  const password = decoded.slice(separator + 1);
+  if (user !== expectedUser || password !== expectedPassword) return fail();
+  return next();
+}
+
+const METRICS_CACHE_MS = 60 * 1000;
+let metricsCache = { value: null, at: 0, pending: null };
+async function currentMetrics() {
+  if (metricsCache.value && Date.now() - metricsCache.at < METRICS_CACHE_MS) return metricsCache.value;
+  if (!metricsCache.pending) {
+    metricsCache.pending = loadMetrics()
+      .then(value => { metricsCache.value = value; metricsCache.at = Date.now(); return value; })
+      .finally(() => { metricsCache.pending = null; });
+  }
+  return metricsCache.pending;
+}
+
+app.get("/metrics", metricsAuth, (_req, res) => res.type("html").send(metricsPage()));
+app.get("/metrics/data", metricsAuth, async (_req, res) => {
+  try { return res.json(await currentMetrics()); }
+  catch (error) {
+    console.error("metrics error:", error.message);
+    return res.status(503).json({ error: "Metrics are temporarily unavailable. Check dashboard configuration." });
+  }
+});
 
 app.get("/", (_req, res) => res.send("NutriDesi is running."));
 

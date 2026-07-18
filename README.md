@@ -50,6 +50,32 @@ recipes) as a fuzzy-matched reference tier in Supabase.
 5-minute healthcheck that WhatsApp-alerts the founder on downtime or low Twilio balance).
 Cloud deploy + proper WhatsApp Business number planned (`docs/post-launch-backlog.md` #0).
 
+## Founder metrics dashboard
+
+`/metrics` is a private, read-only dashboard for the beta's decision metrics:
+users, DAU, join-cohort D1/D3/D7 retention, return rate, food-items-per-active-user,
+estimate/uncurated rates, top missing foods, and goal adoption. It excludes `+000`
+test numbers and never renders phone numbers or message text.
+
+Set these server-side environment variables before opening it:
+
+```bash
+METRICS_USER=...
+METRICS_PASSWORD=...
+```
+
+Open `/metrics` and authenticate with HTTP Basic Auth. The browser receives only
+aggregated data; it never receives a Supabase key. The authenticated server uses
+its existing backend-only service key, so RLS can remain enabled with no public
+`anon`/`SELECT` policy on phone-number tables. Metrics 10–12 (failures, latency,
+correction rate) are intentionally deferred until an events table is added. D7
+is labelled **join-cohort retention** and can be understated by the Twilio
+Sandbox's re-join expiry.
+
+If your Supabase project predates the goal loop, run the three additive `alter
+table users ...` statements in `supabase-schema.sql`. Until then goal adoption
+shows 0% with an availability note.
+
 ## Setup
 
 1. **Install**

@@ -36,26 +36,23 @@ and client-side Supabase access.
 ## Architecture
 
 `src/metrics.js` fetches required `users` and `user_logs` columns with the
-existing backend-only service key and reduces them into a PII-free JSON model. `server.js`
-adds protected page/data routes. The page is a static HTML renderer with inline
-CSS/JS and Chart.js loaded from CDN.
+existing backend-only service key and reduces them into a PII-free JSON model.
+`server.js` adds protected page/data routes. The page is a static HTML renderer
+with inline CSS/JS and Chart.js loaded from CDN.
 
 Goal adoption degrades to `0%` with an explanatory availability flag if the
 live database has not yet run the additive goal-column migration.
 
 ## Data shape
 
-The endpoint returns:
-
 ```js
 {
   asOf, totalUsers, activeToday,
   d7: { rate, eligibleUsers },
-  estimate: { overallRate, uncuratedOverallRate, daily: [...] },
-  growth: { dau: [...], newUsers: [...] },
+  estimate: { overallRate, uncuratedOverallRate, daily: [] },
+  growth: { dau: [], newUsers: [] },
   cohorts: [{ date, size, d1, d3, d7 }],
-  nextDayReturn: [...],
-  engagement: [...],
+  nextDayReturn: [], engagement: [],
   topUncurated: [{ foodName, count }],
   goalAdoption: { rate, available }
 }
@@ -66,6 +63,6 @@ No response property contains a phone number, raw message, or individual log.
 ## Setup
 
 The dashboard requires `METRICS_USER` and `METRICS_PASSWORD` in `.env`; it
-uses the existing server-only `SUPABASE_SERVICE_KEY`. Existing databases
-additionally need the additive `users` migration for `name`, `goal_protein`,
-and `nudge_count`.
+uses the existing server-only `SUPABASE_SERVICE_KEY`. Existing databases also
+need the additive `users` migration for `name`, `goal_protein`, and
+`nudge_count`.
