@@ -144,8 +144,11 @@ async function fetchAll(client, table, columns) {
 
 async function loadMetrics() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_READONLY_KEY;
-  if (!url || !key) throw new Error("Metrics dashboard is missing SUPABASE_READONLY_KEY.");
+  // The dashboard route is protected by HTTP Basic Auth and runs only on the
+  // backend. Use the existing server key here so RLS can stay strict: the
+  // public anon/publishable role must never gain SELECT access to phone rows.
+  const key = process.env.SUPABASE_SERVICE_KEY;
+  if (!url || !key) throw new Error("Metrics dashboard is missing server Supabase configuration.");
   const client = createClient(url, key);
   const users = await fetchAll(client, "users", "phone_number,created_at");
   let goalFieldAvailable = true;

@@ -60,16 +60,17 @@ test numbers and never renders phone numbers or message text.
 Set these server-side environment variables before opening it:
 
 ```bash
-SUPABASE_READONLY_KEY=...
 METRICS_USER=...
 METRICS_PASSWORD=...
 ```
 
 Open `/metrics` and authenticate with HTTP Basic Auth. The browser receives only
-aggregated data; it never receives a Supabase key. Metrics 10–12 (failures,
-latency, correction rate) are intentionally deferred until an events table is
-added. D7 is labelled **join-cohort retention** and can be understated by the
-Twilio Sandbox's re-join expiry.
+aggregated data; it never receives a Supabase key. The authenticated server uses
+its existing backend-only service key, so RLS can remain enabled with no public
+`anon`/`SELECT` policy on phone-number tables. Metrics 10–12 (failures, latency,
+correction rate) are intentionally deferred until an events table is added. D7
+is labelled **join-cohort retention** and can be understated by the Twilio
+Sandbox's re-join expiry.
 
 If your Supabase project predates the goal loop, run the three additive `alter
 table users ...` statements in `supabase-schema.sql`. Until then goal adoption

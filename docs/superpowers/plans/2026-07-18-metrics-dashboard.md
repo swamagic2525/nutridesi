@@ -4,8 +4,9 @@
 
 1. Add pure metric aggregation and fixtures for cohort retention, test-number
    exclusion, estimates, uncurated grouping, and goals.
-2. Add server-side read-only Supabase loading plus Basic-Auth `/metrics` and
-   `/metrics/data` routes with a 60-second cache.
+2. Add server-side aggregate loading with the existing backend-only Supabase
+   service key plus Basic-Auth `/metrics` and `/metrics/data` routes with a
+   60-second cache. Do not weaken RLS or add anon table reads.
 3. Add a Chart.js one-page view with summary cards, growth, cohorts, quality,
    top uncurated foods, engagement, and goal adoption.
 4. Add idempotent goal-column SQL migration and dashboard setup documentation.

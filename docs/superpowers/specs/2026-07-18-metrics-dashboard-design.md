@@ -8,8 +8,9 @@ Build a private, read-only founder dashboard for PRD metrics 1–9 and 13.
 - `GET /metrics/data` returns PII-free aggregates only.
 - Both routes require HTTP Basic Auth via `METRICS_USER` and
   `METRICS_PASSWORD`.
-- Server-side Supabase access uses `SUPABASE_READONLY_KEY`; no database key is
-  sent to the browser.
+- Server-side Supabase access uses the existing `SUPABASE_SERVICE_KEY`; no
+  database key is sent to the browser. This lets public `anon` access remain
+  fully blocked by RLS.
 - Responses are cached for 60 seconds.
 
 ## Metric conventions
