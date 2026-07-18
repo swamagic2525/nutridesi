@@ -291,6 +291,30 @@
     padding:.85rem 1.6rem;border-radius:999px;
   }
   .btn:hover{background:#054840}
+
+  /* waitlist composer — styled like WhatsApp's own message-input row */
+  .close__waitline{margin-bottom:1.1rem;font-size:.97rem;color:#43535E;max-width:44ch;margin-left:auto;margin-right:auto}
+  .composer{display:flex;gap:.5rem;max-width:430px;margin:0 auto}
+  .composer__input{
+    flex:1;min-width:0;border:1px solid var(--rule);border-radius:999px;
+    padding:.72rem 1.1rem;font:inherit;font-size:.95rem;
+    background:#fff;color:var(--ink);box-shadow:var(--shadow);
+  }
+  .composer__input::placeholder{color:var(--ink-soft)}
+  .composer__input:focus{outline:2px solid var(--green-deep);outline-offset:1px}
+  .composer__send{
+    background:var(--green-deep);color:#fff;border:0;border-radius:50%;
+    width:47px;height:47px;flex:none;cursor:pointer;
+    display:grid;place-items:center;font-size:1.05rem;
+  }
+  .composer__send:hover{background:#054840}
+  .composer__send:focus-visible{outline:2px solid var(--green-deep);outline-offset:3px}
+  .wl-done{display:none;justify-content:center}
+  .wl-done .bubble--in{max-width:340px}
+  .wl-done.is-done{display:flex}
+  .wl-done__text{font-size:.92rem;color:var(--ink)}
+  .close__hint{margin-top:1rem;font-size:.85rem;color:var(--ink-soft)}
+  .close__hint a{color:var(--green-deep)}
   .close__sub{
     margin-top:.9rem;font-size:.85rem;color:var(--ink-soft);
     font-family:'Space Mono',monospace;
@@ -553,9 +577,24 @@
 
   <section class="close">
     <h2 class="close__line">Tell it what you ate. That's the whole product.</h2>
-    <!-- TEMP-CTA: swap to https://wa.me/<number>?text=hi + label "Start on WhatsApp →" when the WABA number is live -->
-    <a class="btn" href="https://ig.me/m/swapnilgore2525">Join the beta →</a>
+    <!-- TEMP-CTA: when the WABA number is live, restore the big button:
+         <a class="btn" href="https://wa.me/<number>?text=hi">Start on WhatsApp →</a>
+         and demote or remove the waitlist composer. -->
+    <p class="close__waitline">The permanent WhatsApp number opens in a few days. Drop your number, email, or IG handle — you get it first.</p>
+    <form class="composer" name="waitlist" method="POST" action="/thanks.html" data-netlify="true" netlify-honeypot="bot-field">
+      <input type="hidden" name="form-name" value="waitlist">
+      <p hidden><label>Don't fill this out: <input name="bot-field"></label></p>
+      <label class="sr-only" for="contact">Your WhatsApp number, email, or Instagram handle</label>
+      <input class="composer__input" id="contact" name="contact" type="text" required minlength="3" maxlength="120" placeholder="WhatsApp number, email, or IG handle" autocomplete="on">
+      <button class="composer__send" type="submit" aria-label="Join the waitlist">➤</button>
+    </form>
+    <div class="wl-done msg--in" role="status">
+      <div class="bubble bubble--in">
+        <p class="wl-done__text">You're on the list. The number lands here first. <span aria-hidden="true">✓✓</span></p>
+      </div>
+    </div>
     <p class="close__sub">no app · no signup · your number is your account</p>
+    <p class="close__hint">or <a href="https://ig.me/m/swapnilgore2525">DM me on Instagram</a> to join today's beta</p>
   </section>
 
   </main>
@@ -636,6 +675,23 @@
       });
     }, { threshold:.18, rootMargin:'0px 0px -8% 0px' });
     document.querySelectorAll('.reveal:not([data-step])').forEach(function(el){ io.observe(el); });
+  }
+
+  // Waitlist: submit in place, reply as a chat bubble. Falls back to the
+  // native POST (→ /thanks.html) if fetch fails.
+  var wl = document.querySelector('form[name="waitlist"]');
+  if(wl){
+    wl.addEventListener('submit', function(e){
+      e.preventDefault();
+      var body = new URLSearchParams(new FormData(wl)).toString();
+      fetch('/', { method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, body:body })
+        .then(function(r){
+          if(!r.ok) throw new Error(r.status);
+          wl.style.display = 'none';
+          document.querySelector('.wl-done').classList.add('is-done');
+        })
+        .catch(function(){ wl.submit(); });
+    });
   }
 })();
 </script>
