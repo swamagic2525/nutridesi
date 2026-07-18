@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1200">
+<title>OG Image — screenshot this at 1200×630</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600&family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..700,0..100,0..1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    width:1200px;height:630px;overflow:hidden;
+    background:#E5DDD5;
+    font-family:'Archivo',system-ui,sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    padding:48px 72px;gap:56px;
+  }
+  .left{flex:1;min-width:0}
+  .right{flex:none;width:400px}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:10px;
+    background:#075E54;color:#fff;
+    font-weight:600;font-size:18px;
+    padding:8px 18px 8px 12px;border-radius:999px;
+    margin-bottom:28px;
+  }
+  .badge__dot{width:10px;height:10px;border-radius:50%;background:#25D366;flex:none}
+
+  .user-msg{
+    background:#D9FDD3;
+    border-radius:16px;border-top-right-radius:4px;
+    padding:24px 28px 18px;
+    box-shadow:0 2px 4px rgba(11,20,26,.1);
+    margin-bottom:20px;
+    max-width:520px;
+  }
+  .hinglish{
+    font-family:'Fraunces',Georgia,serif;
+    font-variation-settings:'SOFT' 55,'WONK' 1,'opsz' 120;
+    font-weight:500;font-size:36px;line-height:1.15;
+    color:#111B21;letter-spacing:-.01em;
+  }
+
+  .bot-msg{
+    background:#fff;
+    border-radius:16px;border-top-left-radius:4px;
+    padding:22px 26px 16px;
+    box-shadow:0 2px 4px rgba(11,20,26,.1);
+    max-width:400px;
+  }
+  .rcpt-head{
+    font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    color:#075E54;margin-bottom:12px;
+  }
+  .rcpt-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:8px 0;border-bottom:1px solid rgba(17,27,33,.1);
+    font-size:15px;
+  }
+  .rcpt-food{font-weight:500}
+  .rcpt-num{font-family:'Space Mono',monospace;font-size:14px;white-space:nowrap}
+  .rcpt-num b{font-weight:700}
+  .rcpt-p{color:#667781}
+  .rcpt-total{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding-top:12px;margin-top:4px;
+  }
+  .rcpt-totlabel{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:#667781}
+  .rcpt-totnum{font-family:'Space Mono',monospace;font-weight:700;font-size:16px}
+
+  .tagline{
+    font-family:'Fraunces',Georgia,serif;
+    font-variation-settings:'SOFT' 55,'WONK' 1;
+    font-size:22px;font-weight:500;line-height:1.35;
+    color:#111B21;margin-top:28px;
+    max-width:520px;
+  }
+  .tagline span{color:#667781;font-size:17px;display:block;margin-top:6px;font-family:'Archivo',sans-serif;font-weight:400}
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="badge"><span class="badge__dot"></span>NutriDesi</div>
+    <div class="user-msg">
+      <div class="hinglish">2 roti, ek katori dal aur thodi si sabzi</div>
+    </div>
+    <p class="tagline">Calorie tracking that speaks Hinglish.<span>No app. No signup. Just WhatsApp.</span></p>
+  </div>
+  <div class="right">
+    <div class="bot-msg">
+      <div class="rcpt-head">Logged</div>
+      <div class="rcpt-row">
+        <span class="rcpt-food">Roti / Chapati ×2</span>
+        <span class="rcpt-num"><b>178</b> kcal <span class="rcpt-p">· 5g P</span></span>
+      </div>
+      <div class="rcpt-row">
+        <span class="rcpt-food">Dal Tadka · 1 katori</span>
+        <span class="rcpt-num"><b>180</b> kcal <span class="rcpt-p">· 10g P</span></span>
+      </div>
+      <div class="rcpt-row">
+        <span class="rcpt-food">Mixed Veg · ½ katori</span>
+        <span class="rcpt-num"><b>60</b> kcal <span class="rcpt-p">· 2g P</span></span>
+      </div>
+      <div class="rcpt-total">
+        <span class="rcpt-totlabel">Meal 1</span>
+        <span class="rcpt-totnum">418 kcal · 17g P</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
