@@ -221,3 +221,19 @@ Do #1 (data sourcing) exploratory first — it's the only one with unknown scope
 #3 and #4 touch the same resolver code in `db.js`, so batch them in one pass.
 All are quality/safety upgrades; ship behind a real-user retention signal, not
 before it (per the D7 kill-criteria in CLAUDE.md).
+
+---
+
+## Quick wins parked 2026-07-18 (do in any idle slot)
+
+1. **Update the IG DM automation reply** (Meta Business Suite → Inbox →
+   Automations → Custom keywords): the site now runs a waitlist-first funnel
+   (nutridesi.co → signup → beta link in the success bubble), so the DM reply
+   should match — lead with nutridesi.co, keep the direct sandbox link as the
+   "impatient? try it right now" second line. 500-char limit.
+2. **Add "Palak Sabzi (no paneer)" curated entry** (~120 kcal/bowl): "palak
+   sabji" currently closest-matches Palak Paneer at 250 kcal — transparent but
+   ~2x off for the plain dish.
+3. **Dedupe papad/almonds/peanuts in `src/foods.js`** (ids 63/147, 57/151,
+   56/159 — identical aliases, parser picks either nondeterministically).
+   A spawned background-task chip for this already exists in the session.

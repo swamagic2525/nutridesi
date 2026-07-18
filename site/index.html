@@ -289,12 +289,24 @@
     background:var(--green-deep);color:#fff;text-decoration:none;
     font-weight:600;font-size:1rem;
     padding:.85rem 1.6rem;border-radius:999px;
+    border:0;cursor:pointer;font-family:inherit;
   }
   .btn:hover{background:#054840}
+  .wl-open{background:var(--green-live);color:#04231c}
+  .wl-open:hover{background:#1fc25c}
 
   /* waitlist composer — styled like WhatsApp's own message-input row */
-  .close__waitline{margin-bottom:1.1rem;font-size:.97rem;color:#43535E;max-width:44ch;margin-left:auto;margin-right:auto}
-  .composer{display:flex;gap:.5rem;max-width:430px;margin:0 auto}
+  .close__waitline{margin-bottom:.5rem;font-size:.97rem;color:#43535E;max-width:44ch;margin-left:auto;margin-right:auto}
+  .close__founding{margin-bottom:1.1rem;font-size:.88rem;color:var(--green-deep);max-width:44ch;margin-left:auto;margin-right:auto}
+  .composer{display:flex;flex-direction:column;gap:.5rem;max-width:430px;margin:0 auto}
+  .composer__row{display:flex;gap:.5rem}
+  .composer__row .composer__input{flex:1}
+  /* Progressive enhancement: no-JS shows the form directly; JS shows the
+     button and reveals the form on click. */
+  .wl-open{display:none}
+  .js .wl-open{display:inline-block;margin:0 auto}
+  .js .composer{display:none}
+  .js .composer.is-open{display:flex}
   .composer__input{
     flex:1;min-width:0;border:1px solid var(--rule);border-radius:999px;
     padding:.72rem 1.1rem;font:inherit;font-size:.95rem;
@@ -588,16 +600,22 @@
          demote or remove the waitlist composer, and drop the sandbox beta link
          in the wl-done bubble below. -->
     <p class="close__waitline">The permanent WhatsApp number opens in a few days. Drop your number, email, or IG handle — you get it first.</p>
-    <form class="composer" name="waitlist" method="POST" action="/thanks.html" data-netlify="true" netlify-honeypot="bot-field">
+    <p class="close__founding">First 50 on the list become <b>founding members</b> — the core tracker stays free for them, for life.</p>
+    <button class="btn wl-open" type="button" aria-expanded="false" aria-controls="waitlist-form">Join the waitlist</button>
+    <form class="composer" id="waitlist-form" name="waitlist" method="POST" action="/thanks.html" data-netlify="true" netlify-honeypot="bot-field">
       <input type="hidden" name="form-name" value="waitlist">
       <p hidden><label>Don't fill this out: <input name="bot-field"></label></p>
-      <label class="sr-only" for="contact">Your WhatsApp number, email, or Instagram handle</label>
-      <input class="composer__input" id="contact" name="contact" type="text" required minlength="3" maxlength="120" placeholder="WhatsApp number, email, or IG handle" autocomplete="on">
-      <button class="composer__send" type="submit" aria-label="Join the waitlist">➤</button>
+      <label class="sr-only" for="wl-name">Your name</label>
+      <input class="composer__input" id="wl-name" name="name" type="text" required maxlength="60" placeholder="Your name" autocomplete="name">
+      <div class="composer__row">
+        <label class="sr-only" for="contact">Your WhatsApp number, email, or Instagram handle</label>
+        <input class="composer__input" id="contact" name="contact" type="text" required minlength="3" maxlength="120" placeholder="WhatsApp number, email, or IG handle" autocomplete="on">
+        <button class="composer__send" type="submit" aria-label="Join the waitlist">➤</button>
+      </div>
     </form>
     <div class="wl-done msg--in" role="status">
       <div class="bubble bubble--in">
-        <p class="wl-done__text">You're on the list. The number lands here first. <span aria-hidden="true">✓✓</span></p>
+        <p class="wl-done__text">You're on the list — founding-member spot noted. The number lands here first. <span aria-hidden="true">✓✓</span></p>
         <p class="wl-done__text"><a class="wl-done__beta" href="https://wa.me/14155238886?text=join%20electric-detail">Meanwhile — try the beta right now →</a><br><span class="wl-done__note">opens WhatsApp on the temporary test number, join message pre-typed</span></p>
       </div>
     </div>
@@ -684,9 +702,18 @@
     document.querySelectorAll('.reveal:not([data-step])').forEach(function(el){ io.observe(el); });
   }
 
-  // Waitlist: submit in place, reply as a chat bubble. Falls back to the
-  // native POST (→ /thanks.html) if fetch fails.
+  // Waitlist: button reveals the form, submit in place, reply as a chat
+  // bubble. Falls back to the native POST (→ /thanks.html) if fetch fails.
   var wl = document.querySelector('form[name="waitlist"]');
+  var wlOpen = document.querySelector('.wl-open');
+  if(wlOpen && wl){
+    wlOpen.addEventListener('click', function(){
+      wlOpen.style.display = 'none';
+      wlOpen.setAttribute('aria-expanded', 'true');
+      wl.classList.add('is-open');
+      document.getElementById('wl-name').focus();
+    });
+  }
   if(wl){
     wl.addEventListener('submit', function(e){
       e.preventDefault();
