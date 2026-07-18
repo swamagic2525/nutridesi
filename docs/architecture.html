@@ -1,0 +1,233 @@
+<title>NutriDesi — System Architecture &amp; Logic</title>
+<style>
+  :root {
+    --ground: #FBFBF9;
+    --surface: #F2F4F0;
+    --ink: #1D2521;
+    --muted: #5C6B62;
+    --accent: #1B8755;
+    --accent-soft: #E3F0E8;
+    --scar: #B3542D;
+    --scar-soft: #F6EAE2;
+    --line: #DDE3DD;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #121714; --surface: #1A211C; --ink: #E8EDE9; --muted: #93A399;
+      --accent: #3FBF7F; --accent-soft: #1C2F24; --scar: #D98153; --scar-soft: #2E211A; --line: #2A332C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #121714; --surface: #1A211C; --ink: #E8EDE9; --muted: #93A399;
+    --accent: #3FBF7F; --accent-soft: #1C2F24; --scar: #D98153; --scar-soft: #2E211A; --line: #2A332C;
+  }
+  :root[data-theme="light"] {
+    --ground: #FBFBF9; --surface: #F2F4F0; --ink: #1D2521; --muted: #5C6B62;
+    --accent: #1B8755; --accent-soft: #E3F0E8; --scar: #B3542D; --scar-soft: #F6EAE2; --line: #DDE3DD;
+  }
+  html { background: var(--ground); }
+  body {
+    font-family: var(--sans); color: var(--ink); background: var(--ground);
+    line-height: 1.65; margin: 0; padding: 1.25rem 1.1rem 4rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 40rem; margin: 0 auto; }
+  h1 { font-size: 1.7rem; line-height: 1.2; margin: 0.5rem 0 0.3rem; letter-spacing: -0.02em; text-wrap: balance; }
+  .subtitle { color: var(--muted); margin: 0 0 0.4rem; font-size: 1rem; }
+  .meta { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); letter-spacing: 0.04em; }
+  h2 { font-size: 1.22rem; margin: 2.6rem 0 0.6rem; letter-spacing: -0.01em; text-wrap: balance; }
+  h3 { font-size: 1rem; margin: 1.5rem 0 0.4rem; }
+  p { margin: 0.6rem 0; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--accent); display: block; margin: 2.6rem 0 -2.35rem;
+  }
+  .eyebrow + h2 { margin-top: 2.7rem; }
+  code {
+    font-family: var(--mono); font-size: 0.83em; background: var(--surface);
+    padding: 0.1em 0.35em; border-radius: 4px; word-break: break-word;
+  }
+  pre {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    padding: 0.8rem 0.9rem; overflow-x: auto; font-size: 0.78rem; line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; }
+  .flow { display: flex; flex-direction: column; gap: 0; margin: 1.2rem 0; }
+  .flow-box {
+    border: 1.5px solid var(--line); border-radius: 10px; padding: 0.6rem 0.9rem;
+    background: var(--surface);
+  }
+  .flow-box strong { display: block; font-size: 0.92rem; }
+  .flow-box span { color: var(--muted); font-size: 0.82rem; }
+  .flow-box.hot { border-color: var(--accent); background: var(--accent-soft); }
+  .flow-arrow { text-align: center; color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.84rem; margin: 0.8rem 0; }
+  .table-wrap { overflow-x: auto; margin: 0.8rem 0; }
+  th { text-align: left; font-family: var(--mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; padding: 0.4rem 0.7rem 0.4rem 0; border-bottom: 1.5px solid var(--line); }
+  td { padding: 0.5rem 0.7rem 0.5rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td:first-child { white-space: nowrap; }
+  ul, ol { padding-left: 1.2rem; margin: 0.6rem 0; }
+  li { margin: 0.35rem 0; }
+  .tier {
+    border-left: 3px solid var(--accent); background: var(--surface);
+    padding: 0.55rem 0.9rem; margin: 0.6rem 0; border-radius: 0 8px 8px 0;
+  }
+  .tier strong { font-size: 0.9rem; }
+  .tier p { margin: 0.2rem 0 0; font-size: 0.88rem; color: var(--muted); }
+  .scar-card {
+    border-left: 3px solid var(--scar); background: var(--scar-soft);
+    padding: 0.6rem 0.9rem; margin: 0.7rem 0; border-radius: 0 8px 8px 0; font-size: 0.9rem;
+  }
+  .scar-card strong { color: var(--scar); }
+  .scar-card p { margin: 0.25rem 0; }
+  .callout {
+    background: var(--accent-soft); border-radius: 10px; padding: 0.8rem 1rem;
+    margin: 1rem 0; font-size: 0.92rem;
+  }
+  hr { border: none; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+</style>
+
+<main>
+<p class="meta">NUTRIDESI · INTERNAL DOC · 10 JUL 2026</p>
+<h1>System architecture &amp; logic</h1>
+<p class="subtitle">How a WhatsApp message becomes a calorie log — the full pipeline, the parser brain, the failure defenses, and everything that broke on the way here.</p>
+
+<div class="callout"><strong>The one-sentence product:</strong> people fail at calorie tracking because opening an app after dinner is friction — so the tracker lives inside WhatsApp, where they already are. Users text what they ate in Hinglish; the bot replies with calories and macros in 2–5 seconds. No app, no account.</div>
+
+<span class="eyebrow">Part 1</span>
+<h2>The architecture at a glance</h2>
+<p>Six hops, all synchronous, one round trip. The entire response must fit inside Twilio's 15-second webhook window (it currently takes 2–5s).</p>
+
+<div class="flow">
+  <div class="flow-box"><strong>User's phone</strong><span>"2 roti aur dal" via WhatsApp</span></div>
+  <div class="flow-arrow">&#8595;</div>
+  <div class="flow-box"><strong>Twilio WhatsApp Sandbox</strong><span>Shared test number. Receives the message, fires an HTTP webhook.</span></div>
+  <div class="flow-arrow">&#8595;</div>
+  <div class="flow-box"><strong>ngrok tunnel</strong><span>Public URL &#8594; the Mac Mini at home. Free tier now gives a stable domain that survives restarts.</span></div>
+  <div class="flow-arrow">&#8595;</div>
+  <div class="flow-box hot"><strong>Node/Express server — server.js</strong><span>The brain. Rate limiting, dedupe, intent routing, reply formatting. Runs on the Mac Mini under launchd supervision.</span></div>
+  <div class="flow-arrow">&#8595; &#8593;</div>
+  <div class="flow-box"><strong>LLM chain — parser.js</strong><span>Gemini &#8594; Groq &#8594; Claude. One call returns structured JSON: foods, quantities, and intent.</span></div>
+  <div class="flow-arrow">&#8595; &#8593;</div>
+  <div class="flow-box"><strong>Supabase (Postgres)</strong><span>users · user_logs · foods_reference. Totals, meal clustering, corrections.</span></div>
+  <div class="flow-arrow">&#8595;</div>
+  <div class="flow-box"><strong>TwiML reply</strong><span>"&#9989; Logged: … Today: 458 kcal · P24g C66g F10g" — back through Twilio to the phone.</span></div>
+</div>
+
+<p>A key property: the reply is returned <em>inside</em> the webhook response (TwiML), so sending replies needs no API credentials and no separate send step. This is also why the bot kept "working" for a day while the Twilio credentials in <code>.env</code> were quietly wrong — nothing on the happy path ever used them.</p>
+
+<span class="eyebrow">Part 2</span>
+<h2>Life of a message</h2>
+<ol>
+  <li><strong>Dedupe check.</strong> Twilio retries webhooks that take &gt;15s. Every message carries a unique <code>MessageSid</code>; repeats are dropped instantly so a retry can never double-log a meal.</li>
+  <li><strong>Gate checks, before any money is spent.</strong> Message longer than 300 chars &#8594; bounced with a hint. Sender over 25 messages/hour or 60/day &#8594; polite rate-limit reply. Both fire before the LLM call, so abuse costs nothing.</li>
+  <li><strong>One LLM call.</strong> The message (WhatsApp markdown stripped, emojis kept) goes to the parser with a ~3k-token system prompt. Back comes JSON: an <code>intent</code>, an items array with quantities and database matches, and parse notes.</li>
+  <li><strong>Intent routing.</strong> <code>log</code> &#8594; insert rows. <code>replace_last</code> &#8594; delete the previous batch, insert the corrected food. <code>undo</code> &#8594; delete the last batch, show what was removed. A literal "undo" text skips the LLM entirely.</li>
+  <li><strong>Food resolution</strong> (Part 4) turns each item into kcal + protein/carbs/fat.</li>
+  <li><strong>Totals &amp; meal clustering.</strong> Today's rows are fetched once (in parallel with the user upsert, saving a round trip); messages within 45 minutes of each other cluster into the same "meal" in the reply.</li>
+  <li><strong>Reply formatted and returned.</strong> Every line shows what was assumed — "(est.)" markers, quantity multipliers, a macro legend.</li>
+</ol>
+
+<span class="eyebrow">Part 3</span>
+<h2>The parser brain</h2>
+<p>Everything the LLM knows arrives in one system prompt. Its design choices:</p>
+<ul>
+  <li><strong>The food list is pipe-formatted, not JSON</strong> — <code>ID 17 | Dal Tadka | aliases: dal, daal, tadka dal… | 180 kcal/bowl</code>. Around 60–70% fewer tokens than JSON, and the alias strings sit where the model's attention lands. Aliases are the single biggest lever on parse accuracy.</li>
+  <li><strong>Intent classification is in the same call.</strong> "sorry it was rajma", "make it 2x", "remove that last one" — the model labels every message <code>log</code> / <code>replace_last</code> / <code>undo</code>. Regex couldn't survive contact with real phrasing; the LLM catches wordings never seen before. Tie-break rule: when unsure, prefer <code>log</code> — a duplicate is recoverable, a wrongly deleted meal is not.</li>
+  <li><strong>Quantity normalisation:</strong> loose Hinglish maps to five discrete multipliers — <em>thodi si / adha</em> &#8594; 0.5, default 1.0, <em>sawa</em> &#8594; 1.5, <em>dabake / do</em> &#8594; 2.0, <em>teen / extra</em> &#8594; 3.0. Anything else is coerced to 1.0 server-side.</li>
+  <li><strong>No-decomposition rule:</strong> a named dish is ONE item. "Bhelpuri" must never become puri + sev + sabzi (that bug shipped 530 kcal for a 290 kcal snack on day one).</li>
+  <li><strong>Quantity scope rule:</strong> "2 roti with ghee" means 2 rotis and 1 ghee — a leading number binds only to the food it precedes.</li>
+  <li><strong>Modifier rule:</strong> ghee/butter/dahi split into separate items with their own lookup, so an unknown modifier never drags down the base food's match.</li>
+  <li><strong>Annotation rule:</strong> "bahot ghee tha biryani mai" is commentary on an <em>already logged</em> dish — log only the extra ghee, never re-log the biryani.</li>
+  <li><strong>No-fabrication rule:</strong> unknown food = <code>match_type "none"</code>, never an invented database ID. Prompt-injection attempts ("ignore all instructions…") fall out naturally: no food found &#8594; clarifying question, nothing logged.</li>
+</ul>
+
+<span class="eyebrow">Part 4</span>
+<h2>LLM fallback chain</h2>
+<p>Free-tier quotas die mid-day — proven twice in one day of testing (Groq's 100k tokens/day &#8776; only ~33 messages at this prompt size; Gemini's per-model daily caps burned even faster). The chain is what keeps real users off the error path:</p>
+<div class="table-wrap"><table>
+  <tr><th>Order</th><th>Provider</th><th>Role</th></tr>
+  <tr><td class="num">1</td><td>Gemini 2.5 Flash</td><td>Primary. Free, resets daily.</td></tr>
+  <tr><td class="num">2</td><td>Groq (Llama 3.3 70B)</td><td>Fallback. Free, fast (~1.3s).</td></tr>
+  <tr><td class="num">3</td><td>Claude Haiku 4.5</td><td>Paid insurance. ~&#8377;0.35/message from a $5 prepaid balance &#8776; 1,200 messages.</td></tr>
+</table></div>
+<p>Any failure — quota 429, server error, even malformed JSON — falls through to the next provider. A quota 429 fails over <em>instantly</em> (no pointless retry against a dead daily limit); transient 5xx gets one quick retry. If all three die, the user still gets a 300 kcal placeholder logged with an apology — never silence. Total worst-case fits the 15s window.</p>
+<p>The economics: Claude-as-last-resort burns pennies per month while free tiers carry the load. The chain fired for real on day one and users never noticed.</p>
+
+<span class="eyebrow">Part 5</span>
+<h2>Food &#8594; calories: four tiers, never a dead end</h2>
+
+<div class="tier"><strong>Tier 1 — Curated list (67 foods)</strong><p>Hand-checked Indian staples with Hinglish aliases, living inside the system prompt. Instant, highest-quality data. Grows demand-driven: every unmatched food in the logs is a candidate.</p></div>
+<div class="tier"><strong>Tier 2 — INDB reference (1,014 recipes)</strong><p>The full Indian Nutrient Databank (open-access, lab-derived) imported into Supabase. Unknown foods get fuzzy-matched via Postgres trigram search (<code>match_food</code> RPC, strict 0.75 threshold — a false match with confident macros is worse than a miss).</p></div>
+<div class="tier"><strong>Tier 3 — LLM estimate</strong><p>The model's own per-serving guess (papad &#8776;50, shawarma &#8776;450), clamped to 20–800 kcal so a hallucination can't poison a day's total.</p></div>
+<div class="tier"><strong>Tier 4 — 300 kcal floor</strong><p>Zero information &#8594; "meal — 300 kcal (est.)". The bot must always log <em>something</em>; it never asks the user to guess calories.</p></div>
+
+<p><strong>Dirty-data guard:</strong> some INDB "per serving" values are whole-recipe yields (its Poori row claims 921 kcal per poori). Serving values are trusted only in the 20–800 range; otherwise the per-100g value ×1.5 is used. Dishes whose INDB rows are junk in both columns (kadhi: 64g fat/100g) get promoted to the curated list with hand-checked numbers instead.</p>
+<p><strong>Accuracy ceiling, communicated honestly:</strong> home-cooked Indian food is ±15–20% on any tracker, because databases hold averages, not your kitchen. The product targets directional awareness — consistent logging drives behavior change, not clinical precision.</p>
+
+<span class="eyebrow">Part 6</span>
+<h2>Data model</h2>
+<div class="table-wrap"><table>
+  <tr><th>Table</th><th>Holds</th></tr>
+  <tr><td><code>users</code></td><td>Phone number (the only identity), goal, calibration sizes, created_at. No signup — first message creates the row.</td></tr>
+  <tr><td><code>user_logs</code></td><td>Every logged item: food, quantity, kcal, P/C/F, matched_db_id, is_estimate, timestamp, IST date. Rows with <code>matched_db_id = null</code> double as the queue of foods to add next.</td></tr>
+  <tr><td><code>foods_reference</code></td><td>The 1,014 INDB recipes with per-serving and per-100g nutrition + trigram index.</td></tr>
+  <tr><td><code>food_preferences</code></td><td>Reserved for one-time calibration answers ("chota katori or bada bowl?") — asked once per food type, ever.</td></tr>
+</table></div>
+<p>Corrections are pure row operations: <code>replace_last</code> deletes the last batch (grouped by identical timestamp) and inserts the new parse. A name-only correction ("it was veg not chicken") inherits the old quantity — the 2x survives the swap. No conversation state is stored anywhere; every message is self-contained, which is what makes the whole system this simple.</p>
+
+<span class="eyebrow">Part 7</span>
+<h2>Defenses</h2>
+<ul>
+  <li><strong>Rate caps:</strong> 25 messages/hour, 60/day per phone — checked before the LLM spend. One spammer can't burn the shared quota.</li>
+  <li><strong>Length cap:</strong> 300 chars. Long pastes bounce for free.</li>
+  <li><strong>Webhook dedupe</strong> by MessageSid (in-memory, last 1,000).</li>
+  <li><strong>Injection handling:</strong> zero-item parses get a clarifying question, never a log — unless parse notes show a genuine system failure, in which case the placeholder fires (the user probably did send a meal).</li>
+  <li><strong>Undo</strong> as the universal escape hatch: fat-finger recovery in one word.</li>
+</ul>
+
+<span class="eyebrow">Part 8</span>
+<h2>Operations: the Mac Mini setup</h2>
+<p>Three launchd agents (macOS's native supervisor) own everything. Versioned copies live in the repo under <code>launchd/</code>.</p>
+<div class="table-wrap"><table>
+  <tr><th>Agent</th><th>Does</th></tr>
+  <tr><td><code>…server</code></td><td><code>caffeinate -dims node server.js</code> — KeepAlive restarts it within seconds of any crash. Kill-tested: back in 6s.</td></tr>
+  <tr><td><code>…ngrok</code></td><td>The tunnel, same KeepAlive. The free stable domain means restarts no longer change the URL.</td></tr>
+  <tr><td><code>…healthcheck</code></td><td>Every 5 min: pings the public URL and checks Twilio balance. Failure &#8594; WhatsApp alert to Swapnil via Twilio's API (works precisely when the tunnel is what's broken). Max one alert/hour per problem.</td></tr>
+</table></div>
+<ul>
+  <li><strong>Logs</strong> live in <code>~/Library/Logs/</code> (nutridesi.log, -ngrok.log, -healthcheck.log) — <em>not</em> the project folder, because launchd opens log files as itself and can't touch ~/Documents (fails with status 78; learned the hard way).</li>
+  <li><strong>Watch live traffic:</strong> <code>tail -f ~/Library/Logs/nutridesi.log | grep ms</code></li>
+  <li><strong>Manual restart:</strong> <code>launchctl kickstart -k gui/501/com.nutridesi.server</code> — never start node by hand; launchd owns the port.</li>
+  <li><strong>Power:</strong> <code>pmset -c sleep 0</code> + caffeinate belt-and-braces; auto-login + <code>autorestart 1</code> means even a power cut ends with the bot back online untouched.</li>
+</ul>
+
+<span class="eyebrow">Part 9</span>
+<h2>Battle scars — what actually broke, and the fix</h2>
+<p>Every defense above exists because something failed first. The honest log:</p>
+
+<div class="scar-card"><strong>Bhelpuri decomposed into 3 ingredients (530 vs 290 kcal)</strong><p>First real user, first hour. Fix: the no-decomposition rule + Bhel Puri added to the curated list.</p></div>
+<div class="scar-card"><strong>Corrections stacked instead of replacing</strong><p>"Sorry it was pani puri" added a 6th entry on top of 5 wrong ones. Fix: LLM intent classification with delete-then-insert semantics.</p></div>
+<div class="scar-card"><strong>Two LLM free tiers died in one afternoon</strong><p>Groq's daily tokens &#8776;33 messages; Gemini's per-model cap even less. Fix: the three-provider chain.</p></div>
+<div class="scar-card"><strong>Papad logged as 300 kcal (reality: ~50)</strong><p>The flat placeholder inflated a daily habit by 250 kcal/day — the exact error the product exists to prevent. Fix: LLM estimates + INDB tier.</p></div>
+<div class="scar-card"><strong>"papad" fuzzy-matched "Raw papaya with coconut"</strong><p>Trigram threshold too loose. Fix: 0.75 cutoff — no match beats a confident wrong match.</p></div>
+<div class="scar-card"><strong>Replies silently stopped mid-launch-day</strong><p>Twilio trial cap: 9 outbound messages/day, undocumented in the console. The bot logged everything, replied to nothing. Fix: account upgrade — then a compliance suspension (error 90010), resolved with a public GitHub repo as verification. Two days of launch drama, zero code at fault.</p></div>
+<div class="scar-card"><strong>The Mac Mini slept after 1 minute</strong><p>Headless Mini idle-slept and took the bot with it. Fix: pmset + caffeinate.</p></div>
+
+<p>The meta-lesson: every failure was found by <em>us</em> before a stranger hit it — quota exhaustion during our own testing, the Twilio cap the day before the group launch. Pre-launch chaos was the cheapest possible place to buy these lessons.</p>
+
+<span class="eyebrow">Part 10</span>
+<h2>Known limits &amp; what's next</h2>
+<ul>
+  <li><strong>72-hour sandbox re-join:</strong> users who go quiet for 3 days must resend the join code. Unfixable inside the sandbox — the real fix is a proper WhatsApp Business number (Meta Cloud API or Twilio WABA), which is the graduation step if retention shows up.</li>
+  <li><strong>The Mac Mini is a single point of failure:</strong> the watchdog can't alert from a dead machine. External uptime monitor (free) is the cheap patch; Railway deployment is the real one.</li>
+  <li><strong>No query answering yet:</strong> "what's my total?" gets "what did you eat?" — testers already ask for it; likely first Week-2 feature.</li>
+  <li><strong>The metric that decides everything:</strong> D7 retention &#8805; 40% validates the WhatsApp-friction hypothesis; &lt; 20% kills it. Parser direct-match &#8805; 80% or the alias map needs work before more users. One person logging food two days in a row beats twenty "cool bro" replies.</li>
+</ul>
+
+<hr>
+<p class="meta">BUILT IN A WEEKEND · HARDENED IN TWO DAYS OF FIRE · github.com/swamagic2525/nutridesi</p>
+</main>
