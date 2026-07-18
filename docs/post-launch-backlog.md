@@ -226,14 +226,12 @@ before it (per the D7 kill-criteria in CLAUDE.md).
 
 ## Quick wins parked 2026-07-18 (do in any idle slot)
 
-1. **Update the IG DM automation reply** (Meta Business Suite → Inbox →
-   Automations → Custom keywords): the site now runs a waitlist-first funnel
-   (nutridesi.co → signup → beta link in the success bubble), so the DM reply
-   should match — lead with nutridesi.co, keep the direct sandbox link as the
-   "impatient? try it right now" second line. 500-char limit.
-2. **Add "Palak Sabzi (no paneer)" curated entry** (~120 kcal/bowl): "palak
-   sabji" currently closest-matches Palak Paneer at 250 kcal — transparent but
-   ~2x off for the plain dish.
-3. **Dedupe papad/almonds/peanuts in `src/foods.js`** (ids 63/147, 57/151,
-   56/159 — identical aliases, parser picks either nondeterministically).
-   A spawned background-task chip for this already exists in the session.
+1. ~~**Update the IG DM automation reply**~~ — done 2026-07-19: new 406-char
+   message drafted (waitlist-first with founding-50 hook, sandbox beta as the
+   "can't wait?" path); Swapnil pastes it into Business Suite → Inbox →
+   Automations → Custom keywords.
+2. ~~**Add "Palak Sabzi (no paneer)" curated entry**~~ — done 2026-07-19:
+   id 182, 120 kcal/bowl, covers palak/saag/methi sabzi-bhaji phrasings.
+3. ~~**Dedupe papad/almonds/peanuts in `src/foods.js`**~~ — done 2026-07-19
+   (commit 87c07b6): survivors 147/151/159 keep merged aliases, 4 old log rows
+   repointed in Supabase, server restarted.

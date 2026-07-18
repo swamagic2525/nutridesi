@@ -181,6 +181,7 @@ const FOODS = [
   { id: 179, name: "Modak (Steamed)",      aliases: ["modak","ukdiche modak","steamed modak","modak sweet"], unit: "piece", kcal: 110, p: 1.5, c: 18, f: 3.5, fb: 0.5, g: 40 },
   { id: 180, name: "Kulfi",                aliases: ["kulfi","malai kulfi","kesar kulfi","kulfi stick","matka kulfi"], unit: "stick", kcal: 150, p: 4, c: 17, f: 8, fb: 0, g: 70 },
   { id: 181, name: "Green Leafy Vegetables", aliases: ["green vegetable","green vegetables","green veg","hari sabzi","leafy vegetables","leafy greens","greens","palak","spinach","saag","methi leaves"], unit: "cup", kcal: 25, p: 3, c: 4, f: 0.3, fb: 2.5, g: 100 },
+  { id: 182, name: "Palak Sabzi",            aliases: ["palak sabzi","palak sabji","palak ki sabzi","spinach sabzi","palak bhaji","saag sabzi","methi sabzi","methi bhaji"], unit: "bowl", kcal: 120, p: 4.5, c: 8, f: 8, fb: 4 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
