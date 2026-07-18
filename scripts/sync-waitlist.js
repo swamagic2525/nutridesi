@@ -65,7 +65,7 @@ async function main() {
     known.add(c.norm);
     if (rank >= FOUNDING_CAP) { overflow.push({ name, contact: c.norm }); continue; }
     rank += 1;
-    const row = { contact: c.norm, source: "waitlist", waitlist_rank: rank, promised_at: s.created_at };
+    const row = { contact: c.norm, name: name || null, source: "waitlist", waitlist_rank: rank, promised_at: s.created_at };
     if (!DRY) await sb("founding_members", { method: "POST", body: JSON.stringify([row]) });
     inserted.push({ rank, name, type: c.type, contact: c.norm });
   }

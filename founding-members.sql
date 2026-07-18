@@ -8,6 +8,7 @@
 create table if not exists founding_members (
   id bigint generated always as identity primary key,
   contact text not null unique,                -- phone / email / IG handle exactly as submitted
+  name text,                                   -- as given on the waitlist form
   source text not null default 'waitlist',     -- waitlist | beta | manual
   waitlist_rank int,                           -- 1..50, signup order from Netlify Forms
   phone_number text,                           -- filled when they join the bot
