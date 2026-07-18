@@ -4,3 +4,4 @@ nutridesi.log
 *.log
 .DS_Store
 .worktrees/
+site/.netlify/
