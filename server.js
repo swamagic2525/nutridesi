@@ -6,7 +6,7 @@ require("dotenv").config();
 const express = require("express");
 const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
-const { logMeal, deleteLastLog, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, resolveRows, dayReport } = require("./src/db.js");
+const { logMeal, deleteLastLog, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
 
 const app = express();
@@ -86,7 +86,30 @@ app.post("/whatsapp", async (req, res) => {
     }
 
     // Reply renderers (beta feedback 2026-07-14: words not codes, no legend line).
-    const dayLine = (t) => `*You're at ${Math.round(t.kcal)} kcal · ${Math.round(t.protein)}g protein today*`;
+    // dayLine is goal-aware: with a goal set it shows a progress bar + "left today"
+    // open loop; without one it falls back to plain totals. `profile` is fetched
+    // below, before any reply that uses dayLine.
+    let profile = {};
+    const dayLine = (t) => {
+      const k = Math.round(t.kcal), p = Math.round(t.protein);
+      if (!profile.hasGoal) return `*You're at ${k} kcal · ${p}g protein today*`;
+      const gk = profile.goal_kcal, gp = profile.goal_protein;
+      const pLeft = Math.max(0, gp - p);
+      const who = profile.name ? `, ${profile.name}` : "";
+      // Calories are a ceiling, protein a floor. Over on calories -> caution
+      // (still flag protein if it's short too); under -> normal "left today".
+      let tail;
+      if (k > gk) {
+        const over = k - gk;
+        tail = pLeft > 0
+          ? `_${over} kcal past target, and ${pLeft}g protein short${who} — tread carefully ⚠️_`
+          : `_${over} kcal past your target${who} — tread carefully ⚠️_`;
+      } else {
+        const kLeft = gk - k;
+        tail = `_${kLeft} kcal, ${pLeft}g protein left today${who} 💪_`;
+      }
+      return `🔥 *${k} / ${gk} kcal · ${p} / ${gp}g protein*\n${tail}`;
+    };
     const cfLine = (t) => `Carbs ${Math.round(t.carbs)}g · Fat ${Math.round(t.fat)}g · Fibre ${Math.round(t.fiber || 0)}g`;
     const fmtItems = (rows) => rows.map(r => {
       const qty = r.quantity === 1 ? "" : ` ×${r.quantity}`;
@@ -118,6 +141,9 @@ app.post("/whatsapp", async (req, res) => {
       return res.type("text/xml").send(twiml.toString());
     }
 
+    // Profile (name + goal) drives the goal-aware dayLine and onboarding prompts.
+    profile = await getProfile(from);
+
     // "log it" after a food question -> log the stashed items, no LLM call.
     const pending = pendingQuery.get(from);
     if (/^(log it|log|ate it|had it|yes log it)$/i.test(trimmed) &&
@@ -147,6 +173,25 @@ app.post("/whatsapp", async (req, res) => {
     // nutrition correction. It can promote only to the immediately previous
     // log, never an older meal.
     if (shouldPromoteToReplace(parsed, body, recentBatch)) parsed.intent = "replace_last";
+
+    if (parsed.intent === "set_profile") {
+      const name = parsed.name ? String(parsed.name).trim().slice(0, 30) : null;
+      const gk = Number(parsed.goal_kcal) > 0 ? Math.round(Number(parsed.goal_kcal)) : null;
+      const gp = Number(parsed.goal_protein) > 0 ? Math.round(Number(parsed.goal_protein)) : null;
+      if (!name && !gk && !gp) {
+        twiml.message("Tell me your name and daily goal, like \"Priya 1800 cal 120g protein\" \u{1F642}");
+        return res.type("text/xml").send(twiml.toString());
+      }
+      await saveProfile(from, { name, goal_kcal: gk, goal_protein: gp });
+      const fresh = await getProfile(from);
+      const changed = gk || gp;
+      const goalLine = fresh.hasGoal
+        ? `\nDaily goal: *${fresh.goal_kcal} kcal · ${fresh.goal_protein}g protein*`
+        : (gk || gp ? `\nGoal so far: ${gk ? gk + " kcal" : ""}${gk && gp ? " · " : ""}${gp ? gp + "g protein" : ""}${gk && !gp ? " (add a protein target too?)" : ""}${!gk && gp ? " (add a calorie target too?)" : ""}` : "");
+      const hi = name ? `Got it, ${name} \u{1F3AF}` : (changed ? "Updated \u{1F3AF}" : "Got it \u{1F3AF}");
+      twiml.message(`${hi}${goalLine}${fresh.hasGoal ? "\nI'll show your progress with every meal." : ""}`);
+      return res.type("text/xml").send(twiml.toString());
+    }
 
     if (parsed.intent === "query") {
       // LLM's one-line verdict/suggestion. Qualitative only (prompt forbids
@@ -335,12 +380,24 @@ app.post("/whatsapp", async (req, res) => {
     const { rows, meals, totals } = result;
     const cur = meals[meals.length - 1];
     const ass = assumptionLines(rows);
+    // Goal capture: no goal set yet -> invite one. New user gets the warm ask +
+    // founder footer; a returning user gets a compact nudge, capped at 2 so we
+    // never nag. Once a goal exists, this disappears and the progress bar takes over.
+    let goalAsk = "";
+    if (!profile.hasGoal) {
+      if (result.isNewUser) {
+        goalAsk = "\n\n🎯 _Want me to track against a daily goal? Reply your name + target — like \"Priya, 1800 cal 120g protein\". Or skip, I'll just track totals._";
+      } else if ((profile.nudge_count || 0) < 2) {
+        goalAsk = "\n\n🎯 _New: set a daily goal and I'll track your progress. Reply \"Rahul 2000 cal 140 protein\" anytime._";
+        bumpNudge(from, profile.nudge_count);
+      }
+    }
     twiml.message(
       `✅ Logged\n${fmtItems(rows).join("\n")}\n\n` +
       (ass.length ? `${ass.join("\n")}\n\n` : "") +
       `Meal ${meals.length} — ${cur.kcal} kcal · ${cur.protein}g protein\n` +
-      `${dayLine(totals)}\n${cfLine(totals)}`
-      + (result.isNewUser ? FIRST_LOG_FOOTER : "")
+      `${dayLine(totals)}\n${cfLine(totals)}` +
+      (result.isNewUser ? FIRST_LOG_FOOTER : "") + goalAsk
     );
   } catch (err) {
     console.error("handler error:", err);

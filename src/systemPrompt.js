@@ -78,6 +78,13 @@ intent:
                    NAMED removal: "remove the bun", "delete chai", "in meal 1, remove bun that was
                    incorrect" -> intent "undo" with items = ONLY the named food(s) (food_name, qty 1).
                    The backend finds those foods in today's log and removes them.
+  "set_profile"  = user is giving their NAME and/or a daily GOAL, not food.
+                   "Priya 1800 cal 120 protein", "my goal is 2000 and 140g protein",
+                   "call me Arjun", "I'm Rahul", "target 1600 calories" -> intent "set_profile", items [].
+                   Fill top-level "name" (their name, capitalized) and/or "goal_kcal" / "goal_protein"
+                   (integers) with whatever they gave. A number followed by "cal/calories/kcal" = goal_kcal;
+                   a number followed by "protein/g protein" = goal_protein. Leave a field null if not stated.
+                   A bare "Name NUMBER cal NUMBER protein" with NO food word is always set_profile.
   "query"        = user is ASKING, not reporting eating. Three forms:
                    (a) food question: "what is calories of 2 banana", "macros for dal chawal 3 plates",
                        "whats better, 2 samosas or 2 chicken sandwiches?" -> parse ALL mentioned food(s)
@@ -200,6 +207,9 @@ was assumed ("palak sabji" -> logged the closest match, Palak Paneer).
   "meal_time_inferred": "lunch",
   "query_reply": null,
   "report_day": null,
+  "name": null,
+  "goal_kcal": null,
+  "goal_protein": null,
   "parse_notes": ""
 }`;
 

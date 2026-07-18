@@ -17,6 +17,33 @@ async function ensureUser(phone) {
   return (data || []).length > 0;
 }
 
+// Fetch the user's name + goal + how many times we've nudged them to set one.
+// A goal is "set" only when goal_protein is non-null (goal_kcal has a legacy
+// default of 2000, so it can't distinguish set-vs-unset on its own).
+async function getProfile(phone) {
+  const { data, error } = await supabase.from("users")
+    .select("name, goal_kcal, goal_protein, nudge_count").eq("phone_number", phone).maybeSingle();
+  if (error) { console.error("getProfile:", error.message); return {}; }
+  const p = data || {};
+  return { ...p, hasGoal: p.goal_protein != null };
+}
+
+// Save name and/or goal from a set_profile message. Only writes provided fields.
+async function saveProfile(phone, { name, goal_kcal, goal_protein }) {
+  const patch = { phone_number: phone };
+  if (name) patch.name = name;
+  if (goal_kcal) patch.goal_kcal = goal_kcal;
+  if (goal_protein) patch.goal_protein = goal_protein;
+  const { error } = await supabase.from("users").upsert(patch, { onConflict: "phone_number" });
+  if (error) console.error("saveProfile:", error.message);
+}
+
+// Fire-and-forget nudge counter bump (drives the "set a goal" prompt cap).
+function bumpNudge(phone, current) {
+  supabase.from("users").update({ nudge_count: (current || 0) + 1 })
+    .eq("phone_number", phone).then(({ error }) => { if (error) console.error("bumpNudge:", error.message); });
+}
+
 // Approximate grams in one serving of each unit — used to convert weight-based
 // logging ("100g X") into calories when a food has no explicit `g` field.
 const UNIT_GRAMS = {
@@ -401,4 +428,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { logMeal, todayTotal, deleteLastLog, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, resolveRows, dayReport };
+module.exports = { logMeal, todayTotal, deleteLastLog, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };

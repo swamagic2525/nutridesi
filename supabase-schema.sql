@@ -3,7 +3,10 @@
 -- Users: keyed by WhatsApp phone number
 create table if not exists users (
   phone_number text primary key,
+  name text,
   goal_kcal int default 2000,
+  goal_protein int,           -- non-null = user has set a daily goal (goal loop)
+  nudge_count int default 0,  -- times we've prompted them to set a goal (capped at 2)
   katori_size text default 'medium',
   roti_size text default 'medium',
   daily_summary_time text,
