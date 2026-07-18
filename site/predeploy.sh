@@ -8,8 +8,8 @@ if grep -q "WA_NUMBER" index.html; then
   echo "FAIL: WA_NUMBER placeholder still in index.html — replace with the real WABA number"
   fail=1
 fi
-if grep -q "ig.me" index.html; then
-  echo "note: CTAs still point to Instagram DM (temp) — swap to wa.me/<number>?text=hi when the WABA number is live (search TEMP-CTA)"
+if grep -q "14155238886" index.html thanks.html; then
+  echo "note: beta links still point to the Twilio sandbox (temp) — swap to wa.me/<number>?text=hi when the WABA number is live (search TEMP-CTA)"
 fi
 if grep -q "netlify.app" index.html; then
   echo "note: meta URLs point at the temp netlify.app subdomain — swap when the real domain is bought"

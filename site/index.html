@@ -313,6 +313,9 @@
   .wl-done .bubble--in{max-width:340px}
   .wl-done.is-done{display:flex}
   .wl-done__text{font-size:.92rem;color:var(--ink)}
+  .wl-done__text + .wl-done__text{margin-top:.5rem}
+  .wl-done__beta{font-weight:600;color:var(--green-deep)}
+  .wl-done__note{font-size:.78rem;color:var(--ink-soft)}
   .close__hint{margin-top:1rem;font-size:.85rem;color:var(--ink-soft)}
   .close__hint a{color:var(--green-deep)}
   .close__sub{
@@ -357,7 +360,10 @@
     .rcpt__totnum{font-size:.92rem}
   }
 
+  html{scroll-behavior:smooth}
+
   @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
     .js .reveal{opacity:1;transform:none}
     .caret{display:none}
     .goal__fill{transition:none}
@@ -406,7 +412,7 @@
       <div class="topbar__status"><span class="topbar__dot"></span>online</div>
     </div>
     <!-- TEMP-CTA: swap to https://wa.me/<number>?text=hi when the WABA number is live -->
-    <a class="topbar__cta" href="https://ig.me/m/swapnilgore2525">Chat</a>
+    <a class="topbar__cta" href="#join">Join waitlist</a>
   </header>
 
   <main id="main">
@@ -575,11 +581,12 @@
     <div class="note__sig">Swapnil — product manager, ex-fitness coach. Built and maintained by one person.</div>
   </aside>
 
-  <section class="close">
+  <section class="close" id="join">
     <h2 class="close__line">Tell it what you ate. That's the whole product.</h2>
     <!-- TEMP-CTA: when the WABA number is live, restore the big button:
          <a class="btn" href="https://wa.me/<number>?text=hi">Start on WhatsApp →</a>
-         and demote or remove the waitlist composer. -->
+         demote or remove the waitlist composer, and drop the sandbox beta link
+         in the wl-done bubble below. -->
     <p class="close__waitline">The permanent WhatsApp number opens in a few days. Drop your number, email, or IG handle — you get it first.</p>
     <form class="composer" name="waitlist" method="POST" action="/thanks.html" data-netlify="true" netlify-honeypot="bot-field">
       <input type="hidden" name="form-name" value="waitlist">
@@ -591,10 +598,10 @@
     <div class="wl-done msg--in" role="status">
       <div class="bubble bubble--in">
         <p class="wl-done__text">You're on the list. The number lands here first. <span aria-hidden="true">✓✓</span></p>
+        <p class="wl-done__text"><a class="wl-done__beta" href="https://wa.me/14155238886?text=join%20electric-detail">Meanwhile — try the beta right now →</a><br><span class="wl-done__note">opens WhatsApp on the temporary test number, join message pre-typed</span></p>
       </div>
     </div>
     <p class="close__sub">no app · no signup · your number is your account</p>
-    <p class="close__hint">or <a href="https://ig.me/m/swapnilgore2525">DM me on Instagram</a> to join today's beta</p>
   </section>
 
   </main>
