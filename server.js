@@ -156,7 +156,9 @@ function assumptionLines(rows) {
   const lines = guesses.slice(0, 2).map(r =>
     r.matched_db_id
       ? `\u{1F914} _"${r.userSaid}" — logged the closest match, *${r.food_name}*. Something else? Just reply "it was …"_`
-      : `\u{1F914} _"${r.userSaid}" isn't in my book yet — logged my best estimate. Know the calories? Reply "it was 200 calories"_`);
+      : r.refVerified
+        ? `\u{1F52C} _"${r.userSaid}" isn't in my quick list — logged *${r.food_name}* from a lab-verified recipe database. Something else? Just reply "it was …"_`
+        : `\u{1F914} _"${r.userSaid}" isn't in my book yet — logged my best estimate. Know the calories? Reply "it was 200 calories"_`);
   if (guesses.length > 2) lines.push(`_…and ${guesses.length - 2} more guesses in the list below_`);
   return lines;
 }
