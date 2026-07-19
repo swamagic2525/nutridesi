@@ -8,7 +8,7 @@ const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
-const { supabase, logMeal, deleteLastLog, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
+const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
 const { validateSignature, extractMessages, sendMessage, markRead } = require("./src/meta.js");
 const { logCorrectionEvent } = require("./src/correctionLogger.js");
@@ -285,6 +285,17 @@ async function handleMessage(from, body) {
   // --- undo ---
   if (parsed.intent === "undo") {
     const names = (parsed.items || []).map(i => i.food_name).filter(Boolean);
+    // Explicit all-scope ("delete all entries", "sab hata do") clears the whole
+    // day — the narrow last-batch undo silently under-delivering broke trust
+    // (2026-07-19: user "deleted all", 178 kcal of roti stayed logged).
+    const ALL_SCOPE = /\b(all|everything|entire|whole day|full day|sab ?kuch|sab|saara|sara|poora|pura)\b/i;
+    if (!names.length && ALL_SCOPE.test(body)) {
+      const deleted = await deleteAllToday(from);
+      if (!deleted || deleted.length === 0) return "Nothing to clear — no entries logged today.";
+      logCorrectionEvent({ intent: "undo", rawMessage: body, parsed, batch: recentBatch, deleted, outcome: "removed_all" });
+      const kcal = deleted.reduce((s, r) => s + Number(r.kcal || 0), 0);
+      return `↩️ Cleared today's log — ${deleted.length} ${deleted.length === 1 ? "entry" : "entries"} (${Math.round(kcal)} kcal) removed.\n\nFresh start: 0 kcal. \u{1F331}`;
+    }
     let deleted;
     if (names.length) {
       const aligned = await deleteMatchingLastLog(from, names, recentBatch, body);

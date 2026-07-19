@@ -259,6 +259,12 @@ const FOODS = [
   { id: 240, name: "The Whole Truth 20g Bar",   aliases: ["whole truth 20g","twt 20g bar","whole truth protein bar","the whole truth bar","twt bar"], unit: "bar", kcal: 340, p: 20, c: 21, f: 19, fb: 5.8, g: 67 },
   { id: 241, name: "The Whole Truth 12g Bar",   aliases: ["whole truth 12g","twt 12g bar","whole truth mini bar"], unit: "bar", kcal: 240, p: 12, c: 18, f: 13.5, fb: 4, g: 52 },
   { id: 242, name: "Protinex",                  aliases: ["protinex","protinex powder","protinex doodh","protinex milk"], unit: "serving", kcal: 125, p: 11, c: 17, f: 1.4, fb: 0, g: 34 },
+
+  // --- Gap-trail promotions (2026-07-20): both surfaced by real users within
+  // hours of the gap logger going live. Not in INDB — curated from standard
+  // published values. "Dal baati" should parse as TWO items (Dal 17 + Baati).
+  { id: 243, name: "Baati (ghee-dipped)",       aliases: ["baati","bati","rajasthani baati","churma baati"], unit: "piece", kcal: 200, p: 4, c: 26, f: 8.5, fb: 2.5, g: 45 },
+  { id: 244, name: "Ladi Pav (Bun)",            aliases: ["pav","ladi pav","bun","bread bun","maska bun","pao"], unit: "piece", kcal: 120, p: 4, c: 22, f: 1.6, fb: 1, g: 40 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));

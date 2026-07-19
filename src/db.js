@@ -468,6 +468,16 @@ async function deleteMatching(phone, foodHints) {
   return matched; // aligned with foodHints; null entries = no match for that hint
 }
 
+// "Delete all entries": clear the whole IST day. The PRD's narrow undo stays
+// the default — this only fires when the user says an explicit all-scope word.
+async function deleteAllToday(phone) {
+  const date = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const { data, error } = await supabase.from("user_logs").delete()
+    .eq("phone_number", phone).eq("date", date).select("food_name, kcal");
+  if (error) { console.error("deleteAllToday:", error.message); return null; }
+  return data || [];
+}
+
 async function deleteLastLog(phone, foodHint) {
   let batch = await lastLogBatch(phone);
   if (batch.length === 0) return null;
@@ -484,4 +494,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { supabase, logMeal, todayTotal, deleteLastLog, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };
+module.exports = { supabase, logMeal, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };

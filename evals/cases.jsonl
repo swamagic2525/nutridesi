@@ -86,3 +86,6 @@
 {"id":"brand-superyou","tags":["brands"],"input":"superyou wafer khaya snack mein","expected":{"intent":"log","items":[{"db_id":226,"qty":1}]}}
 {"id":"brand-protinex","tags":["brands"],"input":"protinex with milk","expected":{"intent":"log","items":[{"db_id":242,"qty":1},{"db_id":34,"qty":1}]}}
 {"id":"brand-generic-shake-stays","tags":["brands"],"input":"protein shake pi liya","expected":{"intent":"log","items":[{"db_id":58,"qty":1}]}}
+{"id":"undo-all-scope","tags":["undo"],"input":"Delete all entries","expected":{"intent":"undo","items":[]}}
+{"id":"gap-baati","tags":["gap-promo"],"input":"dal baati khayi aaj","expected":{"intent":"log","items":[{"db_id":17,"qty":1},{"db_id":243,"qty":1}]}}
+{"id":"gap-bun-omelette","tags":["gap-promo"],"input":"Bun omelette","expected":{"intent":"log","items":[{"db_id":244,"qty":1},{"db_id":44,"qty_any_of":[1,2]}]}}
