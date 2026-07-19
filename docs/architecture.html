@@ -91,11 +91,30 @@
 </style>
 
 <main>
-<p class="meta">NUTRIDESI · INTERNAL DOC · 10 JUL 2026</p>
+<p class="meta">NUTRIDESI · INTERNAL DOC · 19 JUL 2026 (updated)</p>
 <h1>System architecture &amp; logic</h1>
 <p class="subtitle">How a WhatsApp message becomes a calorie log — the full pipeline, the parser brain, the failure defenses, and everything that broke on the way here.</p>
 
 <div class="callout"><strong>The one-sentence product:</strong> people fail at calorie tracking because opening an app after dinner is friction — so the tracker lives inside WhatsApp, where they already are. Users text what they ate in Hinglish; the bot replies with calories and macros in 2–5 seconds. No app, no account.</div>
+
+<span class="eyebrow">Part 0</span>
+<h2>Acquisition funnel &amp; live metrics</h2>
+<p>Zero paid marketing. The only channel is the founder's Instagram (trial reels + stories showing real bot conversations). Viewers DM "hi" → Meta Business Suite auto-reply → waitlist + beta access.</p>
+
+<div class="table-wrap"><table>
+  <tr><th>Stage</th><th>Description</th><th>Metric</th><th>Conversion</th></tr>
+  <tr><td class="num">1</td><td>Reel/Story impressions</td><td><em>from IG Insights</em></td><td>—</td></tr>
+  <tr><td class="num">2</td><td>DM automation triggered</td><td><em>from Meta Business Suite</em></td><td>view → DM</td></tr>
+  <tr><td class="num">3</td><td>Joined sandbox or waitlist</td><td><strong>94 users + 4 waitlist</strong></td><td>DM → join</td></tr>
+  <tr><td class="num">4</td><td>Logged at least 1 food</td><td><strong>87 users</strong></td><td><strong>92%</strong> of joiners</td></tr>
+  <tr><td class="num">5</td><td>Returned Day 2+</td><td><strong>27 users</strong></td><td><strong>31%</strong> of loggers</td></tr>
+  <tr><td class="num">6</td><td>Retained Day 7+</td><td>1 user</td><td>early data</td></tr>
+  <tr><td class="num">7</td><td>Founding member (committed)</td><td><strong>4 members</strong></td><td>—</td></tr>
+</table></div>
+
+<p><strong>Key conversions:</strong> 92% join-to-first-log validates zero-friction. 31% D2+ retention is promising for an unpolished beta with no onboarding. 1,314 total messages processed, 775 food logs, zero ad spend.</p>
+
+<div class="callout"><strong>New funnel (Jul 2026):</strong> Waitlist-first. IG reel → DM automation → nutridesi.co waitlist (captures name + contact) → auto-inserted into founding_members DB → success screen reveals beta link. Gives us a contact list + urgency (50 founding spots).</div>
 
 <span class="eyebrow">Part 1</span>
 <h2>The architecture at a glance</h2>
@@ -147,20 +166,20 @@
 
 <span class="eyebrow">Part 4</span>
 <h2>LLM fallback chain</h2>
-<p>Free-tier quotas die mid-day — proven twice in one day of testing (Groq's 100k tokens/day &#8776; only ~33 messages at this prompt size; Gemini's per-model daily caps burned even faster). The chain is what keeps real users off the error path:</p>
+<p>Free-tier quotas die mid-day — proven repeatedly (Groq's system prompt exceeds its 12k TPM free limit entirely; older Gemini models deprecated for new projects). The chain keeps real users off the error path:</p>
 <div class="table-wrap"><table>
-  <tr><th>Order</th><th>Provider</th><th>Role</th></tr>
-  <tr><td class="num">1</td><td>Gemini 2.5 Flash</td><td>Primary. Free, resets daily.</td></tr>
-  <tr><td class="num">2</td><td>Groq (Llama 3.3 70B)</td><td>Fallback. Free, fast (~1.3s).</td></tr>
-  <tr><td class="num">3</td><td>Claude Haiku 4.5</td><td>Paid insurance. ~&#8377;0.35/message from a $5 prepaid balance &#8776; 1,200 messages.</td></tr>
+  <tr><th>Order</th><th>Provider</th><th>Model</th><th>Role</th></tr>
+  <tr><td class="num">1</td><td>Google Gemini</td><td>3.1 Flash Lite</td><td>Primary. Paid (pay-per-use, ~&#8377;0.13/msg). Avg 1.7s latency. 65/65 eval score.</td></tr>
+  <tr><td class="num">2</td><td>Groq</td><td>Llama 3.3 70B</td><td>Fallback. Free tier unusable (prompt too large); paid tier available if needed.</td></tr>
+  <tr><td class="num">3</td><td>Anthropic Claude</td><td>Haiku 4.5</td><td>Dead — credits exhausted 19 Jul 2026. Will reactivate if funded.</td></tr>
 </table></div>
-<p>Any failure — quota 429, server error, even malformed JSON — falls through to the next provider. A quota 429 fails over <em>instantly</em> (no pointless retry against a dead daily limit); transient 5xx gets one quick retry. If all three die, the user still gets a 300 kcal placeholder logged with an apology — never silence. Total worst-case fits the 15s window.</p>
-<p>The economics: Claude-as-last-resort burns pennies per month while free tiers carry the load. The chain fired for real on day one and users never noticed.</p>
+<p>Any failure — quota 429, server error, even malformed JSON — falls through to the next provider. A quota 429 fails over <em>instantly</em> (no pointless retry against a dead daily limit); transient 5xx gets one quick retry. If all providers die, the user still gets a 300 kcal placeholder logged with an apology — never silence.</p>
+<p>The current chain is effectively Gemini-only. At &#8377;0.13/message (~$0.0016/call), 50 users &#215; 5 msgs/day = &#8377;2,500/month. Benchmarked faster than Claude Haiku was (1.7s vs 2.3s avg).</p>
 
 <span class="eyebrow">Part 5</span>
 <h2>Food &#8594; calories: four tiers, never a dead end</h2>
 
-<div class="tier"><strong>Tier 1 — Curated list (67 foods)</strong><p>Hand-checked Indian staples with Hinglish aliases, living inside the system prompt. Instant, highest-quality data. Grows demand-driven: every unmatched food in the logs is a candidate.</p></div>
+<div class="tier"><strong>Tier 1 — Curated list (179 foods)</strong><p>Hand-checked Indian staples with Hinglish aliases, living inside the system prompt. Instant, highest-quality data. Grows demand-driven: every unmatched food in the logs is a candidate.</p></div>
 <div class="tier"><strong>Tier 2 — INDB reference (1,014 recipes)</strong><p>The full Indian Nutrient Databank (open-access, lab-derived) imported into Supabase. Unknown foods get fuzzy-matched via Postgres trigram search (<code>match_food</code> RPC, strict 0.75 threshold — a false match with confident macros is worse than a miss).</p></div>
 <div class="tier"><strong>Tier 3 — LLM estimate</strong><p>The model's own per-serving guess (papad &#8776;50, shawarma &#8776;450), clamped to 20–800 kcal so a hallucination can't poison a day's total.</p></div>
 <div class="tier"><strong>Tier 4 — 300 kcal floor</strong><p>Zero information &#8594; "meal — 300 kcal (est.)". The bot must always log <em>something</em>; it never asks the user to guess calories.</p></div>
@@ -222,12 +241,36 @@
 <span class="eyebrow">Part 10</span>
 <h2>Known limits &amp; what's next</h2>
 <ul>
-  <li><strong>72-hour sandbox re-join:</strong> users who go quiet for 3 days must resend the join code. Unfixable inside the sandbox — the real fix is a proper WhatsApp Business number (Meta Cloud API or Twilio WABA), which is the graduation step if retention shows up.</li>
-  <li><strong>The Mac Mini is a single point of failure:</strong> the watchdog can't alert from a dead machine. External uptime monitor (free) is the cheap patch; Railway deployment is the real one.</li>
-  <li><strong>No query answering yet:</strong> "what's my total?" gets "what did you eat?" — testers already ask for it; likely first Week-2 feature.</li>
-  <li><strong>The metric that decides everything:</strong> D7 retention &#8805; 40% validates the WhatsApp-friction hypothesis; &lt; 20% kills it. Parser direct-match &#8805; 80% or the alias map needs work before more users. One person logging food two days in a row beats twenty "cool bro" replies.</li>
+  <li><strong>72-hour sandbox re-join:</strong> users who go quiet for 3 days must resend the join code. Unfixable inside the sandbox — the real fix is a proper WhatsApp Business number (WABA). Meta verification submitted; awaiting approval.</li>
+  <li><strong>The Mac Mini is a single point of failure:</strong> the watchdog can't alert from a dead machine. Migration to Railway/Cloud Run planned before scaling past 50 users (~2 hours of work).</li>
+  <li><strong>Claude credits exhausted:</strong> the fallback chain is Gemini-only until funded. Groq's free tier can't fit the system prompt (14k tokens vs 12k TPM limit). Single-provider risk is real but manageable — Gemini has been stable.</li>
+  <li><strong>The metric that decides everything:</strong> D7 retention &#8805; 40% validates the WhatsApp-friction hypothesis; &lt; 20% kills it. Parser direct-match &#8805; 80% or the alias map needs work before more users.</li>
 </ul>
 
+<span class="eyebrow">Part 11</span>
+<h2>Correction framework (shipped Jul 2026)</h2>
+<p>Users correct mistakes constantly — "it was 200 calories", "sorry I meant rajma", "undo". A 5-rung attribution ladder determines <em>which item</em> to fix when a batch has multiple foods:</p>
+<ol>
+  <li><strong>Explicit scope words</strong> — "each", "total", "the dosa" → unambiguous target</li>
+  <li><strong>Named food</strong> — word overlap between the correction and logged items</li>
+  <li><strong>Sole flagged item</strong> — the one item the bot marked as uncertain (uncurated or estimated)</li>
+  <li><strong>Magnitude fit</strong> — stated calories within 0.4–2.5× of a candidate (not yet implemented)</li>
+  <li><strong>Whole-meal default</strong> — scale proportionally across the batch (not yet implemented)</li>
+</ol>
+<p>Validated against 35 real correction incidents from production. Classes A (bare "it was N cal") and B (rename eats siblings) are fixed and unit-tested. See <code>rules/correction-framework.md</code> for the full spec.</p>
+
+<span class="eyebrow">Part 12</span>
+<h2>Founding members &amp; waitlist automation</h2>
+<p>The landing site (nutridesi.co) collects waitlist signups. On each submission:</p>
+<ol>
+  <li>Netlify form captures name + contact</li>
+  <li>Outgoing webhook (JWS-signed) hits the bot server</li>
+  <li>Server validates contact (phone/email/IG handle), rejects garbage</li>
+  <li>Auto-inserts into <code>founding_members</code> table (cap: 50)</li>
+  <li>WhatsApp alert fires to the founder instantly</li>
+</ol>
+<p>Current founding members: 4. Promised: free for life. The 50-cap creates urgency without paid marketing.</p>
+
 <hr>
-<p class="meta">BUILT IN A WEEKEND · HARDENED IN TWO DAYS OF FIRE · github.com/swamagic2525/nutridesi</p>
+<p class="meta">BUILT IN A WEEKEND · HARDENED OVER TWO WEEKS OF REAL USERS · github.com/swamagic2525/nutridesi</p>
 </main>
