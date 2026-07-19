@@ -63,7 +63,8 @@ async function currentMetrics() {
 
 app.get("/metrics", metricsAuth, (_req, res) => res.type("html").send(metricsPage()));
 app.get("/metrics/data", metricsAuth, async (_req, res) => {
-  try { return res.json(await currentMetrics()); }
+  // recent rides outside the 60s cache so the conversation feed is always live
+  try { return res.json({ ...(await currentMetrics()), recent: recentExchanges }); }
   catch (error) {
     console.error("metrics error:", error.message);
     return res.status(503).json({ error: "Metrics are temporarily unavailable. Check dashboard configuration." });
@@ -111,6 +112,20 @@ const WELCOME =
   "— Swapnil \u{1F44B} full-time PM & ex-fitness coach. My clients kept quitting tracking apps, so I " +
   "built this where you already are. Bigger version in ~30 days — feedback shapes it: " +
   "DM @swapnilgore2525 on Instagram, I read everything.";
+
+// Recent conversations for the founder dashboard. In-memory (wiped on restart),
+// phones masked, test numbers excluded, served only behind metrics basic auth.
+const RECENT_MAX = 50;
+const recentExchanges = [];
+const maskPhone = (p) => String(p || "").replace(/^(\+\d{2})\d+(\d{4})$/, "$1••••••$2");
+function recordExchange(from, inbound, reply) {
+  if (String(from).startsWith("+0000")) return;
+  recentExchanges.unshift({
+    at: new Date().toISOString(), user: maskPhone(from),
+    in: String(inbound || "(media)").slice(0, 160), out: String(reply || "").slice(0, 400),
+  });
+  if (recentExchanges.length > RECENT_MAX) recentExchanges.pop();
+}
 
 const MEDIA_REPLY =
   "\u{1F4F8} I can't read photos, screenshots or voice notes yet — I'm text-first, that's what keeps me fast.\n\n" +
@@ -446,9 +461,11 @@ app.post("/whatsapp", async (req, res) => {
   try {
     const reply = await handleMessage(from, body, { media: hasMedia });
     twiml.message(reply);
+    recordExchange(from, body, reply);
   } catch (err) {
     console.error("handler error:", err);
     twiml.message("✅ Logged: meal — 300 kcal (placeholder). Try again with more detail anytime.");
+    recordExchange(from, body, "(handler error → placeholder reply)");
   }
   res.type("text/xml").send(twiml.toString());
 });
@@ -488,8 +505,10 @@ app.post("/meta-whatsapp", async (req, res) => {
       markRead(msgId);
       const reply = await handleMessage(from, text, { media });
       await sendMessage(from, reply);
+      recordExchange(from, text, reply);
     } catch (err) {
       console.error("handler error:", err);
+      recordExchange(from, text, "(handler error → placeholder reply)");
       try {
         await sendMessage(from, "✅ Logged: meal — 300 kcal (placeholder). Try again with more detail anytime.");
       } catch (sendErr) {
@@ -538,6 +557,9 @@ app.post("/netlify-waitlist", async (req, res) => {
 
   const classified = classifyContact(rawContact);
   const contact = classified ? classified.norm : rawContact || "(no contact)";
+  // Every valid-signature hit gets a log line — an unclassifiable contact must
+  // never be invisible (2026-07-20: a signup left no trace anywhere).
+  console.log(`netlify-waitlist: ${name || "(no name)"} · ${classified ? classified.type : `UNCLASSIFIED "${rawContact.slice(0, 40)}"`}`);
 
   // Auto-insert into founding_members (skip if duplicate or past cap)
   if (classified) {
