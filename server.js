@@ -8,9 +8,10 @@ const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
-const { logMeal, deleteLastLog, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
+const { supabase, logMeal, deleteLastLog, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
 const { validateSignature, extractMessages, sendMessage, markRead } = require("./src/meta.js");
+const { logCorrectionEvent } = require("./src/correctionLogger.js");
 
 const app = express();
 app.use(express.urlencoded({ extended: false })); // Twilio sends form-encoded
@@ -206,7 +207,10 @@ async function handleMessage(from, body) {
     ? { intent: "undo", items: [], parse_notes: "literal undo" }
     : await parseMeal(body, formatLastLogContext(recentBatch));
 
-  if (shouldPromoteToReplace(parsed, body, recentBatch)) parsed.intent = "replace_last";
+  if (shouldPromoteToReplace(parsed, body, recentBatch)) {
+    parsed.intent = "replace_last";
+    logCorrectionEvent({ intent: "promoted_to_replace", rawMessage: body, parsed, batch: recentBatch, deleted: [], outcome: "promoted" });
+  }
 
   // --- set_profile ---
   if (parsed.intent === "set_profile") {
@@ -292,6 +296,7 @@ async function handleMessage(from, body) {
     if (!deleted || deleted.length === 0) {
       return "Nothing to undo — no entries logged today.";
     }
+    logCorrectionEvent({ intent: "undo", rawMessage: body, parsed, batch: recentBatch, deleted, outcome: "removed" });
     const total = await todayTotal(from);
     const removedLines = deleted.map(r => `${r.food_name} — ${r.kcal} kcal`).join("\n");
     const mealLine = total.meals.length
@@ -313,6 +318,7 @@ async function handleMessage(from, body) {
       deleted = await deleteLastLog(from, parsed.items.length === 1 ? parsed.items[0].food_name : null);
     }
     if (!deleted || deleted.length === 0) {
+      logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed, batch: latest, deleted: [], outcome: "dead_end" });
       return "Which item should I change? Name it and I'll fix just that one — like \"the shake was 200 calories\". Everything else stays logged.";
     }
     const inheritFromOld = (it, old) => {
@@ -349,6 +355,7 @@ async function handleMessage(from, body) {
         Number(deleted[0].quantity) && Number(deleted[0].quantity) !== 1) {
       parsed.items[0].quantity = Number(deleted[0].quantity);
     }
+    logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed, batch: latest, deleted, outcome: "corrected" });
     const { rows, meals, totals } = await logMeal(from, parsed);
     const removedLines = (deleted || []).map(r => `❌ ${r.food_name} — ${r.kcal} kcal`).join("\n");
     const addedLines = fmtItems(rows).map(l => `✅ ${l}`);
@@ -474,9 +481,61 @@ app.post("/netlify-waitlist", async (req, res) => {
   res.sendStatus(200);
 
   const d = req.body.data || {};
-  const name = d.name || req.body.name || "(no name)";
-  const contact = d.contact || "(no contact)";
-  const text = `\u{1F389} New waitlist signup: ${name} — ${contact}\nRun: node scripts/sync-waitlist.js`;
+  const name = String(d.name || req.body.name || "").trim();
+  const rawContact = String(d.contact || "").trim();
+
+  // Classify & normalize contact (same logic as sync-waitlist.js)
+  function classifyContact(raw) {
+    const s = String(raw || "").trim();
+    if (!s) return null;
+    const digits = s.replace(/[\s\-()."']/g, "");
+    if (/^(\+91)?[6-9]\d{9}$/.test(digits)) return { type: "phone", norm: "+91" + digits.slice(-10) };
+    if (/^\+\d{7,15}$/.test(digits)) return { type: "phone", norm: digits };
+    if (/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(s)) return { type: "email", norm: s.toLowerCase() };
+    const handle = s.replace(/^@/, "").replace(/^(https?:\/\/)?(www\.)?instagram\.com\//i, "").replace(/\/.*$/, "");
+    if (/^[a-z0-9](?:[a-z0-9._]{1,28})[a-z0-9_]$/i.test(handle) && /[a-z]/i.test(handle)) {
+      return { type: "instagram", norm: handle.toLowerCase() };
+    }
+    return null;
+  }
+
+  const classified = classifyContact(rawContact);
+  const contact = classified ? classified.norm : rawContact || "(no contact)";
+
+  // Auto-insert into founding_members (skip if duplicate or past cap)
+  if (classified) {
+    try {
+      const { data: existing } = await supabase
+        .from("founding_members")
+        .select("id")
+        .eq("contact", classified.norm)
+        .limit(1);
+      if (!existing || existing.length === 0) {
+        const { data: all } = await supabase
+          .from("founding_members")
+          .select("waitlist_rank")
+          .order("waitlist_rank", { ascending: false })
+          .limit(1);
+        const nextRank = ((all && all[0]?.waitlist_rank) || 0) + 1;
+        if (nextRank <= 50) {
+          const row = {
+            contact: classified.norm,
+            name: name || null,
+            source: "waitlist",
+            waitlist_rank: nextRank,
+            phone_number: classified.type === "phone" ? classified.norm : null,
+          };
+          await supabase.from("founding_members").insert([row]);
+          console.log(`founding_members: #${nextRank} ${name || "(no name)"} · ${classified.type}`);
+        }
+      }
+    } catch (err) {
+      console.error("netlify-waitlist: founding_members insert failed:", err.message);
+    }
+  }
+
+  // WhatsApp alert to Swapnil
+  const text = `\u{1F389} New waitlist signup (#${classified ? "auto-added" : "NEEDS REVIEW"}): ${name || "(no name)"} — ${contact}`;
   try {
     const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
     const from = `whatsapp:${process.env.TWILIO_WHATSAPP_FROM || "+14155238886"}`;

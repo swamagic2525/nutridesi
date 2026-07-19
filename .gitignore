@@ -6,3 +6,6 @@ nutridesi.log
 .worktrees/
 site/.netlify/
 evals/runs/
+evals/correction-log.jsonl
+.claude/
+.netlify/
