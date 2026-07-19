@@ -60,7 +60,12 @@ Partial word matches are not matches: "bhelpuri" does NOT match "Puri". Match wh
 A leading number applies ONLY to the food it directly precedes, NOT to the whole line.
 - "3 idli with sambar" -> Idli qty 3, Sambar qty 1 (the 3 is idlis, not sambar).
 - "2 roti with butter" -> Roti qty 2, Butter qty 1 (the 2 is rotis, not butter).
-- "2 roti with ghee" -> Roti qty 2, Ghee qty 1 (NEVER copy the roti count onto the ghee).
+- "2 roti with ghee" -> Roti qty 2, Ghee qty 1 (the 2 is rotis; ghee is a side/topping, 1 serving).
+- "3 ghee chapati" -> Chapati qty 3, Ghee qty 3 (all 3 chapatis have ghee — the modifier inherits the count).
+When a modifier is INLINE (before the base food: "ghee roti", "butter paratha"), it applies to EVERY unit.
+"3 ghee chapati" = 3 chapatis each with ghee = Ghee qty 3. If the user wanted fewer, they'd say
+"1 ghee chapati and 2 plain chapati".
+When a modifier is a SIDE (after "with": "roti with ghee"), it defaults to qty 1 unless given its own count.
 Modifiers and secondary/side items default to qty 1.0 unless the user gives them their OWN explicit quantity
 (e.g. "2 roti and 2 eggs" -> Roti qty 2, Egg qty 2).
 

@@ -10,8 +10,10 @@ const FOODS = [
   { id: 5,  name: "Naan",                  aliases: ["naan","naan bread","tandoori naan","butter naan"], unit: "piece", kcal: 262, p: 8.7, c: 45, f: 5.1, fb: 2 },
   { id: 6,  name: "Bhatura",               aliases: ["bhatura","batura"], unit: "piece", kcal: 300, p: 7, c: 42, f: 12, fb: 2 },
   { id: 7,  name: "Rice (Cooked)",         aliases: ["rice","chawal","boiled rice","plain rice","steamed rice","white rice"], unit: "cup", kcal: 195, p: 4, c: 43, f: 0.4, fb: 0.6, rawFactor: 2.8 },
-  { id: 8,  name: "Biryani (Chicken)",     aliases: ["chicken biryani","biryani","murgh biryani","dum biryani"], unit: "plate", kcal: 450, p: 25, c: 55, f: 12, fb: 3 },
-  { id: 9,  name: "Biryani (Veg)",         aliases: ["veg biryani","vegetable biryani","paneer biryani"], unit: "plate", kcal: 350, p: 10, c: 60, f: 8, fb: 4 },
+  { id: 8,  name: "Biryani (Chicken)",     aliases: ["chicken biryani","murgh biryani","chicken dum biryani"], unit: "plate", kcal: 450, p: 25, c: 55, f: 12, fb: 3 },
+  // Bare category words default to the VEG variant — non-veg needs an explicit
+  // protein word ("chicken biryani"). Policy set 2026-07-19.
+  { id: 9,  name: "Biryani (Veg)",         aliases: ["veg biryani","biryani","vegetable biryani","paneer biryani","dum biryani","biriyani","veg dum biryani"], unit: "plate", kcal: 350, p: 10, c: 60, f: 8, fb: 4 },
   { id: 10, name: "Fried Rice",            aliases: ["fried rice","veg fried rice","egg fried rice","chinese rice"], unit: "plate", kcal: 320, p: 8, c: 52, f: 9, fb: 2 },
   { id: 11, name: "Upma",                  aliases: ["upma","rava upma","sooji upma"], unit: "bowl", kcal: 180, p: 4.5, c: 30, f: 5, fb: 2.5 },
   { id: 12, name: "Poha",                  aliases: ["poha","aval","beaten rice","pohaa","pohe"], unit: "bowl", kcal: 165, p: 4, c: 32, f: 3, fb: 1.5 },
@@ -182,6 +184,12 @@ const FOODS = [
   { id: 180, name: "Kulfi",                aliases: ["kulfi","malai kulfi","kesar kulfi","kulfi stick","matka kulfi"], unit: "stick", kcal: 150, p: 4, c: 17, f: 8, fb: 0, g: 70 },
   { id: 181, name: "Green Leafy Vegetables", aliases: ["green vegetable","green vegetables","green veg","hari sabzi","leafy vegetables","leafy greens","greens","palak","spinach","saag","methi leaves"], unit: "cup", kcal: 25, p: 3, c: 4, f: 0.3, fb: 2.5, g: 100 },
   { id: 182, name: "Palak Sabzi",            aliases: ["palak sabzi","palak sabji","palak ki sabzi","spinach sabzi","palak bhaji","saag sabzi","methi sabzi","methi bhaji"], unit: "bowl", kcal: 120, p: 4.5, c: 8, f: 8, fb: 4 },
+  { id: 183, name: "Chicken Paratha",        aliases: ["chicken paratha","murgh paratha","non veg paratha","chicken stuffed paratha"], unit: "piece", kcal: 310, p: 15, c: 30, f: 14, fb: 2 },
+  { id: 184, name: "Keema Paratha",          aliases: ["keema paratha","mutton paratha","mince paratha","qeema paratha"], unit: "piece", kcal: 330, p: 16, c: 30, f: 16, fb: 2 },
+  { id: 185, name: "Egg Paratha",            aliases: ["egg paratha","anda paratha","egg stuffed paratha","anda wala paratha"], unit: "piece", kcal: 280, p: 12, c: 28, f: 13, fb: 2 },
+  // Exception to the veg-default policy: bare "bhurji" stays on Egg Bhurji (150)
+  // — common usage is overwhelmingly anda bhurji. Paneer needs the explicit word.
+  { id: 186, name: "Paneer Bhurji",          aliases: ["paneer bhurji","paneer bhurjee","paneer burji","paneer ki bhurji","cottage cheese bhurji"], unit: "bowl", kcal: 290, p: 15, c: 8, f: 23, fb: 1 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));

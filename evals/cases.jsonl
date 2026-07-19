@@ -16,7 +16,7 @@
 {"id":"raw-chicken","tags":["raw"],"input":"150g chicken breast raw","expected":{"intent":"log","items":[{"db_id":68,"grams":150,"raw":true}]}}
 {"id":"raw-dal","tags":["raw"],"input":"50g raw dal","expected":{"intent":"log","items":[{"db_id":17,"grams":50,"raw":true}]}}
 {"id":"modifier-butter","tags":["modifier"],"input":"2 roti with amul butter","expected":{"intent":"log","items":[{"db_id":1,"qty":2},{"db_id":49,"qty":1}]}}
-{"id":"modifier-ghee-chapati","tags":["modifier"],"input":"3 ghee chapati","expected":{"intent":"log","items":[{"db_id":1,"qty":3},{"db_id":48,"qty":1}]}}
+{"id":"modifier-ghee-chapati","tags":["modifier"],"input":"3 ghee chapati","expected":{"intent":"log","items":[{"db_id":1,"qty":3},{"db_id":48,"qty":3}]}}
 {"id":"scope-idli-sambar","tags":["scope"],"input":"3 idli with sambar","expected":{"intent":"log","items":[{"db_id":13,"qty":3},{"db_id":16,"qty":1}]}}
 {"id":"scope-roti-eggs","tags":["scope"],"input":"2 roti and 2 boiled eggs","expected":{"intent":"log","items":[{"db_id":1,"qty":2},{"db_id":43,"qty":2}]}}
 {"id":"scope-real-eggs-bread-oil","tags":["scope"],"input":"2 Eggs with 2 bread with little oil","expected":{"intent":"log","items":[{"db_id":[43,44,133],"qty":2},{"db_id":72,"qty":2},{"db_id":50,"qty_any_of":[0.5,1]}]}}
@@ -63,3 +63,11 @@
 {"id":"corr-rename-one-of-five","tags":["correction","incident"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- Protein Shake: 120 kcal, 24g protein\n- Poha: 165 kcal, 4g protein\n- Peanuts: 170 kcal, 8g protein\n- Egg Whites ×5: 85 kcal, 18g protein\n- Egg (Fried/Half Fry) ×2: 180 kcal, 13g protein","input":"It was  muscle blaze biozyme whey isolate. That has 27 grams of protein","expected":{"intent":"replace_last","items":[{"name_like":"whey","stated_protein":27}]}}
 {"id":"corr-rename-not-black","tags":["correction","incident"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- Black Coffee: 5 kcal, 0g protein\n- Chia Seeds ×2: 116 kcal, 4g protein, estimated","input":"Cup of Coffee wasn't black, it was with skimmed milk","expected":{"intent":"replace_last","items":[{"name_like":"coffee"}]}}
 {"id":"corr-two-named-stated","tags":["correction","incident","stated"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- jalapeno chicken pocket: 420 kcal, estimated\n- mozzarella pesto sandwich: 480 kcal, estimated","input":"Jalapeno chicken pocket - 200 calories\npesto mozarella sandwich - 390 calories","expected":{"intent":"replace_last","items":[{"name_like":"jalapeno","stated_kcal":200},{"name_like":"sandwich","stated_kcal":390}]}}
+{"id":"nonveg-paratha-chicken","tags":["paratha","nonveg"],"input":"chicken paratha","expected":{"intent":"log","items":[{"db_id":183,"qty":1}]}}
+{"id":"nonveg-paratha-egg","tags":["paratha","nonveg"],"input":"2 anda paratha","expected":{"intent":"log","items":[{"db_id":185,"qty":2}]}}
+{"id":"nonveg-paratha-keema","tags":["paratha","nonveg"],"input":"keema paratha khaya","expected":{"intent":"log","items":[{"db_id":184,"qty":1}]}}
+{"id":"vegdefault-biryani-bare","tags":["vegdefault"],"input":"biryani khaya lunch mein","expected":{"intent":"log","items":[{"db_id":9,"qty":1}]}}
+{"id":"vegdefault-biryani-veg","tags":["vegdefault"],"input":"veg biryani","expected":{"intent":"log","items":[{"db_id":9,"qty":1}]}}
+{"id":"vegdefault-biryani-chicken","tags":["vegdefault"],"input":"chicken biryani full plate","expected":{"intent":"log","items":[{"db_id":8,"qty_any_of":[1,2]}]}}
+{"id":"vegdefault-bhurji-paneer","tags":["vegdefault"],"input":"paneer bhurji with 2 roti","expected":{"intent":"log","items":[{"db_id":186,"qty":1},{"db_id":1,"qty":2}]}}
+{"id":"vegdefault-bhurji-bare","tags":["vegdefault"],"input":"bhurji bana ke khayi","expected":{"intent":"log","items":[{"db_id":150,"qty_any_of":[1,2]}]}}
