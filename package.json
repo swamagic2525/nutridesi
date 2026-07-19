@@ -12,7 +12,8 @@
     "test:corrections": "node test/correction-context-test.js",
     "test:metrics": "node test/metrics-test.js",
     "test:guard": "node test/protein-guard-test.js",
-    "test:context": "node test/context-guard-test.js"
+    "test:context": "node test/context-guard-test.js",
+    "test:serving": "node test/serving-size-test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",

@@ -64,6 +64,13 @@ const splitMacros = (kcal) => ({
   fat: +(kcal * 0.25 / 9).toFixed(1),
 });
 
+// Serving-word floor: "platter"/"thali"/"combo" on a per-piece food means a
+// multi-piece serving, not one piece ("chicken tandoor platter" was served as
+// 1 tikka piece = 55 kcal). No explicit count from the user -> assume 4 pieces,
+// shown transparently in the reply so one message corrects it.
+const SERVING_WORDS = /\b(platter|thali|combo|full plate|meal box)\b/i;
+const PIECE_UNITS = new Set(["piece", "stick", "slice", "fillet"]);
+
 // Convert a parsed item into a log row with resolved nutrition + 4-tier fallback.
 // Wrapper applies user-stated PROTEIN ("yogurt was 22g protein") on top of any
 // resolution path — the user's number replaces ours, kcal and the rest stay.
@@ -154,6 +161,9 @@ function resolveItemBase(item) {
   const PORTION_UNITS = new Set(["bowl", "plate", "glass", "katori", "cup", "serving", "100g"]);
   if (PORTION_UNITS.has(food ? food.unit : "serving") && qty > 5) qty = 5;
   if (food && qty === 0) qty = 0.5; // a matched food must log something, never 0
+  const platter = !!food && PIECE_UNITS.has(food.unit)
+    && SERVING_WORDS.test(String(item.food_name || "")) && qty <= 1;
+  if (platter) qty = 4;
 
   if (food) {
     // Tier 1/2: direct or category DB match
@@ -163,9 +173,10 @@ function resolveItemBase(item) {
       kcal: Math.round(food.kcal * m), protein: +(food.p * m).toFixed(1),
       carbs: +(food.c * m).toFixed(1), fat: +(food.f * m).toFixed(1),
       fiber: +((food.fb || 0) * m).toFixed(1),
-      is_estimate: item.match_type !== "direct" || item.portion_clarity !== "specified",
+      is_estimate: platter || item.match_type !== "direct" || item.portion_clarity !== "specified",
       userSaid: item.food_name, assumed: item.match_type !== "direct",
-      portionNote: item.portion_clarity !== "specified" ? `${qty} ${food.unit}` : null,
+      portionNote: platter ? `assumed ${qty} ${food.unit}s for the platter — reply a count to fix`
+        : item.portion_clarity !== "specified" ? `${qty} ${food.unit}` : null,
     };
   }
   // Tier 3: unknown food but the LLM knows it — use its per-serving estimate,
