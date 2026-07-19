@@ -7,5 +7,6 @@ nutridesi.log
 site/.netlify/
 evals/runs/
 evals/correction-log.jsonl
+evals/db-gaps.jsonl
 .claude/
 .netlify/
