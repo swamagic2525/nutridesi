@@ -22,11 +22,14 @@ function extractMessages(webhookBody) {
     for (const change of entry.changes || []) {
       if (change.field !== "messages") continue;
       for (const msg of change.value?.messages || []) {
-        if (msg.type !== "text") continue;
+        // Non-text (photo/voice/video/doc) must still get a reply — dropping
+        // them is a silent failure. Captions ride along as the text.
+        const media = msg.type !== "text";
         out.push({
           from: "+" + msg.from,
-          text: msg.text?.body || "",
+          text: media ? (msg[msg.type]?.caption || "") : (msg.text?.body || ""),
           msgId: msg.id,
+          media,
         });
       }
     }

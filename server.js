@@ -112,6 +112,10 @@ const WELCOME =
   "built this where you already are. Bigger version in ~30 days — feedback shapes it: " +
   "DM @swapnilgore2525 on Instagram, I read everything.";
 
+const MEDIA_REPLY =
+  "\u{1F4F8} I can't read photos, screenshots or voice notes yet — I'm text-first, that's what keeps me fast.\n\n" +
+  "Just type what you ate — *\"2 roti, dal, chicken curry\"* — and I'll log it with calories + protein in seconds.";
+
 const FIRST_LOG_FOOTER =
   "\n\n\u{1F64F} _First log — thanks for testing NutriDesi early! Reply \"undo\" to remove a mistake, " +
   "or correct me anytime (\"that dosa was 120 calories\"). Feedback? DM @swapnilgore2525 on Instagram — " +
@@ -167,7 +171,12 @@ function assumptionLines(rows) {
 // Core message handler — transport-agnostic, returns the reply string.
 // ---------------------------------------------------------------------------
 
-async function handleMessage(from, body) {
+async function handleMessage(from, body, opts = {}) {
+  // Photo / screenshot / voice note with no caption: deterministic answer, no
+  // LLM call. A caption ("2 roti" under a food pic) is processed as normal text.
+  if (opts.media && !String(body || "").trim()) {
+    return MEDIA_REPLY;
+  }
   if (body.length > RATE.maxLen) {
     return "That's a long one \u{1F605} Keep it short — just the foods and portions, e.g. \"2 roti and dal\".";
   }
@@ -179,14 +188,28 @@ async function handleMessage(from, body) {
   }
 
   const trimmed = body.trim();
+  if (!trimmed) {
+    return "What did you eat? Send me a food name and I'll log it \u{1F642}";
+  }
   const isJoin = /^join\b/i.test(trimmed);
   const isGreeting = /^(hi+|hello+|hey+|namaste|hola|start|yo)[\s!.\u{1F44B}\u{1F64F}]*$/iu.test(trimmed);
-  const isHelp = /^(help|what can you do\??|how does (this|it) work\??|what is this\??)$/i.test(trimmed);
+  // Capability questions in any common phrasing — never worth an LLM call.
+  const isHelp = /^(help|menu|commands|features|info|instructions)\b[\s!?.]*$/i.test(trimmed)
+    || /\b(what (can|all can|do) (you|u) do|how (does|do) (this|it|you|u) work|how (to|do i) (use|log)|what is (this|nutridesi)|who are (you|u)|kaise (use|kaam|chalta)|kya (kar sakte|karta hai))\b/i.test(trimmed);
   if (isJoin || isGreeting || isHelp) {
     const isNew = await ensureUser(from);
     return (isNew || isJoin || isHelp)
       ? WELCOME
       : "Hey! \u{1F44B} Just tell me what you ate — e.g. \"2 roti and dal\" — and I'll log it.";
+  }
+  // "Can I send a screenshot / photo / voice note?" — asked in text form.
+  if (/\b(screenshot|photo|pic|picture|image|voice note|voice message|audio|video)s?\b/i.test(trimmed)
+    && /\b(can|could|kya|how|send|bhej|bheju|bhejun|share|upload|attach|read|scan)\b/i.test(trimmed)) {
+    return MEDIA_REPLY;
+  }
+  // Bare acknowledgements ("thanks", "ok", "nice") — don't ask them what they ate.
+  if (/^(thanks+|thank (you|u)|thanku|thnx|thx|tysm|ty|ok+|okay+|great|nice|cool|super|awesome|perfect|got it|shukriya|dhanyawad|\u{1F44D}|\u{1F64F}|❤️)[\s!.\u{1F44D}\u{1F64F}❤️]*$/iu.test(trimmed)) {
+    return "\u{1F64C} Anytime! Text me your next meal whenever you eat.";
   }
 
   const profile = await getProfile(from);
@@ -412,6 +435,7 @@ app.post("/whatsapp", async (req, res) => {
   const twiml = new twilio.twiml.MessagingResponse();
   const from = (req.body.From || "").replace("whatsapp:", "");
   const body = req.body.Body || "";
+  const hasMedia = Number(req.body.NumMedia || 0) > 0;
   const t0 = Date.now();
 
   if (isDuplicate(req.body.MessageSid)) {
@@ -420,7 +444,7 @@ app.post("/whatsapp", async (req, res) => {
   res.on("finish", () => console.log(`${new Date().toISOString()} ${from} "${body.slice(0, 40)}" ${Date.now() - t0}ms`));
 
   try {
-    const reply = await handleMessage(from, body);
+    const reply = await handleMessage(from, body, { media: hasMedia });
     twiml.message(reply);
   } catch (err) {
     console.error("handler error:", err);
@@ -457,12 +481,12 @@ app.post("/meta-whatsapp", async (req, res) => {
   res.sendStatus(200);
 
   const messages = extractMessages(req.body);
-  for (const { from, text, msgId } of messages) {
+  for (const { from, text, msgId, media } of messages) {
     if (isDuplicate(msgId)) continue;
     const t0 = Date.now();
     try {
       markRead(msgId);
-      const reply = await handleMessage(from, text);
+      const reply = await handleMessage(from, text, { media });
       await sendMessage(from, reply);
     } catch (err) {
       console.error("handler error:", err);
