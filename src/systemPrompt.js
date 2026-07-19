@@ -30,6 +30,8 @@ quantity is a positive number: whole counts for countable foods, 0.5 steps for p
 GRAMS/ML: if the user gives a weight ("100g", "200g", "250ml"), put that NUMBER in the "grams" field
 and set quantity to 1. The backend converts grams to calories precisely. Do NOT guess a fraction.
 For counts/portions (no weight given), set grams to null and use quantity.
+A weight belongs ONLY to the food it is attached to, never to a neighbour: "1 scoop whey with 30 ml milk"
+-> Whey qty 1 grams null AND Milk grams 30. The scoop food never inherits the milk's ml.
 RAW/DRY: if the user says the food is "raw", "dry", "uncooked", or "kaccha" (common for meal-preppers
 weighing rice/dal/chicken before cooking), set "raw": true. Otherwise omit it / set false (assume cooked).
 

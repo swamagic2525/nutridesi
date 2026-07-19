@@ -56,6 +56,7 @@ function checkItem(exp, p) {
   if (exp.qty !== undefined && !eq(p.quantity, exp.qty)) errs.push(`qty ${p.quantity} != ${exp.qty}`);
   if (exp.qty_any_of && !exp.qty_any_of.some(q => eq(p.quantity, q))) errs.push(`qty ${p.quantity} not in [${exp.qty_any_of}]`);
   if (exp.grams !== undefined && !eq(p.grams, exp.grams)) errs.push(`grams ${p.grams} != ${exp.grams}`);
+  if (exp.grams_absent && Number(p.grams) > 0) errs.push(`grams ${p.grams} expected none`);
   if (exp.raw !== undefined && !!p.raw !== exp.raw) errs.push(`raw ${!!p.raw} != ${exp.raw}`);
   if (exp.stated_kcal !== undefined && !eq(p.stated_kcal, exp.stated_kcal)) errs.push(`stated_kcal ${p.stated_kcal} != ${exp.stated_kcal}`);
   if (exp.stated_protein !== undefined && !eq(p.stated_protein, exp.stated_protein)) errs.push(`stated_protein ${p.stated_protein} != ${exp.stated_protein}`);

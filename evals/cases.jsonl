@@ -59,3 +59,4 @@
 {"id":"instead-is-log","tags":["annotation"],"input":"I had dal instead of rice","expected":{"intent":"log","items":[{"db_id":17,"qty":1}]}}
 {"id":"real-whey","tags":["basic"],"input":"1 scoop whey","expected":{"intent":"log","items":[{"db_id":[58,130],"qty":1}]}}
 {"id":"real-oats-milk","tags":["grams"],"input":"25g oats and 1 glass milk","expected":{"intent":"log","items":[{"db_id":98,"grams":25},{"db_id":34,"qty":1}]}}
+{"id":"scope-scoop-with-milk","tags":["scope","regression"],"input":"1 scoop of the wholetruth cold coffee whey protein with 30 ml milk","expected":{"intent":"log","items":[{"db_id":[58,130,null],"qty":1,"grams_absent":true},{"db_id":34,"grams":30}]}}

@@ -91,6 +91,20 @@ function matchRows(rows, foodHints, rawMessage = "") {
       }
       if (exact.length > 1) return null;
     }
+    // Bare "it was N calories" against a multi-item batch: the estimate callout
+    // invites exactly this reply, so when the batch has exactly one flagged item
+    // (uncurated, else sole estimate), that item is the target — not a dead-end.
+    // Gram-logged rows ("30g Milk...") are excluded: the user weighed those, and
+    // their is_estimate flag reflects DB averages, not an assumption to correct.
+    if (!targetId && hintWords.length === 0) {
+      const gramRow = row => /^\d+(\.\d+)?(g|ml)\b/i.test(String(row.food_name || ""));
+      const free = rows.filter(row => !taken.has(row.id));
+      const uncurated = free.filter(row => row.matched_db_id == null);
+      const estimated = free.filter(row => row.is_estimate === true && !gramRow(row));
+      const sole = uncurated.length === 1 ? uncurated[0]
+        : estimated.length === 1 ? estimated[0] : null;
+      if (sole) { taken.add(sole.id); return sole; }
+    }
     let best = null, bestScore = 0;
     for (const row of rows) {
       if (taken.has(row.id)) continue;
