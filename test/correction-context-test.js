@@ -39,6 +39,8 @@ const cakeBatch = [
 ];
 const [matchedCake] = matchRows(cakeBatch, [{ food_name: null, matched_db_id: null }], "Cake slice was 150 cals, 5g protein");
 assert.strictEqual(matchedCake.id, 11);
-const [ambiguousPronoun] = matchRows(cakeBatch, [{ food_name: null, matched_db_id: null }], "it was 150 cals");
-assert.strictEqual(ambiguousPronoun, null);
+// Class A (framework): a bare "it was N" against a batch with exactly ONE
+// flagged estimate targets that sole flagged item (User A whey incident).
+const [solePronoun] = matchRows(cakeBatch, [{ food_name: null, matched_db_id: null }], "it was 150 cals");
+assert.strictEqual(solePronoun.id, 11);
 console.log("Correction context tests: passed (10 cases)");
