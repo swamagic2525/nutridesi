@@ -34,7 +34,7 @@ already are. Built by a PM & ex-fitness coach who watched clients quit every tra
 ```
 WhatsApp → Twilio Sandbox → POST /whatsapp (Express)
         → LLM parse (Gemini → Groq → Claude fallback chain, prompt-cached)
-        → resolve nutrition (curated 118 foods → INDB 1,014 recipes → LLM estimate)
+        → resolve nutrition (curated 180 foods → INDB 1,014 recipes → LLM estimate)
         → Supabase (async insert) → TwiML reply inline
 ```
 
@@ -42,7 +42,7 @@ One synchronous webhook — replies land in ~2-3s, well inside Twilio's 15s wind
 Guardrails: per-phone rate limiting, webhook dedupe by MessageSid, message length cap,
 portion-quantity sanity caps, INDB plausibility check against the LLM's own estimate.
 
-**Data**: 118 hand-curated Indian foods with Hinglish aliases (`src/foods.js`) +
+**Data**: 180 hand-curated Indian foods with Hinglish aliases (`src/foods.js`) +
 the [Indian Nutrient Databank](https://www.indiannutrientdatabank.in/) (1,014 lab-derived
 recipes) as a fuzzy-matched reference tier in Supabase.
 
@@ -112,7 +112,7 @@ Text the sandbox number `2 roti and dal` → calories + running daily total.
 | `server.js` | Express webhook: routing, welcome flow, rate limits, TwiML replies |
 | `src/parser.js` | Multi-provider LLM call (Gemini/Groq/Claude) + preprocessing |
 | `src/systemPrompt.js` | System prompt builder: alias map, parsing rules, output schema |
-| `src/foods.js` | 118-item curated food DB with Hinglish aliases, raw factors, serving grams |
+| `src/foods.js` | 180-item curated food DB with Hinglish aliases, raw factors, serving grams |
 | `src/db.js` | Nutrition resolution (4-tier fallback), Supabase logging, daily totals |
 | `scripts/healthcheck.js` | Watchdog: tunnel reachability + Twilio balance alerts |
 | `launchd/` | LaunchAgent plists (server, ngrok, healthcheck) |
@@ -124,6 +124,7 @@ Text the sandbox number `2 roti and dal` → calories + running daily total.
 
 ## What's deliberately not built
 
-Goal setting, personal calibration, scheduled daily summaries, streaks, photo logging,
-Devanagari input. The bet: prove D7/D30 retention on the core logging loop *first*
-(targets in `CLAUDE.md`), then invest in the accountability layer.
+Personal calibration, scheduled daily summaries, streaks, photo logging,
+Devanagari input. Goal setting with calorie + protein targets and a progress bar
+shipped in v1; the bet is to prove D7/D30 retention on the core loop before
+investing in the broader accountability layer.

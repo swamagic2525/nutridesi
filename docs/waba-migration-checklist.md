@@ -11,19 +11,16 @@ identity/accounts); the code migration (Part C) is done in-repo.
 
 Do these in one sitting (~30 min), then wait 1–3 days for Meta's review.
 
-- [ ] **A1. Facebook Business Manager**: go to business.facebook.com → Create
-  account. Business name: "NutriDesi" (or your legal/individual name — solo
-  builders can verify as sole proprietor). Use swa.magic2525@gmail.com or a
-  dedicated email you'll keep.
-- [ ] **A2. Business details**: address, phone, website. For website, the GitHub
-  repo page or an Instagram profile URL works at this stage; a landing page is
-  better if you have an hour (even a one-page Carrd/Notion site).
-- [ ] **A3. Start Business Verification**: Business Settings → Security Centre →
-  Start Verification. Documents that work for a sole proprietor in India:
-  PAN + bank statement, or GST/Udyam registration if you have one. The name on
-  the document must match the business name you entered.
-- [ ] **A4. Confirm contact**: Meta calls/emails to verify the business phone.
-  Answer it — silent rejections are usually a missed verification call.
+- [x] **A1. Facebook Business Manager**: done — sole proprietor, legal name
+  Swapnil Sukhadev Gore.
+- [x] **A2. Business details**: done — website is https://nutridesi.co
+  (Instagram URL and netlify.app subdomain were both rejected as shared
+  domains; bought nutridesi.co on Namecheap 2026-07-18, hosted on Netlify).
+- [x] **A3. Start Business Verification**: submitted 2026-07-18 with documents
+  (name/address + phone). Meta quoted ~2 days for review.
+- [ ] **A4. Confirm contact**: Meta may call/email to verify the business
+  phone during review. Answer it — silent rejections are usually a missed
+  verification call.
 
 **Gotchas:** mismatched name spelling between A1 and A3 is the #1 rejection
 reason. If rejected, fix the mismatch and resubmit — appeals are fast.
@@ -63,13 +60,13 @@ the core loop (users text first) is unlimited from day one.
 
 ## Part C — Code migration (done for you, in-repo)
 
-- [ ] C1. New webhook: `GET /meta-whatsapp` verify-token handshake +
+- [x] C1. New webhook: `GET /meta-whatsapp` verify-token handshake +
   `POST /meta-whatsapp` parsing Meta's JSON payload (replaces Twilio's
   form-encoded body).
-- [ ] C2. Replies via Graph API `POST /v23.0/{phone_number_id}/messages`
+- [x] C2. Replies via Graph API `POST /v23.0/{phone_number_id}/messages`
   (replaces inline TwiML). Same parser/DB/reply pipeline, transport only.
-- [ ] C3. Healthcheck alert ported to Graph API send.
-- [ ] C4. Webhook signature validation (`X-Hub-Signature-256` with the app
+- [x] C3. Healthcheck alert ported to Graph API send.
+- [x] C4. Webhook signature validation (`X-Hub-Signature-256` with the app
   secret) — closes backlog #0 item 1 properly.
 - [ ] C5. Cloud deploy (Railway/Render) with `.env` in host secrets; Mac Mini
   + ngrok retire. Webhook URL pasted into the app's WhatsApp → Configuration.
