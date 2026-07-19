@@ -2,6 +2,8 @@
 const { createClient } = require("@supabase/supabase-js");
 const { FOOD_BY_ID } = require("./foods.js");
 const { matchRows } = require("./correctionContext.js");
+const { guardItems } = require("./proteinGuard.js");
+const { logGapEvent } = require("./gapLogger.js");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -228,12 +230,17 @@ function applyReference(row, ref) {
   row.fiber = +(fb * qty).toFixed(1);
   row.unit = unit;
   row.food_name = ref.food_name;
+  row.refVerified = true;
 }
 
 // Resolve parsed items to nutrition rows (curated -> INDB -> estimate) without
 // touching the log — shared by logMeal and query-intent previews.
-async function resolveRows(parsed) {
-  const rows = (parsed.items || []).map(it => resolveItem(it));
+async function resolveRows(parsed, opts = {}) {
+  const items = parsed.items || [];
+  // Deterministic protein guard first: a cross-protein match ("chicken paratha"
+  // -> veg paratha) is nulled here so it takes the INDB path below instead.
+  guardItems(items);
+  const rows = items.map(it => resolveItem(it));
   // Cross-reference unmatched foods against INDB (parallel, misses only).
   await Promise.all(rows
     .filter(r => !r.matched_db_id && !r.stated && r.food_name && r.food_name !== "meal")
@@ -241,13 +248,27 @@ async function resolveRows(parsed) {
       const ref = await refLookup(r.food_name);
       if (ref) applyReference(r, ref);
     }));
+  // Gap trail: only when actually logging (not query previews). rows[i] maps 1:1 to items[i].
+  if (opts.trackGaps) {
+    rows.forEach((r, i) => {
+      const it = items[i];
+      if (!it || !it.food_name || r.matched_db_id || r.stated || r.food_name === "meal") return;
+      logGapEvent({
+        food: it.food_name,
+        reason: it.protein_guard ? "protein_guard" : "no_match",
+        source: r.refVerified ? "indb" : "estimate",
+        served_as: r.food_name,
+        kcal: r.kcal,
+      });
+    });
+  }
   return rows;
 }
 
 async function logMeal(phone, parsed) {
   // Previous total fetched in parallel with the user upsert (before the insert,
   // so no double-count); new items are added locally. Saves one DB round-trip.
-  const [prevTotal, isNewUser, rows] = await Promise.all([todayTotal(phone), ensureUser(phone), resolveRows(parsed)]);
+  const [prevTotal, isNewUser, rows] = await Promise.all([todayTotal(phone), ensureUser(phone), resolveRows(parsed, { trackGaps: true })]);
   const mealTime = parsed.meal_time_inferred || "snack";
   rows.forEach(r => Object.assign(r, { phone_number: phone, meal_time: mealTime }));
 
@@ -260,7 +281,7 @@ async function logMeal(phone, parsed) {
 
   // Fire-and-forget: the reply's totals are computed locally (below), so it need
   // not wait for the write. Saves ~0.7s of India<->Supabase latency per message.
-  supabase.from("user_logs").insert(rows.map(({ stated, userSaid, assumed, portionNote, ...r }) => r)).then(({ error }) => {
+  supabase.from("user_logs").insert(rows.map(({ stated, userSaid, assumed, portionNote, refVerified, ...r }) => r)).then(({ error }) => {
     if (error) console.error("SUPABASE INSERT FAILED:", error.message, error.details || "", error.hint || "");
   });
   const sum = (k) => prevTotal[k] + rows.reduce((s, r) => s + Number(r[k] || 0), 0);
