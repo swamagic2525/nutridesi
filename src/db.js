@@ -3,6 +3,7 @@ const { createClient } = require("@supabase/supabase-js");
 const { FOOD_BY_ID } = require("./foods.js");
 const { matchRows } = require("./correctionContext.js");
 const { guardItems } = require("./proteinGuard.js");
+const { contextGuard, contentTokens } = require("./contextGuard.js");
 const { logGapEvent } = require("./gapLogger.js");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -198,7 +199,7 @@ async function refLookup(name) {
 
 // Some INDB serving values are whole-recipe yields, not one portion — trust the
 // serving numbers only in a plausible range, else derive from per-100g (~150g serving).
-function applyReference(row, ref) {
+function applyReference(row, ref, opts = {}) {
   const qty = row.quantity;
   const inRange = (k) => Number.isFinite(Number(k)) && k >= 20 && k <= 800;
 
@@ -220,8 +221,12 @@ function applyReference(row, ref) {
   // Guardrail: row.kcal here is the LLM's own per-serving estimate x qty. If the
   // fuzzy match disagrees wildly (>2x or <0.5x), it's probably a wrong recipe
   // ("honey" -> "Honey cake", "jam" -> "Jam tart") — keep the LLM estimate.
-  const llmPerServing = row.kcal / qty;
-  if (llmPerServing > 0 && (perServing > llmPerServing * 2 || perServing < llmPerServing * 0.5)) return;
+  // Suspect arbitration passes trusted: token evidence replaces this check
+  // (comparing INDB against the WRONG curated value would falsely reject).
+  if (!opts.trusted) {
+    const llmPerServing = row.kcal / qty;
+    if (llmPerServing > 0 && (perServing > llmPerServing * 2 || perServing < llmPerServing * 0.5)) return;
+  }
 
   row.kcal = Math.round(perServing * qty);
   row.protein = +(p * qty).toFixed(1);
@@ -237,8 +242,10 @@ function applyReference(row, ref) {
 // touching the log — shared by logMeal and query-intent previews.
 async function resolveRows(parsed, opts = {}) {
   const items = parsed.items || [];
-  // Deterministic protein guard first: a cross-protein match ("chicken paratha"
-  // -> veg paratha) is nulled here so it takes the INDB path below instead.
+  // Deterministic nets before nutrition resolution (order matters): the context
+  // guard may rematch or flag; the protein guard then nulls cross-protein
+  // matches outright so they take the INDB path below.
+  contextGuard(items);
   guardItems(items);
   const rows = items.map(it => resolveItem(it));
   // Cross-reference unmatched foods against INDB (parallel, misses only).
@@ -248,18 +255,35 @@ async function resolveRows(parsed, opts = {}) {
       const ref = await refLookup(r.food_name);
       if (ref) applyReference(r, ref);
     }));
-  // Gap trail: only when actually logging (not query previews). rows[i] maps 1:1 to items[i].
+  // Suspect arbitration: a still-matched compound/coverage suspect asks INDB for
+  // the full phrase. Only positive evidence - every content word present in the
+  // INDB recipe name - overrides the curated value; otherwise curated stands.
+  await Promise.all(rows.map(async (r, i) => {
+    const it = items[i];
+    if (!it || !r.matched_db_id || !(it.compound_suspect || it.coverage_suspect)) return;
+    const ref = await refLookup(it.food_name);
+    if (!ref) return;
+    const refName = String(ref.food_name || "").toLowerCase();
+    const tokens = contentTokens(it.food_name);
+    if (!tokens.length || !tokens.every(w => refName.includes(w))) return;
+    r.matched_db_id = null;
+    r.is_estimate = true;
+    r.assumed = true;
+    applyReference(r, ref, { trusted: true });
+  }));
+  // Gap trail: only when actually logging (not query previews). rows[i] maps
+  // 1:1 to items[i]. Silent alias rematches are correct outcomes - not logged.
   if (opts.trackGaps) {
     rows.forEach((r, i) => {
       const it = items[i];
-      if (!it || !it.food_name || r.matched_db_id || r.stated || r.food_name === "meal") return;
-      logGapEvent({
-        food: it.food_name,
-        reason: it.protein_guard ? "protein_guard" : "no_match",
-        source: r.refVerified ? "indb" : "estimate",
-        served_as: r.food_name,
-        kcal: r.kcal,
-      });
+      if (!it || !it.food_name || r.stated || r.food_name === "meal") return;
+      const reason = it.protein_guard ? "protein_guard"
+        : it.compound_suspect ? "compound"
+        : it.coverage_suspect ? "coverage"
+        : !r.matched_db_id ? "no_match" : null;
+      if (!reason) return;
+      const source = !r.matched_db_id ? (r.refVerified ? "indb" : "estimate") : "curated_kept";
+      logGapEvent({ food: it.food_name, reason, source, served_as: r.food_name, kcal: r.kcal });
     });
   }
   return rows;
