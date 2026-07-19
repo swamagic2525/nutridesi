@@ -69,5 +69,20 @@
 {"id":"vegdefault-biryani-bare","tags":["vegdefault"],"input":"biryani khaya lunch mein","expected":{"intent":"log","items":[{"db_id":9,"qty":1}]}}
 {"id":"vegdefault-biryani-veg","tags":["vegdefault"],"input":"veg biryani","expected":{"intent":"log","items":[{"db_id":9,"qty":1}]}}
 {"id":"vegdefault-biryani-chicken","tags":["vegdefault"],"input":"chicken biryani full plate","expected":{"intent":"log","items":[{"db_id":8,"qty_any_of":[1,2]}]}}
-{"id":"vegdefault-bhurji-paneer","tags":["vegdefault"],"input":"paneer bhurji with 2 roti","expected":{"intent":"log","items":[{"db_id":186,"qty":1},{"db_id":1,"qty":2}]}}
+{"id":"vegdefault-bhurji-paneer","tags":["vegdefault"],"input":"paneer bhurji with 2 roti","expected":{"intent":"log","items":[{"db_id":124,"qty":1},{"db_id":1,"qty":2}]}}
 {"id":"vegdefault-bhurji-bare","tags":["vegdefault"],"input":"bhurji bana ke khayi","expected":{"intent":"log","items":[{"db_id":150,"qty_any_of":[1,2]}]}}
+{"id":"indb-thepla","tags":["indb-batch"],"input":"2 thepla khaye","expected":{"intent":"log","items":[{"db_id":187,"qty":2}]}}
+{"id":"indb-aloo-paratha","tags":["indb-batch"],"input":"2 aloo parathe","expected":{"intent":"log","items":[{"db_id":189,"qty":2}]}}
+{"id":"indb-keema","tags":["indb-batch"],"input":"keema curry with 1 roti","expected":{"intent":"log","items":[{"db_id":195,"qty":1},{"db_id":1,"qty":1}]}}
+{"id":"indb-jeera-rice","tags":["indb-batch"],"input":"jeera rice aur dal","expected":{"intent":"log","items":[{"db_id":200,"qty":1},{"db_id":17,"qty":1}]}}
+{"id":"indb-frankie","tags":["indb-batch"],"input":"paneer frankie kha liya","expected":{"intent":"log","items":[{"db_id":208,"qty":1}]}}
+{"id":"vegdefault-korma","tags":["vegdefault"],"input":"korma with 2 roti","expected":{"intent":"log","items":[{"db_id":194,"qty":1},{"db_id":1,"qty":2}]}}
+{"id":"vegdefault-pulao","tags":["vegdefault"],"input":"pulao khaya lunch mein","expected":{"intent":"log","items":[{"db_id":201,"qty":1}]}}
+{"id":"vegdefault-noodles","tags":["vegdefault"],"input":"noodles khaye dinner mein","expected":{"intent":"log","items":[{"db_id":212,"qty":1}]}}
+{"id":"vegdefault-sandwich","tags":["vegdefault"],"input":"ek sandwich khaya","expected":{"intent":"log","items":[{"db_id":205,"qty":1}]}}
+{"id":"restaurant-chilli-chicken","tags":["indb-batch"],"input":"chilli chicken order kiya tha","expected":{"intent":"log","items":[{"db_id":209,"qty":1}]}}
+{"id":"brand-on-whey","tags":["brands"],"input":"1 scoop on whey post workout","expected":{"intent":"log","items":[{"db_id":218,"qty":1}]}}
+{"id":"brand-biozyme","tags":["brands"],"input":"2 scoop biozyme liya","expected":{"intent":"log","items":[{"db_id":221,"qty":2}]}}
+{"id":"brand-superyou","tags":["brands"],"input":"superyou wafer khaya snack mein","expected":{"intent":"log","items":[{"db_id":226,"qty":1}]}}
+{"id":"brand-protinex","tags":["brands"],"input":"protinex with milk","expected":{"intent":"log","items":[{"db_id":242,"qty":1},{"db_id":34,"qty":1}]}}
+{"id":"brand-generic-shake-stays","tags":["brands"],"input":"protein shake pi liya","expected":{"intent":"log","items":[{"db_id":58,"qty":1}]}}

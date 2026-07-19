@@ -42,7 +42,7 @@ word in the user's food phrase must be explained by the match.**
    ignores the alias map. **Documented exceptions** where common usage is
    overwhelmingly non-veg keep the bare alias on the non-veg entry, with a
    comment at the entry in foods.js — currently: bare "bhurji" -> Egg Bhurji
-   (150); Paneer Bhurji (186) needs the explicit word. Alias containment in
+   (150); Paneer Bhurji (124) needs the explicit word. Alias containment in
    rule (c) is what makes exceptions safe: the bare word is a real alias, so
    no trip.
 3. **INDB reference lookup (Tier 2.5, existing) + suspect arbitration.**

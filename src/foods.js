@@ -5,7 +5,7 @@
 const FOODS = [
   { id: 1,  name: "Roti / Chapati",       aliases: ["roti","chapati","phulka","chappati","fulka","chapatti","wheat roti"], unit: "piece", kcal: 89,  p: 2.6, c: 17, f: 1.1, fb: 2.5 },
   { id: 2,  name: "Paratha (Plain)",       aliases: ["paratha","plain paratha","tawa paratha","sada paratha"], unit: "piece", kcal: 155, p: 3.5, c: 26, f: 4.5, fb: 3 },
-  { id: 3,  name: "Paratha (Stuffed)",     aliases: ["aloo paratha","gobi paratha","stuffed paratha","mixed paratha","paneer paratha"], unit: "piece", kcal: 260, p: 5.5, c: 38, f: 10, fb: 4 },
+  { id: 3,  name: "Paratha (Stuffed)",     aliases: ["gobi paratha","stuffed paratha","mixed paratha","mooli paratha"], unit: "piece", kcal: 260, p: 5.5, c: 38, f: 10, fb: 4 },
   { id: 4,  name: "Puri",                  aliases: ["puri","poori","puri bhaji"], unit: "piece", kcal: 110, p: 2, c: 13, f: 5.5, fb: 1 },
   { id: 5,  name: "Naan",                  aliases: ["naan","naan bread","tandoori naan","butter naan"], unit: "piece", kcal: 262, p: 8.7, c: 45, f: 5.1, fb: 2 },
   { id: 6,  name: "Bhatura",               aliases: ["bhatura","batura"], unit: "piece", kcal: 300, p: 7, c: 42, f: 12, fb: 2 },
@@ -60,7 +60,7 @@ const FOODS = [
   { id: 53, name: "Orange",                aliases: ["orange","santra","mosambi","sweet lime"], unit: "medium", kcal: 62, p: 1.2, c: 15, f: 0.2, fb: 3 },
   { id: 54, name: "Mixed Fruit",           aliases: ["fruit salad","mixed fruit","fruits"], unit: "bowl", kcal: 80, p: 1, c: 19, f: 0.3, fb: 3 },
   { id: 55, name: "Sprouts",               aliases: ["sprouts","moong sprouts","mixed sprouts","germinated moong"], unit: "bowl", kcal: 85, p: 7, c: 14, f: 0.5, fb: 5 },
-  { id: 58, name: "Protein Shake",         aliases: ["protein shake","whey shake","protein smoothie","gym shake"], unit: "scoop", kcal: 120, p: 24, c: 3, f: 2, fb: 1 },
+  { id: 58, name: "Protein Shake",         aliases: ["protein shake","whey shake","protein smoothie","gym shake","whey","whey protein","whey scoop"], unit: "scoop", kcal: 120, p: 24, c: 3, f: 2, fb: 1 },
   { id: 59, name: "Bhel Puri",             aliases: ["bhel","bhelpuri","bhel puri","churmuri"], unit: "plate", kcal: 290, p: 6, c: 48, f: 8, fb: 4 },
   { id: 60, name: "Pani Puri",             aliases: ["pani puri","panipuri","golgappa","gol gappa","puchka","gupchup"], unit: "plate", kcal: 180, p: 3, c: 32, f: 5, fb: 2 },
   { id: 61, name: "Sev Puri",              aliases: ["sev puri","sevpuri","sev puri chaat"], unit: "plate", kcal: 320, p: 5, c: 42, f: 14, fb: 3 },
@@ -125,7 +125,9 @@ const FOODS = [
   { id: 121, name: "Pumpkin Seeds",        aliases: ["pumpkin seeds","pepitas","kaddu ke beej"], unit: "tbsp", kcal: 56, p: 3, c: 1, f: 4.9, fb: 0.6, g: 10 },
   { id: 122, name: "Dates",                aliases: ["dates","khajur","date","medjool dates","khajoor"], unit: "piece", kcal: 66, p: 0.4, c: 18, f: 0, fb: 1.6, g: 24 },
   { id: 123, name: "Bhakri (Jowar/Bajra)", aliases: ["bhakri","jowar bhakri","jawar bhakri","bajra bhakri","multigrain bhakri","bhakhri","jowar roti","bajra roti"], unit: "piece", kcal: 120, p: 3, c: 25, f: 1, fb: 3 },
-  { id: 124, name: "Paneer Bhurji",        aliases: ["paneer bhurji","paneer burji","scrambled paneer","paneer bhurjee"], unit: "bowl", kcal: 300, p: 15, c: 8, f: 23, fb: 1.5 },
+  // Exception to the veg-default policy: bare "bhurji" stays on Egg Bhurji (150)
+  // — common usage is overwhelmingly anda bhurji. Paneer needs the explicit word.
+  { id: 124, name: "Paneer Bhurji",        aliases: ["paneer bhurji","paneer burji","scrambled paneer","paneer bhurjee","paneer ki bhurji","cottage cheese bhurji"], unit: "bowl", kcal: 300, p: 15, c: 8, f: 23, fb: 1.5 },
   { id: 125, name: "Sattu Drink",          aliases: ["sattu drink","sattu","sattu shake","sattu sharbat","sattu water"], unit: "glass", kcal: 110, p: 6.5, c: 16, f: 1.5, fb: 3 },
   { id: 126, name: "Mutton Biryani",       aliases: ["mutton biryani","mutton biriyani","gosht biryani","lamb biryani"], unit: "plate", kcal: 400, p: 16, c: 42, f: 17, fb: 2.5, g: 250 },
   { id: 127, name: "Broccoli",             aliases: ["broccoli","steamed broccoli","boiled broccoli"], unit: "cup", kcal: 31, p: 2.5, c: 6, f: 0.3, fb: 2.4, g: 90 },
@@ -187,9 +189,76 @@ const FOODS = [
   { id: 183, name: "Chicken Paratha",        aliases: ["chicken paratha","murgh paratha","non veg paratha","chicken stuffed paratha"], unit: "piece", kcal: 310, p: 15, c: 30, f: 14, fb: 2 },
   { id: 184, name: "Keema Paratha",          aliases: ["keema paratha","mutton paratha","mince paratha","qeema paratha"], unit: "piece", kcal: 330, p: 16, c: 30, f: 16, fb: 2 },
   { id: 185, name: "Egg Paratha",            aliases: ["egg paratha","anda paratha","egg stuffed paratha","anda wala paratha"], unit: "piece", kcal: 280, p: 12, c: 28, f: 13, fb: 2 },
-  // Exception to the veg-default policy: bare "bhurji" stays on Egg Bhurji (150)
-  // — common usage is overwhelmingly anda bhurji. Paneer needs the explicit word.
-  { id: 186, name: "Paneer Bhurji",          aliases: ["paneer bhurji","paneer bhurjee","paneer burji","paneer ki bhurji","cottage cheese bhurji"], unit: "bowl", kcal: 290, p: 15, c: 8, f: 23, fb: 1 },
+  // --- INDB promotion batch (2026-07-20): values from the lab-analyzed
+  // foods_reference table (rows passed the 4/4/9 macro-energy identity check).
+  // Bare category words follow the veg-default policy: pulao, sandwich,
+  // manchurian, noodles, pakora, kachori, frankie -> veg variant.
+  { id: 187, name: "Methi Thepla",           aliases: ["methi thepla","thepla","theplas","gujarati thepla","dhebra"], unit: "piece", kcal: 126, p: 3.3, c: 15.1, f: 5.8, fb: 2.8 },
+  { id: 188, name: "Besan Chilla",           aliases: ["besan chilla","besan cheela","chilla","cheela","besan ka chilla","moong dal chilla"], unit: "piece", kcal: 71, p: 4.1, c: 10.9, f: 1.5, fb: 2.2 },
+  { id: 189, name: "Aloo Paratha",           aliases: ["aloo paratha","aloo ka paratha","alu paratha","potato paratha","aloo parantha"], unit: "piece", kcal: 191, p: 3.5, c: 22.3, f: 9.5, fb: 3.9 },
+  { id: 190, name: "Paneer Paratha",         aliases: ["paneer paratha","paneer ka paratha","paneer parantha"], unit: "piece", kcal: 224, p: 6.8, c: 20.7, f: 12.4, fb: 3.4 },
+  { id: 191, name: "Rava Dosa",              aliases: ["rava dosa","suji dosa","sooji dosa","semolina dosa"], unit: "piece", kcal: 167, p: 5.4, c: 24.1, f: 5.2, fb: 3 },
+  { id: 192, name: "Chicken Korma",          aliases: ["chicken korma","murgh korma","chicken kurma"], unit: "bowl", kcal: 513, p: 34.1, c: 18.8, f: 33.6, fb: 6.3 },
+  { id: 193, name: "Mutton Korma",           aliases: ["mutton korma","gosht korma","mutton kurma"], unit: "bowl", kcal: 424, p: 26, c: 9.3, f: 31.3, fb: 2.9 },
+  { id: 195, name: "Keema Curry",            aliases: ["keema","keema curry","mutton keema","matar keema","keema matar","kheema"], unit: "bowl", kcal: 457, p: 29, c: 21.5, f: 28, fb: 10.2 },
+  { id: 196, name: "Prawn Curry",            aliases: ["prawn curry","jhinga curry","prawns curry","shrimp curry","prawn masala"], unit: "bowl", kcal: 313, p: 24.4, c: 8.9, f: 19.8, fb: 4.5 },
+  { id: 197, name: "Tandoori Fish",          aliases: ["tandoori fish","fish tandoori","tandoori pomfret"], unit: "piece", kcal: 224, p: 26.1, c: 5.5, f: 10.8, fb: 1.4 },
+  { id: 198, name: "Seekh Kebab (Mutton)",   aliases: ["seekh kebab","seekh kabab","mutton seekh kebab","mutton seekh"], unit: "piece", kcal: 60, p: 5.1, c: 1.4, f: 3.8, fb: 0.8 },
+  { id: 199, name: "Boti Kebab (Mutton)",    aliases: ["boti kebab","boti kabab","mutton boti"], unit: "piece", kcal: 73, p: 5, c: 1.7, f: 5.1, fb: 0.4 },
+  { id: 200, name: "Jeera Pulao",            aliases: ["jeera pulao","jeera rice","zeera pulao","cumin rice"], unit: "plate", kcal: 366, p: 6.7, c: 63.9, f: 8.7, fb: 3.8 },
+  { id: 201, name: "Veg Pulao",              aliases: ["veg pulao","pulao","pulav","vegetable pulao","mixed veg pulao","veg pulav"], unit: "plate", kcal: 496, p: 11.9, c: 76.7, f: 14.6, fb: 11.7 },
+  { id: 202, name: "Matar Pulao",            aliases: ["matar pulao","peas pulao","mutter pulao","matar pulav"], unit: "plate", kcal: 514, p: 18.4, c: 86.9, f: 9, fb: 15.2 },
+  { id: 203, name: "Makki ki Roti",          aliases: ["makki ki roti","makki roti","makke ki roti","corn roti"], unit: "piece", kcal: 224, p: 3, c: 20.6, f: 14.3, fb: 4.4 },
+  { id: 204, name: "Sarson ka Saag",         aliases: ["sarson ka saag","sarson da saag","sarson saag","mustard greens"], unit: "bowl", kcal: 124, p: 4.3, c: 7.5, f: 8.3, fb: 5.2 },
+  { id: 205, name: "Veg Sandwich (Grilled)", aliases: ["veg sandwich","sandwich","grilled sandwich","tomato sandwich","bombay sandwich","veg grilled sandwich"], unit: "sandwich", kcal: 146, p: 4.8, c: 16.3, f: 7.2, fb: 1.5 },
+  { id: 206, name: "Banana Milkshake",       aliases: ["banana milkshake","banana shake","kela shake"], unit: "glass", kcal: 226, p: 6.4, c: 31.6, f: 8.2, fb: 0.9 },
+  { id: 207, name: "Mango Milkshake",        aliases: ["mango milkshake","mango shake","aam shake","mango milk shake"], unit: "glass", kcal: 202, p: 6.1, c: 25.7, f: 8.3, fb: 0.9 },
+  { id: 208, name: "Paneer Kathi Roll",      aliases: ["paneer kathi roll","paneer roll","kathi roll","kaathi roll","paneer frankie","frankie","veg roll","veg frankie"], unit: "piece", kcal: 424, p: 10.3, c: 29.8, f: 29, fb: 3.6 },
+
+  // --- Restaurant Indian-Chinese + fried street snacks (2026-07-20): INDB rows
+  // for these had whole-recipe oil yields (e.g. 718 kcal/72.8g fat per kachori),
+  // so values below are curated from standard published averages instead.
+  // Verify against INDB per-100g or labels before trusting for clinical use.
+  { id: 194, name: "Veg Korma (Navratan)",   aliases: ["veg korma","korma","navratan korma","vegetable korma","veg kurma"], unit: "bowl", kcal: 320, p: 6, c: 22, f: 23, fb: 3 },
+  { id: 209, name: "Chilli Chicken",         aliases: ["chilli chicken","chilly chicken","chili chicken","dry chilli chicken"], unit: "bowl", kcal: 330, p: 22, c: 15, f: 20, fb: 1 },
+  { id: 210, name: "Chicken Manchurian",     aliases: ["chicken manchurian","manchurian chicken"], unit: "bowl", kcal: 300, p: 18, c: 16, f: 18, fb: 1 },
+  { id: 211, name: "Veg Manchurian",         aliases: ["veg manchurian","manchurian","gobi manchurian","cabbage manchurian","veg manchurian gravy"], unit: "bowl", kcal: 250, p: 5, c: 28, f: 13, fb: 2 },
+  { id: 212, name: "Hakka Noodles (Veg)",    aliases: ["hakka noodles","veg noodles","noodles","chowmein","chow mein","veg chowmein"], unit: "plate", kcal: 400, p: 9, c: 55, f: 15, fb: 3 },
+  { id: 213, name: "Chicken Noodles",        aliases: ["chicken noodles","chicken hakka noodles","chicken chowmein"], unit: "plate", kcal: 460, p: 20, c: 55, f: 17, fb: 3 },
+  { id: 214, name: "Onion Pakora",           aliases: ["onion pakora","pyaz pakora","pakora","pakoda","pakode","bhajiya","onion bhajji","kanda bhaji"], unit: "piece", kcal: 60, p: 1.5, c: 5, f: 3.8, fb: 0.7 },
+  { id: 215, name: "Spring Roll (Veg)",      aliases: ["spring roll","veg spring roll","spring rolls"], unit: "piece", kcal: 120, p: 3, c: 15, f: 5.3, fb: 1 },
+  { id: 216, name: "Khasta Kachori",         aliases: ["kachori","khasta kachori","kachauri","pyaz kachori","raj kachori"], unit: "piece", kcal: 210, p: 4, c: 23, f: 11, fb: 1.5 },
+  { id: 217, name: "Hara Bhara Kebab",       aliases: ["hara bhara kebab","hara bhara kabab","veg kebab","hara kebab"], unit: "piece", kcal: 70, p: 2, c: 9, f: 2.9, fb: 1.5 },
+
+  // --- Branded protein products (2026-07-20): values from manufacturer labels
+  // (uncertain brands verified via published label data on 2026-07-20).
+  // Generic fallbacks stay on: Protein Shake 58, Protein Bar 105, Creatine 115,
+  // Clear Whey 130, Protein Muesli 114. Brand word required to land here.
+  { id: 218, name: "ON Gold Standard Whey",     aliases: ["on whey","optimum nutrition whey","gold standard whey","gold standard","on gold standard"], unit: "scoop", kcal: 120, p: 24, c: 3, f: 1.5, fb: 0, g: 30 },
+  { id: 219, name: "ON Gold Standard Isolate",  aliases: ["on isolate","optimum nutrition isolate","gold standard isolate"], unit: "scoop", kcal: 110, p: 25, c: 2, f: 0.5, fb: 0, g: 31 },
+  { id: 220, name: "ON Serious Mass",           aliases: ["serious mass","on serious mass","on mass gainer"], unit: "scoop", kcal: 625, p: 25, c: 126, f: 2.2, fb: 2, g: 167 },
+  { id: 221, name: "MuscleBlaze Biozyme Whey",  aliases: ["mb whey","muscleblaze whey","biozyme","biozyme whey","biozyme performance whey"], unit: "scoop", kcal: 136, p: 25, c: 4.4, f: 2.2, fb: 0, g: 36 },
+  { id: 222, name: "MuscleBlaze Whey Isolate",  aliases: ["mb isolate","muscleblaze isolate","biozyme isolate"], unit: "scoop", kcal: 120, p: 27, c: 1.5, f: 1, fb: 0, g: 33 },
+  { id: 223, name: "MuscleBlaze Raw Whey",      aliases: ["mb raw whey","muscleblaze raw whey","raw whey concentrate"], unit: "scoop", kcal: 120, p: 24, c: 2.4, f: 1.8, fb: 0, g: 30 },
+  { id: 224, name: "MuscleBlaze Mass Gainer XXL", aliases: ["mb gainer","muscleblaze gainer","mass gainer xxl","mb mass gainer"], unit: "scoop", kcal: 280, p: 11, c: 52, f: 3, fb: 1, g: 75 },
+  { id: 225, name: "MuscleBlaze Protein Bar",   aliases: ["mb protein bar","muscleblaze bar","muscleblaze protein bar"], unit: "bar", kcal: 230, p: 20, c: 22, f: 7, fb: 2, g: 60 },
+  { id: 226, name: "SuperYou Protein Wafer",    aliases: ["superyou wafer","superyou protein wafer","super you wafer","superyou bar","protein wafer"], unit: "bar", kcal: 190, p: 10, c: 16, f: 10, fb: 3, g: 40 },
+  { id: 227, name: "SuperYou Mega Wafer",       aliases: ["superyou mega wafer","superyou mega protein wafer","mega protein wafer","superyou 20g"], unit: "bar", kcal: 285, p: 20, c: 20, f: 14, fb: 4.8, g: 60 },
+  { id: 228, name: "Avvatar Whey",              aliases: ["avvatar whey","avvatar protein","avvatar absolute whey","avvatar"], unit: "scoop", kcal: 130, p: 25, c: 4, f: 2, fb: 0, g: 30 },
+  { id: 229, name: "MyProtein Impact Whey",     aliases: ["myprotein whey","impact whey","my protein whey","myprotein"], unit: "scoop", kcal: 103, p: 21, c: 2, f: 1.9, fb: 0, g: 25 },
+  { id: 230, name: "MyProtein Impact Isolate",  aliases: ["myprotein isolate","impact isolate","impact whey isolate"], unit: "scoop", kcal: 93, p: 23, c: 0.6, f: 0.3, fb: 0, g: 25 },
+  { id: 231, name: "GNC Pro Performance Whey",  aliases: ["gnc whey","gnc pro performance","gnc protein"], unit: "scoop", kcal: 130, p: 24, c: 5.5, f: 1.5, fb: 0, g: 33 },
+  { id: 232, name: "GNC AMP Gold Isolate",      aliases: ["gnc isolate","amp gold","gnc amp gold"], unit: "scoop", kcal: 110, p: 24, c: 3, f: 0.5, fb: 0, g: 30 },
+  { id: 233, name: "Nakpro Gold Whey",          aliases: ["nakpro","nakpro whey","nakpro gold"], unit: "scoop", kcal: 137, p: 25.5, c: 4.5, f: 2, fb: 0, g: 35 },
+  { id: 234, name: "Yoga Bar 20g Protein Bar",  aliases: ["yoga bar 20g","yogabar 20g","yogabar 20g protein bar","yoga bar protein bar"], unit: "bar", kcal: 230, p: 20, c: 23, f: 6.6, fb: 2, g: 60 },
+  { id: 235, name: "Yoga Bar 10g Protein Bar",  aliases: ["yoga bar 10g","yogabar 10g","yogabar 10g protein bar"], unit: "bar", kcal: 150, p: 10, c: 18, f: 4.4, fb: 1.5, g: 38 },
+  { id: 236, name: "Yoga Bar Protein Muesli",   aliases: ["yogabar muesli","yoga bar muesli","yogabar protein muesli"], unit: "serving", kcal: 190, p: 10.5, c: 26, f: 4.4, fb: 3, g: 50 },
+  { id: 237, name: "RiteBite Max Protein Ultimate", aliases: ["ritebite ultimate","max protein ultimate","ritebite 30g bar","max protein 30g bar"], unit: "bar", kcal: 361, p: 30, c: 45, f: 14.7, fb: 5, g: 100 },
+  { id: 238, name: "RiteBite Max Protein Daily", aliases: ["ritebite daily","max protein daily","ritebite 10g bar","ritebite bar"], unit: "bar", kcal: 173, p: 10, c: 22, f: 5.4, fb: 2.5, g: 50 },
+  { id: 239, name: "RiteBite Max Protein Active", aliases: ["ritebite active","max protein active","max protein bar"], unit: "bar", kcal: 250, p: 20, c: 28, f: 7, fb: 3, g: 70 },
+  { id: 240, name: "The Whole Truth 20g Bar",   aliases: ["whole truth 20g","twt 20g bar","whole truth protein bar","the whole truth bar","twt bar"], unit: "bar", kcal: 340, p: 20, c: 21, f: 19, fb: 5.8, g: 67 },
+  { id: 241, name: "The Whole Truth 12g Bar",   aliases: ["whole truth 12g","twt 12g bar","whole truth mini bar"], unit: "bar", kcal: 240, p: 12, c: 18, f: 13.5, fb: 4, g: 52 },
+  { id: 242, name: "Protinex",                  aliases: ["protinex","protinex powder","protinex doodh","protinex milk"], unit: "serving", kcal: 125, p: 11, c: 17, f: 1.4, fb: 0, g: 34 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
