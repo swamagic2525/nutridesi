@@ -1,0 +1,61 @@
+{"id":"basic-multi","tags":["basic"],"input":"2 roti, ek katori dal aur thodi si sabzi","expected":{"intent":"log","items":[{"db_id":1,"qty":2},{"db_id":17,"qty":1},{"db_id":29,"qty":0.5}]}}
+{"id":"basic-single","tags":["basic"],"input":"chicken biryani","expected":{"intent":"log","items":[{"db_id":8,"qty":1}]}}
+{"id":"basic-two","tags":["basic"],"input":"3 dosa with potato curry","expected":{"intent":"log","items":[{"db_id":14,"qty":3},{"db_id":28,"qty":1}]}}
+{"id":"basic-real-veg-thali","tags":["basic"],"input":"Veg sabji and 4 chapati","expected":{"intent":"log","items":[{"db_id":29,"qty":1},{"db_id":1,"qty":4}]}}
+{"id":"hq-adha","tags":["hinglish-qty"],"input":"adha katori rajma","expected":{"intent":"log","items":[{"db_id":20,"qty":0.5}]}}
+{"id":"hq-do","tags":["hinglish-qty"],"input":"do bowl chole","expected":{"intent":"log","items":[{"db_id":19,"qty":2}]}}
+{"id":"hq-teen","tags":["hinglish-qty"],"input":"teen roti","expected":{"intent":"log","items":[{"db_id":1,"qty":3}]}}
+{"id":"hq-dabake","tags":["hinglish-qty"],"input":"aaj dabake rice khaya","expected":{"intent":"log","items":[{"db_id":7,"qty":2}]}}
+{"id":"count-large","tags":["hinglish-qty"],"input":"12 idli","expected":{"intent":"log","items":[{"db_id":13,"qty":12}]}}
+{"id":"grams-paneer","tags":["grams"],"input":"100g paneer","expected":{"intent":"log","items":[{"db_id":69,"grams":100}]}}
+{"id":"grams-rice","tags":["grams"],"input":"40g rice","expected":{"intent":"log","items":[{"db_id":7,"grams":40}]}}
+{"id":"grams-two","tags":["grams"],"input":"Chicken breast 120g with 70g broccoli","expected":{"intent":"log","items":[{"db_id":68,"grams":120},{"db_id":127,"grams":70}]}}
+{"id":"grams-ml-lassi","tags":["grams"],"input":"350 ml sweet lassi","expected":{"intent":"log","items":[{"db_id":32,"grams":350}]}}
+{"id":"grams-quinoa","tags":["grams"],"input":"Quinoa 150 gm","expected":{"intent":"log","items":[{"db_id":104,"grams":150}]}}
+{"id":"grams-chai-fafda","tags":["grams"],"input":"Chai with 100gms of fafda","expected":{"intent":"log","items":[{"db_id":31,"qty":1},{"db_id":142,"grams":100}]}}
+{"id":"raw-chicken","tags":["raw"],"input":"150g chicken breast raw","expected":{"intent":"log","items":[{"db_id":68,"grams":150,"raw":true}]}}
+{"id":"raw-dal","tags":["raw"],"input":"50g raw dal","expected":{"intent":"log","items":[{"db_id":17,"grams":50,"raw":true}]}}
+{"id":"modifier-butter","tags":["modifier"],"input":"2 roti with amul butter","expected":{"intent":"log","items":[{"db_id":1,"qty":2},{"db_id":49,"qty":1}]}}
+{"id":"modifier-ghee-chapati","tags":["modifier"],"input":"3 ghee chapati","expected":{"intent":"log","items":[{"db_id":1,"qty":3},{"db_id":48,"qty":1}]}}
+{"id":"scope-idli-sambar","tags":["scope"],"input":"3 idli with sambar","expected":{"intent":"log","items":[{"db_id":13,"qty":3},{"db_id":16,"qty":1}]}}
+{"id":"scope-roti-eggs","tags":["scope"],"input":"2 roti and 2 boiled eggs","expected":{"intent":"log","items":[{"db_id":1,"qty":2},{"db_id":43,"qty":2}]}}
+{"id":"scope-real-eggs-bread-oil","tags":["scope"],"input":"2 Eggs with 2 bread with little oil","expected":{"intent":"log","items":[{"db_id":[43,44,133],"qty":2},{"db_id":72,"qty":2},{"db_id":50,"qty_any_of":[0.5,1]}]}}
+{"id":"egg-omelette-count","tags":["egg"],"input":"3 egg omelette","expected":{"intent":"log","items":[{"db_id":44,"qty":3}]}}
+{"id":"egg-omelette-bare","tags":["egg"],"input":"omelette","expected":{"intent":"log","items":[{"db_id":44,"qty":2}]}}
+{"id":"egg-whites-count","tags":["egg"],"input":"Boiled egg whites 10","expected":{"intent":"log","items":[{"db_id":71,"qty":10}]}}
+{"id":"egg-mixed-whole-whites","tags":["egg"],"input":"omelette with 1 whole egg and 2 whites","expected":{"intent":"log","items":[{"db_id":44,"qty":1},{"db_id":71,"qty":2}]}}
+{"id":"decomp-bhel","tags":["decomp"],"input":"bhelpuri","expected":{"intent":"log","items":[{"db_id":59,"qty":1}]}}
+{"id":"decomp-chole-bhature","tags":["decomp"],"input":"chole bhature","expected":{"intent":"log","items":[{"db_id":67,"qty":1}]}}
+{"id":"variant-lowfat-paneer","tags":["variant"],"input":"200g low fat paneer","expected":{"intent":"log","items":[{"db_id":107,"grams":200}]}}
+{"id":"variant-hp-peanut-butter","tags":["variant"],"input":"High protein peanut butter","expected":{"intent":"log","items":[{"db_id":110,"qty":1}]}}
+{"id":"unknown-cutlet","tags":["unknown"],"input":"2 aloo cutlet","expected":{"intent":"log","items":[{"db_id":null,"name_like":"cutlet","qty":2}]}}
+{"id":"unknown-shawarma","tags":["unknown"],"input":"chicken shawarma","expected":{"intent":"log","items":[{"db_id":null,"name_like":"shawarma"}]}}
+{"id":"cross-food-no-fake-match","tags":["unknown"],"input":"Ate some roasted chana","expected":{"intent":"log","items":[{"db_id":92,"qty":1}]}}
+{"id":"reg-diet-coke","tags":["regression"],"input":"diet coke","expected":{"intent":"log","items":[{"db_id":135,"qty":1}]}}
+{"id":"reg-thums-up","tags":["regression"],"input":"1 can thums up","expected":{"intent":"log","items":[{"db_id":136,"qty":1}]}}
+{"id":"reg-green-veg","tags":["regression"],"input":"50g green vegetable","expected":{"intent":"log","items":[{"db_id":181,"grams":50}]}}
+{"id":"reg-palak-sabji","tags":["regression"],"input":"1 bowl palak sabji","expected":{"intent":"log","items":[{"db_id":182,"qty":1}]}}
+{"id":"corr-food-swap","tags":["correction"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- Chole: 270 kcal, 13g protein","input":"sorry it was rajma","expected":{"intent":"replace_last","items":[{"db_id":20,"qty":1}]}}
+{"id":"corr-qty-pronoun","tags":["correction"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- Roti / Chapati ×2: 178 kcal, 5g protein","input":"I had 3 of them","expected":{"intent":"replace_last","items":[{"name_null":true,"qty":3}]}}
+{"id":"corr-qty-named","tags":["correction"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- chicken wrap: 300 kcal, 15g protein, estimated","input":"I ate 3 of this chicken wrap","expected":{"intent":"replace_last","items":[{"qty":3}]}}
+{"id":"corr-stated-kcal","tags":["correction","stated"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- Cake slice: 300 kcal, 4g protein, estimated","input":"Cake slice was 150 cals, 5g protein","expected":{"intent":"replace_last","items":[{"stated_kcal":150,"stated_protein":5}]}}
+{"id":"corr-stated-each","tags":["correction","stated"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- bun ×2: 400 kcal, 8g protein, estimated","input":"Bun is 150 cal each with 2g protein","expected":{"intent":"replace_last","items":[{"stated_kcal":150,"stated_protein":2}]}}
+{"id":"stated-log-total-split","tags":["stated"],"input":"I ate 4 fish sticks, they have 230 calories total","expected":{"intent":"log","items":[{"qty":4,"stated_kcal":57.5}]}}
+{"id":"stated-protein-only","tags":["stated","correction"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- Curd / Dahi: 60 kcal, 4g protein","input":"Yogurt was 22 grams protein","expected":{"intent":"replace_last","items":[{"stated_protein":22}]}}
+{"id":"undo-plain","tags":["undo"],"input":"undo","expected":{"intent":"undo","items":[]}}
+{"id":"undo-hinglish","tags":["undo"],"input":"galat log hua, hatao","expected":{"intent":"undo","items":[]}}
+{"id":"undo-named","tags":["undo"],"input":"remove the chai","expected":{"intent":"undo","items":[{"name_like":"chai"}]}}
+{"id":"profile-full","tags":["profile"],"input":"Swapnil 2200 calories 125g protein","expected":{"intent":"set_profile","items":[],"name":"Swapnil","goal_kcal":2200,"goal_protein":125}}
+{"id":"profile-goal-only","tags":["profile"],"input":"target 1600 calories","expected":{"intent":"set_profile","items":[],"goal_kcal":1600}}
+{"id":"query-food-calories","tags":["query"],"input":"What is calories of 2 medium banana","expected":{"intent":"query","items":[{"db_id":51,"qty":2}],"query_reply_no_digits":true}}
+{"id":"query-compare","tags":["query"],"input":"whats better, 2 samosas or 2 chicken sandwiches?","expected":{"intent":"query","items":[{"db_id":37,"qty":2},{"db_id":null,"name_like":"sandwich","qty":2}],"query_reply_no_digits":true}}
+{"id":"query-day-total","tags":["query"],"input":"whats my total today","expected":{"intent":"query","items":[],"report_day":null}}
+{"id":"report-today","tags":["query"],"input":"Today's report","expected":{"intent":"query","items":[],"report_day":"today"}}
+{"id":"report-yesterday","tags":["query"],"input":"Total meals I had yesterday","expected":{"intent":"query","items":[],"report_day":"yesterday"}}
+{"id":"chitchat-wassup","tags":["chitchat"],"input":"Wassup dude","expected":{"intent":["query","log"],"items":[]}}
+{"id":"chitchat-bmw","tags":["chitchat"],"input":"BMW","expected":{"intent":["query","log"],"items":[]}}
+{"id":"annotation-ghee-biryani","tags":["annotation"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- Biryani (Chicken): 450 kcal, 25g protein","input":"bahot ghee tha biryani mai","expected":{"intent":"log","items":[{"db_id":48,"qty":2}]}}
+{"id":"annotation-oily-dal","tags":["annotation"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- Dal Tadka: 180 kcal, 10g protein","input":"the dal was very oily","expected":{"intent":"log","items":[{"db_id":50}]}}
+{"id":"instead-is-log","tags":["annotation"],"input":"I had dal instead of rice","expected":{"intent":"log","items":[{"db_id":17,"qty":1}]}}
+{"id":"real-whey","tags":["basic"],"input":"1 scoop whey","expected":{"intent":"log","items":[{"db_id":[58,130],"qty":1}]}}
+{"id":"real-oats-milk","tags":["grams"],"input":"25g oats and 1 glass milk","expected":{"intent":"log","items":[{"db_id":98,"grams":25},{"db_id":34,"qty":1}]}}

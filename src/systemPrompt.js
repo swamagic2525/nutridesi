@@ -24,6 +24,8 @@ PORTION foods (served in a bowl/katori/plate/glass: dal, rice, sabzi, curry, las
 "sawa", "one and half" -> 1.5
 "do", "bada bowl", "full plate", "dabake", "poora" -> 2.0
 "teen", "extra" -> 3.0
+HINDI COUNT WORDS are numbers, never English verbs: "do" before a food/unit = 2 (Hindi two), NOT the
+English verb "do". "do bowl chole" -> Chole qty 2.0. "do roti" -> Roti qty 2. Same for ek=1, teen=3, char=4.
 quantity is a positive number: whole counts for countable foods, 0.5 steps for portions.
 GRAMS/ML: if the user gives a weight ("100g", "200g", "250ml"), put that NUMBER in the "grams" field
 and set quantity to 1. The backend converts grams to calories precisely. Do NOT guess a fraction.
