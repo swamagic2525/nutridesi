@@ -64,3 +64,34 @@ assert.strictEqual(acceptableRef("", "Anything"), false);
   assert.ok(!/okra/i.test(rows[0].food_name), "no specific bhindi recipe override");
   console.log("ref-guard-test: arbitration guard passed");
 })().catch(e => { console.error(e); process.exit(1); });
+
+// Weight-based unknown foods must use per-100g, not a 150g "serving" assumption
+// (50g chocos logged 63 kcal against a real ~187).
+(async () => {
+  const { resolveRows } = require("../src/db.js");
+  let rows = await resolveRows({ items: [
+    { food_name: "chocos", matched_db_id: null, grams: 50, quantity: 1, est_kcal: 190, est_kcal_100g: 373 },
+  ] });
+  assert.strictEqual(rows[0].kcal, 187, `50g at 373/100g should be 187, got ${rows[0].kcal}`);
+
+  // Falls back to the old serving math when the model gives no per-100g figure
+  rows = await resolveRows({ items: [
+    { food_name: "mystery snack", matched_db_id: null, grams: 150, quantity: 1, est_kcal: 200 },
+  ] });
+  assert.strictEqual(rows[0].kcal, 200);
+
+  // Generic category words are an assumption, shown to the user
+  rows = await resolveRows({ items: [
+    { food_name: "sabji", matched_db_id: 29, quantity: 1, match_type: "direct" },
+  ] });
+  assert.strictEqual(rows[0].matched_db_id, 29);
+  assert.strictEqual(rows[0].assumed, true, "generic 'sabji' must surface the assumption");
+
+  // A specific dish stays silent
+  rows = await resolveRows({ items: [
+    { food_name: "palak sabzi", matched_db_id: 182, quantity: 1, match_type: "direct" },
+  ] });
+  assert.strictEqual(rows[0].assumed, false, "a specific dish needs no confession");
+
+  console.log("ref-guard-test: grams + generic-term guards passed");
+})().catch(e => { console.error(e); process.exit(1); });

@@ -92,3 +92,6 @@
 {"id":"gap-cheese-modifier","tags":["gap-promo"],"input":"3 egg omelette with cheese","expected":{"intent":"log","items":[{"db_id":44,"qty":3},{"db_id":245,"qty":1}]}}
 {"id":"gap-schezwan-dosa","tags":["gap-promo"],"input":"schezwan sada dosa khaya","expected":{"intent":"log","items":[{"db_id":246,"qty":1}]}}
 {"id":"gap-cheese-dosa","tags":["gap-promo"],"input":"cheese dosa","expected":{"intent":"log","items":[{"db_id":247,"qty":1}]}}
+{"id":"gap-mutton-curry","tags":["gap-promo"],"input":"mutton curry with rice","expected":{"intent":"log","items":[{"db_id":250,"qty":1},{"db_id":7,"qty":1}]}}
+{"id":"gap-munch","tags":["gap-promo"],"input":"one munch chocolate","expected":{"intent":"log","items":[{"db_id":249,"qty":1}]}}
+{"id":"gap-chocos-grams","tags":["gap-promo","grams"],"input":"50 g chocos","expected":{"intent":"log","items":[{"db_id":248,"grams":50}]}}

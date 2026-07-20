@@ -173,6 +173,9 @@ NEVER return items [] for these — the quantity is the whole message. NEVER cla
 When matched_db_id is null but you know the food, set est_kcal to your best estimate for ONE standard serving
 (e.g. papad ~50, vada ~150, shawarma ~450, rasgulla ~120). Estimate the SINGLE-serving value — quantity is
 applied separately. If you genuinely cannot identify the food, set est_kcal null.
+ALSO set est_kcal_100g to the calories in 100g of that food (e.g. chocos ~373, almonds ~575, cooked rice ~130).
+This is what gets used when the user gives a weight ("50g chocos"), so a dense food is not scaled as if a
+serving were 150g. Set it null only when est_kcal is also null.
 
 # NO CROSS-FOOD MATCHING — CRITICAL
 Match ONLY the same food. A different main ingredient or a different form is NOT a match —
@@ -207,6 +210,7 @@ was assumed ("palak sabji" -> logged the closest match, Palak Paneer).
       "raw": false,
       "matched_db_id": 17,
       "est_kcal": null,
+      "est_kcal_100g": null,
       "stated_kcal": null,
       "stated_protein": null,
       "match_type": "direct",

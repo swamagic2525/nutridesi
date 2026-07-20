@@ -268,6 +268,13 @@ const FOODS = [
   { id: 245, name: "Cheese (Processed)",        aliases: ["cheese","cheese slice","amul cheese","processed cheese","cheese cube","cheez"], unit: "slice", kcal: 62, p: 3.7, c: 0.8, f: 5, fb: 0, g: 20 },
   { id: 246, name: "Schezwan Dosa",             aliases: ["schezwan dosa","schezwan sada dosa","szechuan dosa","chinese dosa","schezvan dosa"], unit: "piece", kcal: 280, p: 5, c: 40, f: 11, fb: 2 },
   { id: 247, name: "Cheese Dosa",               aliases: ["cheese dosa","cheese sada dosa"], unit: "piece", kcal: 250, p: 7, c: 30, f: 11, fb: 1.5 },
+
+  // --- Gap-trail promotions, label-verified 2026-07-20 ---
+  // Chocos 373 kcal/100g; a 30g bowl is the common serving.
+  { id: 248, name: "Chocos (Kellogg's)",        aliases: ["chocos","choco flakes","chocos cereal","kelloggs chocos"], unit: "bowl", kcal: 112, p: 2.7, c: 25.1, f: 0.9, fb: 1.5, g: 30 },
+  // Munch 435 kcal/100g; the common ₹10 bar is ~20g. Munch Max is roughly double.
+  { id: 249, name: "Munch (Nestlé)",            aliases: ["munch","munch chocolate","nestle munch","munch bar"], unit: "piece", kcal: 87, p: 1.2, c: 12, f: 4.2, fb: 0.3, g: 20 },
+  { id: 250, name: "Mutton Curry",              aliases: ["mutton curry","gosht curry","mutton masala","mutton gravy","lamb curry","mutton rogan josh","rogan josh"], unit: "bowl", kcal: 350, p: 24, c: 8, f: 25, fb: 1.5 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));

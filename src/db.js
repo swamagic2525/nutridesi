@@ -88,6 +88,14 @@ for (const f of FOODS) {
 }
 const aliasRescue = (name) => ALIAS_TO_ID.get(String(name || "").trim().toLowerCase()) ?? null;
 
+// Bare category words span a huge calorie range ("sabji" is anywhere from 80 to
+// 250 kcal). We still log a sensible default rather than dead-end, but the user
+// must be told which one we picked — never a silent direct match.
+const GENERIC_TERMS = new Set([
+  "sabji", "sabzi", "subzi", "sabjee", "curry", "gravy", "sweet", "mithai",
+  "dessert", "snack", "namkeen", "juice", "shake", "chutney", "salad",
+]);
+
 // INDB matching is fuzzy, so short or generic queries pull in recipes that
 // merely contain the word ("eggs" -> "Mayonnaise without eggs", 1274 kcal/serving;
 // "sabji" -> a specific bhindi fry). Two deterministic checks before we trust a hit.
@@ -226,8 +234,19 @@ function resolveItemBase(item) {
   // clamped so a hallucinated number can't poison a day. Tier 4: flat 300 floor.
   const est = Number(item.est_kcal);
   const perServing = Number.isFinite(est) && est > 0 ? Math.min(Math.max(Math.round(est), 20), 800) : 300;
-  // Weight-based even for uncurated foods: scale the estimate by grams / ~150g serving.
+  // Weight-based even for uncurated foods. Prefer the LLM's per-100g figure:
+  // scaling a "standard serving" by grams/150 under-reports dense foods badly
+  // (50g chocos came out 63 kcal against a real ~187).
   if (grams > 0 && grams <= 2000) {
+    const per100 = Number(item.est_kcal_100g);
+    if (Number.isFinite(per100) && per100 > 0 && per100 <= 900) {
+      const kcal = Math.round(per100 * grams / 100);
+      return {
+        food_name: `${grams}g ${item.food_name || "meal"}`, matched_db_id: null, quantity: 1,
+        unit: `${grams}g`, kcal, ...splitMacros(kcal, item.food_name), fiber: 0,
+        is_estimate: true, userSaid: item.food_name, assumed: true,
+      };
+    }
     const s = grams / 150;
     return {
       food_name: `${grams}g ${item.food_name || "meal"}`, matched_db_id: null, quantity: 1,
@@ -304,9 +323,14 @@ async function resolveRows(parsed, opts = {}) {
   // Exact curated alias beats anything fuzzy — never let a food the map already
   // knows reach INDB. Guard-tripped items keep their INDB route.
   for (const it of items) {
-    if (it && !it.matched_db_id && !it.protein_guard && it.food_name) {
+    if (!it || !it.food_name) continue;
+    if (!it.matched_db_id && !it.protein_guard) {
       const id = aliasRescue(it.food_name);
       if (id) { it.matched_db_id = id; it.match_type = "direct"; }
+    }
+    // A generic word resolved to a specific dish is an assumption, not a match.
+    if (it.matched_db_id && GENERIC_TERMS.has(String(it.food_name).trim().toLowerCase())) {
+      it.match_type = "category";
     }
   }
   const rows = items.map(it => resolveItem(it));
