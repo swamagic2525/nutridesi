@@ -16,11 +16,23 @@ const PROTEIN_GROUPS = {
   pork: ["pork", "bacon", "ham"],
 };
 
+// A negated mention is not a protein mention. Without this the guard reads
+// "Mayonnaise without eggs" as an egg food and waves an egg query straight
+// through to it (2026-07-20 incident: "2 eggs" -> 988 kcal of mayonnaise).
+function stripNegated(text, word) {
+  return text
+    .replace(new RegExp(`\\b(?:without|no|sans|excluding|free\\s+of)\\s+(?:\\w+\\s+){0,2}?${word}\\b`, "g"), " ")
+    .replace(new RegExp(`\\b${word}\\s*-?\\s*(?:free|less)\\b`, "g"), " ")
+    .replace(new RegExp(`\\b${word}less\\b`, "g"), " ");
+}
+
 function extractGroups(text) {
-  const t = String(text || "").toLowerCase();
+  const t0 = String(text || "").toLowerCase();
   const found = new Set();
   for (const [group, words] of Object.entries(PROTEIN_GROUPS)) {
-    if (words.some(w => new RegExp(`\\b${w}\\b`).test(t))) found.add(group);
+    for (const w of words) {
+      if (new RegExp(`\\b${w}\\b`).test(stripNegated(t0, w))) { found.add(group); break; }
+    }
   }
   return found;
 }

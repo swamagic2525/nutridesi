@@ -1,6 +1,6 @@
 // Supabase helpers: ensure user, log items, compute today's total.
 const { createClient } = require("@supabase/supabase-js");
-const { FOOD_BY_ID } = require("./foods.js");
+const { FOODS, FOOD_BY_ID } = require("./foods.js");
 const { matchRows } = require("./correctionContext.js");
 const { guardItems } = require("./proteinGuard.js");
 const { contextGuard, contentTokens } = require("./contextGuard.js");
@@ -58,11 +58,54 @@ const UNIT_GRAMS = {
 
 // Default macro split for estimated foods where macros are unknown:
 // 50% carbs / 25% protein / 25% fat by energy (user-set policy, 2026-07-15).
-const splitMacros = (kcal) => ({
-  protein: +(kcal * 0.25 / 4).toFixed(1),
-  carbs: +(kcal * 0.5 / 4).toFixed(1),
-  fat: +(kcal * 0.25 / 9).toFixed(1),
-});
+// The flat split is nonsense for whole categories — it billed a Munch bar at
+// 6g protein. Obvious ones get a sane energy profile; everything else keeps the
+// user-set default.
+const MACRO_PROFILES = [
+  { re: /chocolate|candy|toffee|barfi|halwa|jalebi|gulab|rasgulla|sweet|dessert|ice ?cream|cake|pastry|cookie|biscuit|chocos|cornflakes|cereal|juice|soda|cola|syrup|jam|honey|sugar/,
+    p: 0.05, c: 0.75, f: 0.20 },
+  { re: /chips|fries|namkeen|\bsev\b|mixture|papad|wafer|crisps/, p: 0.07, c: 0.50, f: 0.43 },
+  { re: /chicken|mutton|gosht|keema|fish|prawn|\begg|paneer|tofu|soya|whey|protein|kebab|tikka/,
+    p: 0.35, c: 0.25, f: 0.40 },
+];
+const splitMacros = (kcal, name = "") => {
+  const p = MACRO_PROFILES.find(m => m.re.test(String(name).toLowerCase()))
+    || { p: 0.25, c: 0.5, f: 0.25 };
+  return {
+    protein: +(kcal * p.p / 4).toFixed(1),
+    carbs: +(kcal * p.c / 4).toFixed(1),
+    fat: +(kcal * p.f / 9).toFixed(1),
+  };
+};
+
+// Exact-alias rescue: the LLM occasionally returns matched_db_id null for a
+// food whose alias is right there in the map. Catching it here keeps the item
+// off the fuzzy INDB path entirely.
+const ALIAS_TO_ID = new Map();
+for (const f of FOODS) {
+  ALIAS_TO_ID.set(f.name.toLowerCase(), f.id);
+  for (const a of f.aliases) ALIAS_TO_ID.set(a.toLowerCase(), f.id);
+}
+const aliasRescue = (name) => ALIAS_TO_ID.get(String(name || "").trim().toLowerCase()) ?? null;
+
+// INDB matching is fuzzy, so short or generic queries pull in recipes that
+// merely contain the word ("eggs" -> "Mayonnaise without eggs", 1274 kcal/serving;
+// "sabji" -> a specific bhindi fry). Two deterministic checks before we trust a hit.
+function acceptableRef(query, refName) {
+  const q = contentTokens(query);
+  const r = String(refName || "").toLowerCase();
+  if (!q.length) return false;
+  // 1. The recipe explicitly excludes what the user asked for.
+  const negates = q.some(w => new RegExp(
+    `\\b(?:without|no|sans|free\\s+of)\\s+(?:\\w+\\s+){0,2}?${w}\\b|\\b${w}\\s*-?\\s*(?:free|less)\\b`
+  ).test(r));
+  if (negates) return false;
+  // 2. The recipe must be mostly about the query. Alternate names live in
+  //    parentheses, so those count as evidence but never as unexplained words.
+  const present = q.filter(w => r.includes(w)).length;
+  const absent = contentTokens(r.replace(/\(.*?\)/g, " ")).filter(w => !q.includes(w)).length;
+  return present > 0 && absent <= present;
+}
 
 // Serving-word floor: "platter"/"thali"/"combo" on a per-piece food means a
 // multi-piece serving, not one piece ("chicken tandoor platter" was served as
@@ -126,7 +169,7 @@ function resolveItemBase(item) {
       ...(food
         ? { protein: +(food.p * ratio * qs).toFixed(1), carbs: +(food.c * ratio * qs).toFixed(1),
             fat: +(food.f * ratio * qs).toFixed(1), fiber: +((food.fb || 0) * ratio * qs).toFixed(1) }
-        : { ...splitMacros(statedKcal * qs), fiber: 0 }),
+        : { ...splitMacros(statedKcal * qs, item.food_name), fiber: 0 }),
       is_estimate: false, stated: true,
       userSaid: item.food_name, assumed: false,
     };
@@ -188,13 +231,13 @@ function resolveItemBase(item) {
     const s = grams / 150;
     return {
       food_name: `${grams}g ${item.food_name || "meal"}`, matched_db_id: null, quantity: 1,
-      unit: `${grams}g`, kcal: Math.round(perServing * s), ...splitMacros(perServing * s), fiber: 0,
+      unit: `${grams}g`, kcal: Math.round(perServing * s), ...splitMacros(perServing * s, item.food_name), fiber: 0,
       is_estimate: true, userSaid: item.food_name, assumed: true,
     };
   }
   return {
     food_name: item.food_name || "meal", matched_db_id: null, quantity: qty, unit: "serving",
-    kcal: Math.round(perServing * qty), ...splitMacros(perServing * qty), fiber: 0, is_estimate: true,
+    kcal: Math.round(perServing * qty), ...splitMacros(perServing * qty, item.food_name), fiber: 0, is_estimate: true,
     userSaid: item.food_name, assumed: true,
   };
 }
@@ -258,13 +301,21 @@ async function resolveRows(parsed, opts = {}) {
   // matches outright so they take the INDB path below.
   contextGuard(items);
   guardItems(items);
+  // Exact curated alias beats anything fuzzy — never let a food the map already
+  // knows reach INDB. Guard-tripped items keep their INDB route.
+  for (const it of items) {
+    if (it && !it.matched_db_id && !it.protein_guard && it.food_name) {
+      const id = aliasRescue(it.food_name);
+      if (id) { it.matched_db_id = id; it.match_type = "direct"; }
+    }
+  }
   const rows = items.map(it => resolveItem(it));
   // Cross-reference unmatched foods against INDB (parallel, misses only).
   await Promise.all(rows
     .filter(r => !r.matched_db_id && !r.stated && r.food_name && r.food_name !== "meal")
     .map(async r => {
       const ref = await refLookup(r.food_name);
-      if (ref) applyReference(r, ref);
+      if (ref && acceptableRef(r.userSaid || r.food_name, ref.food_name)) applyReference(r, ref);
     }));
   // Suspect arbitration: a still-matched compound/coverage suspect asks INDB for
   // the full phrase. Only positive evidence - every content word present in the
@@ -276,7 +327,11 @@ async function resolveRows(parsed, opts = {}) {
     if (!ref) return;
     const refName = String(ref.food_name || "").toLowerCase();
     const tokens = contentTokens(it.food_name);
+    // Containment alone is too weak — "sabji" is present inside
+    // "Okra/Lady's fingers fry (Bhindi sabzi/sabji/subji)". The same acceptance
+    // rules as the primary path apply before we override a curated value.
     if (!tokens.length || !tokens.every(w => refName.includes(w))) return;
+    if (!acceptableRef(it.food_name, ref.food_name)) return;
     r.matched_db_id = null;
     r.is_estimate = true;
     r.assumed = true;
@@ -494,4 +549,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { supabase, logMeal, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };
+module.exports = { supabase, acceptableRef, logMeal, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };

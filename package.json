@@ -14,6 +14,7 @@
     "test:guard": "node test/protein-guard-test.js",
     "test:context": "node test/context-guard-test.js",
     "test:serving": "node test/serving-size-test.js",
+    "test:ref": "node test/ref-guard-test.js",
     "test:undoall": "node test/undo-all-test.js"
   },
   "dependencies": {
