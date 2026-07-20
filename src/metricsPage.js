@@ -13,6 +13,7 @@ function metricsPage() {
     .metric-label,.note { color:var(--muted); font-size:12px }.metric { font-size:30px; font-weight:750; margin:5px 0 }.hint { color:var(--muted); font-size:12px; margin:0 }
     .grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px }.section { min-width:0 } canvas { max-height:240px } table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums } th,td { text-align:right; padding:9px 5px; border-bottom:1px solid var(--line) } th:first-child,td:first-child { text-align:left } th { color:var(--muted); font-weight:500 }.list { margin:0; padding-left:21px }.list li { padding:5px 0 }.pill { display:inline-block; color:#092012; background:var(--accent); border-radius:999px; padding:2px 8px; font-size:11px; font-weight:700 }.warn { color:var(--warm) } footer { color:var(--muted); font-size:12px; margin-top:20px } button { background:transparent; color:var(--accent); border:1px solid var(--accent); border-radius:8px; padding:7px 10px; cursor:pointer; float:right } .error { color:#ffae9e }
     .convo th,.convo td { text-align:left; vertical-align:top; font-size:12px } .convo td:nth-child(4) { white-space:pre-wrap; color:var(--muted) }
+    .liveness { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); margin-left:12px; font-weight:400 } .liveness-dot { width:8px; height:8px; border-radius:50%; display:inline-block } .live-ok { background:#72dc9a } .live-warn { background:var(--warm) } .live-stale { background:#ef8f84 }
     .milestones { grid-template-columns:repeat(3,1fr) } .milestones .card { border-color:#33513f; background:linear-gradient(180deg,#17231c,#141c18) } .milestones .metric { font-size:38px; color:var(--accent) }
     .divider { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.09em; margin:26px 0 10px } .ops { grid-template-columns:repeat(3,1fr) } .ops .metric { font-size:24px }
     @media (max-width:760px) { main { padding:24px 14px } .cards { grid-template-columns:1fr 1fr }.milestones,.ops { grid-template-columns:1fr 1fr }.grid { grid-template-columns:1fr } }
@@ -40,7 +41,7 @@ function metricsPage() {
   <section class="grid"><div class="section"><h2>Next-day return</h2><canvas id="nextDay"></canvas></div><div class="section"><h2>Food items / active user / day</h2><p class="note">Food rows, not incoming WhatsApp messages.</p><canvas id="engagement"></canvas></div></section>
   <section class="grid"><div class="section"><h2>Quality signals</h2><p class="note">Estimate rate = confidence/assumption signal · Uncurated rate = food-coverage gap.</p><canvas id="quality"></canvas></div><div class="section"><h2>Top uncurated foods · last 7 days</h2><ol class="list" id="uncurated"></ol></div></section>
   <section class="section"><h2>Goal adoption</h2><div class="metric" id="goalAdoption">—</div><p class="hint" id="goalHint">users with a protein goal set</p></section>
-  <section class="section convo" style="margin-top:18px"><h2>Recent conversations</h2><p class="note">Last 24 hours (max 200) · phones masked · live (not cached) · test numbers excluded.</p><div style="overflow:auto;max-height:480px"><table><thead><tr><th style="width:52px">When</th><th style="width:110px">User</th><th>Message</th><th>Reply</th></tr></thead><tbody id="recent"></tbody></table></div></section>
+  <section class="section convo" style="margin-top:18px"><h2>Recent conversations <span class="liveness" id="liveness"></span></h2><p class="note">Last 24 hours (max 200) · phones masked · live (not cached) · test numbers excluded.</p><div style="overflow:auto;max-height:480px"><table><thead><tr><th style="width:52px">When</th><th style="width:110px">User</th><th>Message</th><th>Reply</th></tr></thead><tbody id="recent"></tbody></table></div></section>
   <footer id="footer">excludes test numbers · IST · loading…</footer>
 </main>
 <script>
@@ -75,8 +76,18 @@ function metricsPage() {
     const list = document.getElementById('uncurated'); list.replaceChildren();
     if (!data.topUncurated.length) { const li=document.createElement('li');li.textContent='No uncurated foods in the last 7 days.';list.appendChild(li) }
     data.topUncurated.forEach(row => { const li=document.createElement('li');li.textContent=row.foodName + ' · ' + row.count;list.appendChild(li) });
+    // Liveness indicator
+    const lEl = document.getElementById('liveness');
+    if (data.lastMessageAt) {
+      const ago = Math.round((Date.now() - new Date(data.lastMessageAt).getTime()) / 60000);
+      const label = ago < 1 ? 'just now' : ago < 60 ? ago + ' min ago' : Math.round(ago/60) + 'h ago';
+      const hr = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false});
+      const active = +hr >= 8 && +hr < 24;
+      const cls = ago <= 30 ? 'live-ok' : (active && ago > 120) ? 'live-stale' : 'live-warn';
+      lEl.innerHTML = '<span class="liveness-dot '+cls+'"></span>Last message: '+label;
+    } else { lEl.innerHTML = '<span class="liveness-dot live-stale"></span>No messages in 24h'; }
     const rec = document.getElementById('recent'); rec.replaceChildren();
-    if (!(data.recent || []).length) { const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=4; td.textContent='No conversations since the last server restart.'; tr.appendChild(td); rec.appendChild(tr); }
+    if (!(data.recent || []).length) { const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=4; td.textContent='No conversations in the last 24 hours.'; tr.appendChild(td); rec.appendChild(tr); }
     (data.recent || []).forEach(x => { const tr=document.createElement('tr'); const when=new Date(x.at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); [when,x.user,x.in,x.out].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)}); rec.appendChild(tr); });
     text('footer','excludes test numbers · IST · data as of ' + new Date(data.asOf).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}));
   }

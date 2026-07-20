@@ -4,6 +4,8 @@
 
 require("dotenv").config();
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
 const { loadMetrics } = require("./src/metrics.js");
@@ -65,7 +67,10 @@ app.get("/metrics", metricsAuth, (_req, res) => res.type("html").send(metricsPag
 app.get("/metrics/data", metricsAuth, async (_req, res) => {
   // recent rides outside the 60s cache so the conversation feed is always live
   res.set("Cache-Control", "no-store"); // a browser-cached payload looks like a frozen dashboard
-  try { return res.json({ ...(await currentMetrics()), recent: await recentConversations() }); }
+  try {
+    const convos = await recentConversations();
+    return res.json({ ...(await currentMetrics()), recent: convos.rows, lastMessageAt: convos.lastMessageAt });
+  }
   catch (error) {
     console.error("metrics error:", error.message);
     return res.status(503).json({ error: "Metrics are temporarily unavailable. Check dashboard configuration." });
@@ -73,6 +78,27 @@ app.get("/metrics/data", metricsAuth, async (_req, res) => {
 });
 
 app.get("/", (_req, res) => res.send("NutriDesi is running."));
+
+const LOG_FILE = path.join(process.env.HOME, "Library/Logs/nutridesi.log");
+app.get("/logs", metricsAuth, (req, res) => {
+  const lines = parseInt(req.query.lines) || 150;
+  let content;
+  try {
+    const buf = fs.readFileSync(LOG_FILE, "utf8");
+    content = buf.split("\n").slice(-lines).join("\n");
+  } catch (e) { content = "Could not read log: " + e.message; }
+  res.type("html").send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NutriDesi Logs</title>
+<style>body{margin:0;background:#0d1210;color:#c9d6ce;font:12px/1.5 monospace;padding:12px}pre{white-space:pre-wrap;word-break:break-all}
+.bar{position:sticky;top:0;background:#151d19;padding:8px 12px;border-bottom:1px solid #29362f;display:flex;gap:12px;align-items:center}
+a,button{color:#72dc9a;background:none;border:1px solid #72dc9a;border-radius:6px;padding:4px 10px;cursor:pointer;text-decoration:none;font:inherit}
+</style></head><body>
+<div class="bar"><b>nutridesi.log</b> <span style="color:#9baca2">last ${lines} lines</span>
+<a href="/logs?lines=300">300</a><a href="/logs?lines=500">500</a><button onclick="location.reload()">Refresh</button><a href="/metrics">Dashboard</a></div>
+<pre>${content.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</pre>
+<script>window.scrollTo(0,document.body.scrollHeight);</script>
+</body></html>`);
+});
 
 // ---------------------------------------------------------------------------
 // Shared state & helpers
@@ -145,10 +171,11 @@ async function recentConversations() {
   const { data, error } = await supabase.from("message_log")
     .select("phone_number, body, reply, at")
     .gte("at", since).order("at", { ascending: false }).limit(200);
-  if (error || !data) return recentExchanges; // table not created yet
-  return data
+  if (error || !data) return { rows: recentExchanges, lastMessageAt: recentExchanges[0]?.at || null };
+  const rows = data
     .filter(r => !/^\+000|^\+910{5,}/.test(r.phone_number))
     .map(r => ({ at: r.at, user: maskPhone(r.phone_number), in: r.body || "(media)", out: r.reply || "" }));
+  return { rows, lastMessageAt: rows[0]?.at || null };
 }
 
 const MEDIA_REPLY =
