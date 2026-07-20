@@ -275,6 +275,12 @@ const FOODS = [
   // Munch 435 kcal/100g; the common ₹10 bar is ~20g. Munch Max is roughly double.
   { id: 249, name: "Munch (Nestlé)",            aliases: ["munch","munch chocolate","nestle munch","munch bar"], unit: "piece", kcal: 87, p: 1.2, c: 12, f: 4.2, fb: 0.3, g: 20 },
   { id: 250, name: "Mutton Curry",              aliases: ["mutton curry","gosht curry","mutton masala","mutton gravy","lamb curry","mutton rogan josh","rogan josh"], unit: "bowl", kcal: 350, p: 24, c: 8, f: 25, fb: 1.5 },
+
+  // --- Momos (2026-07-20): bare "momo/momos" defaults to steamed veg per
+  // veg-default policy. Chicken needs the explicit protein word.
+  { id: 251, name: "Momos (Steamed Veg)",       aliases: ["momo","momos","steam momo","steamed momos","steamed momo","veg momos","veg momo","dim sum","veg steamed momos"], unit: "piece", kcal: 35, p: 1.2, c: 5, f: 1, fb: 0.5 },
+  { id: 252, name: "Momos (Chicken)",            aliases: ["chicken momo","chicken momos","non veg momo","non veg momos","steamed chicken momos","chicken steam momo"], unit: "piece", kcal: 45, p: 3, c: 4, f: 1.5, fb: 0.3 },
+  { id: 253, name: "Momos (Fried)",              aliases: ["fried momo","fried momos","tawa momo","tawa momos","kurkure momos","crispy momo","crispy momos","deep fried momos"], unit: "piece", kcal: 65, p: 1.5, c: 6, f: 3.5, fb: 0.5 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));

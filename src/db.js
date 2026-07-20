@@ -210,7 +210,7 @@ function resolveItemBase(item) {
   // always a grams/parse misread ("100g" -> qty 100), not a real count. Cap at 5.
   // Countable units (piece/slice/medium/fillet...) keep large counts (20 rotis).
   const PORTION_UNITS = new Set(["bowl", "plate", "glass", "katori", "cup", "serving", "100g"]);
-  if (PORTION_UNITS.has(food ? food.unit : "serving") && qty > 5) qty = 5;
+  if (food && PORTION_UNITS.has(food.unit) && qty > 5) qty = 5;
   if (food && qty === 0) qty = 0.5; // a matched food must log something, never 0
   const platter = !!food && PIECE_UNITS.has(food.unit)
     && SERVING_WORDS.test(String(item.food_name || "")) && qty <= 1;
