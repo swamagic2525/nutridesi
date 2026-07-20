@@ -13,14 +13,24 @@ function metricsPage() {
     .metric-label,.note { color:var(--muted); font-size:12px }.metric { font-size:30px; font-weight:750; margin:5px 0 }.hint { color:var(--muted); font-size:12px; margin:0 }
     .grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px }.section { min-width:0 } canvas { max-height:240px } table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums } th,td { text-align:right; padding:9px 5px; border-bottom:1px solid var(--line) } th:first-child,td:first-child { text-align:left } th { color:var(--muted); font-weight:500 }.list { margin:0; padding-left:21px }.list li { padding:5px 0 }.pill { display:inline-block; color:#092012; background:var(--accent); border-radius:999px; padding:2px 8px; font-size:11px; font-weight:700 }.warn { color:var(--warm) } footer { color:var(--muted); font-size:12px; margin-top:20px } button { background:transparent; color:var(--accent); border:1px solid var(--accent); border-radius:8px; padding:7px 10px; cursor:pointer; float:right } .error { color:#ffae9e }
     .convo th,.convo td { text-align:left; vertical-align:top; font-size:12px } .convo td:nth-child(4) { white-space:pre-wrap; color:var(--muted) }
-    @media (max-width:760px) { main { padding:24px 14px } .cards { grid-template-columns:1fr 1fr }.grid { grid-template-columns:1fr } }
+    .milestones { grid-template-columns:repeat(3,1fr) } .milestones .card { border-color:#33513f; background:linear-gradient(180deg,#17231c,#141c18) } .milestones .metric { font-size:38px; color:var(--accent) }
+    .divider { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.09em; margin:26px 0 10px } .ops { grid-template-columns:repeat(3,1fr) } .ops .metric { font-size:24px }
+    @media (max-width:760px) { main { padding:24px 14px } .cards { grid-template-columns:1fr 1fr }.milestones,.ops { grid-template-columns:1fr 1fr }.grid { grid-template-columns:1fr } }
   </style>
 </head>
 <body><main>
-  <button id="refresh">Refresh</button><h1>NutriDesi metrics</h1><p class="sub">Founder dashboard · join-cohort retention is the decision metric</p>
+  <button id="refresh">Refresh</button><h1>NutriDesi metrics</h1><p class="sub" id="sub">Founder dashboard · join-cohort retention is the decision metric</p>
   <div id="error" class="error"></div>
-  <section class="cards">
-    <div class="card"><div class="metric-label">Total users</div><div class="metric" id="totalUsers">—</div><p class="hint">excludes test numbers</p></div>
+  <section class="cards milestones">
+    <div class="card"><div class="metric-label">Total users</div><div class="metric" id="totalUsers">—</div><p class="hint">real humans, excludes test numbers</p></div>
+    <div class="card"><div class="metric-label">Days since launch</div><div class="metric" id="dayNumber">—</div><p class="hint" id="launchHint">since first public share</p></div>
+    <div class="card"><div class="metric-label">Foods logged</div><div class="metric" id="foodsLogged">—</div><p class="hint">individual items across all meals</p></div>
+    <div class="card"><div class="metric-label">Founding members</div><div class="metric" id="foundingMembers">—</div><p class="hint">of 50 free-for-life spots</p></div>
+    <div class="card"><div class="metric-label">Matched from database</div><div class="metric" id="directMatch">—</div><p class="hint">exact dish match, not an estimate</p></div>
+    <div class="card"><div class="metric-label">Corrections handled</div><div class="metric" id="corrections">—</div><p class="hint">users fixing a log in one reply</p></div>
+  </section>
+  <h2 class="divider">Operating health</h2>
+  <section class="cards ops">
     <div class="card"><div class="metric-label">Active today</div><div class="metric" id="activeToday">—</div><p class="hint">logged at least one food</p></div>
     <div class="card"><div class="metric-label">D7 join-cohort retention</div><div class="metric" id="d7">—</div><p class="hint" id="d7Hint">eligible cohorts only</p></div>
     <div class="card"><div class="metric-label">Estimate rate</div><div class="metric" id="estimateRate">—</div><p class="hint">assumed or estimated rows</p></div>
@@ -44,6 +54,13 @@ function metricsPage() {
   }
   function render(data) {
     text('totalUsers', data.totalUsers); text('activeToday', data.activeToday); text('d7', pct(data.d7.rate)); text('estimateRate', pct(data.estimate.overallRate));
+    const m = data.milestone || {};
+    text('dayNumber', m.dayNumber == null ? '—' : 'Day ' + m.dayNumber);
+    text('launchHint', m.launchDate ? 'since launch on ' + shortDate(m.launchDate) : 'since first public share');
+    text('foodsLogged', m.foodsLogged == null ? '—' : m.foodsLogged.toLocaleString('en-IN'));
+    text('foundingMembers', m.foundingMembers == null ? '—' : m.foundingMembers + ' / 50');
+    text('directMatch', pct(m.directMatchRate));
+    text('corrections', m.corrections == null ? '—' : m.corrections);
     text('d7Hint', data.d7.eligibleUsers + ' eligible joined users');
     text('goalAdoption', data.goalAdoption.available ? pct(data.goalAdoption.rate) : '0%');
     text('goalHint', data.goalAdoption.available ? 'users with a protein goal set' : 'run the goal-column migration to enable this');

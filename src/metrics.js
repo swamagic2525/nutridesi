@@ -3,6 +3,10 @@ const { createClient } = require("@supabase/supabase-js");
 const IST = "Asia/Kolkata";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// First day NutriDesi was shared outside Swapnil's own testing. Drives the
+// "Day N" milestone card.
+const LAUNCH_DATE = "2026-07-11";
+
 function istDate(value = new Date()) {
   return new Date(value).toLocaleDateString("en-CA", { timeZone: IST });
 }
@@ -41,7 +45,7 @@ function makeDateSets(logs) {
   return usersByDate;
 }
 
-function buildMetrics(rawUsers, rawLogs, now = new Date(), goalFieldAvailable = true) {
+function buildMetrics(rawUsers, rawLogs, now = new Date(), goalFieldAvailable = true, extras = {}) {
   const today = istDate(now);
   const users = (rawUsers || []).filter(u => !isTestPhone(u.phone_number));
   const userPhones = new Set(users.map(u => u.phone_number));
@@ -108,9 +112,21 @@ function buildMetrics(rawUsers, rawLogs, now = new Date(), goalFieldAvailable = 
     .slice(0, 10);
 
   const overallQuality = qualityFor(logs);
+  // Milestone cards: cumulative, share-friendly, and independent of the
+  // operational health metrics below them.
+  const milestone = {
+    dayNumber: Math.max(1, Math.round((new Date(`${today}T00:00:00.000Z`)
+      - new Date(`${LAUNCH_DATE}T00:00:00.000Z`)) / DAY_MS) + 1),
+    launchDate: LAUNCH_DATE,
+    foodsLogged: logs.length,
+    directMatchRate: percent(logs.filter(r => r.matched_db_id != null).length, logs.length),
+    foundingMembers: extras.foundingMembers ?? null,
+    corrections: extras.corrections ?? null,
+  };
   return {
     asOf: new Date(now).toISOString(),
     today,
+    milestone,
     totalUsers: users.length,
     activeToday: (activeByDate.get(today) || new Set()).size,
     d7: { rate: percent(d7Returned, eligibleD7.length), eligibleUsers: eligibleD7.length },
@@ -161,7 +177,20 @@ async function loadMetrics() {
   }
   const goalByPhone = new Map(goals.map(row => [row.phone_number, row.goal_protein]));
   const logs = await fetchAll(client, "user_logs", "phone_number,food_name,matched_db_id,is_estimate,date");
-  return buildMetrics(users.map(user => ({ ...user, goal_protein: goalByPhone.get(user.phone_number) })), logs, new Date(), goalFieldAvailable);
+  // Milestone extras — both fail soft: a missing table or log file just leaves
+  // that card blank rather than breaking the dashboard.
+  let foundingMembers = null;
+  try {
+    const { count } = await client.from("founding_members").select("*", { count: "exact", head: true });
+    foundingMembers = count ?? null;
+  } catch (error) { console.warn("metrics: founding_members unavailable:", error.message); }
+  let corrections = null;
+  try {
+    const lines = require("fs").readFileSync(`${__dirname}/../evals/correction-log.jsonl`, "utf8")
+      .trim().split("\n").filter(Boolean);
+    corrections = lines.filter(l => /"outcome":"(corrected|removed|removed_all)"/.test(l)).length;
+  } catch { /* no correction log yet */ }
+  return buildMetrics(users.map(user => ({ ...user, goal_protein: goalByPhone.get(user.phone_number) })), logs, new Date(), goalFieldAvailable, { foundingMembers, corrections });
 }
 
 module.exports = { buildMetrics, loadMetrics, normalizeFoodName, istDate };
