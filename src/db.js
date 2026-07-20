@@ -382,7 +382,9 @@ async function resolveRows(parsed, opts = {}) {
 async function logMeal(phone, parsed) {
   // Previous total fetched in parallel with the user upsert (before the insert,
   // so no double-count); new items are added locally. Saves one DB round-trip.
-  const [prevTotal, isNewUser, rows] = await Promise.all([todayTotal(phone), ensureUser(phone), resolveRows(parsed, { trackGaps: true })]);
+  const [prevTotal, isNewUser, rows, seqStart] = await Promise.all([
+    todayTotal(phone), ensureUser(phone), resolveRows(parsed, { trackGaps: true }), nextDaySeq(phone),
+  ]);
   const mealTime = parsed.meal_time_inferred || "snack";
   rows.forEach(r => Object.assign(r, { phone_number: phone, meal_time: mealTime }));
 
@@ -392,6 +394,10 @@ async function logMeal(phone, parsed) {
       matched_db_id: null, quantity: 1, unit: "serving", kcal: 300,
       ...splitMacros(300), fiber: 0, is_estimate: true });
   }
+  // Numbers are assigned once, here, and never recomputed — deleting 14 leaves
+  // a gap so numbers the user has already seen stay valid. Null seqStart means
+  // the column isn't there yet, so items just log without numbers.
+  if (seqStart != null) rows.forEach((r, i) => { r.day_seq = seqStart + i; });
 
   // Fire-and-forget: the reply's totals are computed locally (below), so it need
   // not wait for the write. Saves ~0.7s of India<->Supabase latency per message.
@@ -452,7 +458,7 @@ async function dayReport(phone, daysAgo = 0) {
   const date = new Date(Date.now() - daysAgo * 86400000)
     .toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const { data, error } = await supabase.from("user_logs")
-    .select("food_name, quantity, kcal, protein, carbs, fat, fiber, logged_at")
+    .select("food_name, quantity, kcal, protein, carbs, fat, fiber, logged_at, day_seq")
     .eq("phone_number", phone).eq("date", date).order("logged_at", { ascending: true });
   if (error) console.error("dayReport:", error.message);
   const meals = [];
@@ -461,7 +467,8 @@ async function dayReport(phone, daysAgo = 0) {
     for (const k of Object.keys(totals)) totals[k] += Number(r[k] || 0);
     const at = new Date(r.logged_at).getTime();
     const last = meals[meals.length - 1];
-    const item = Number(r.quantity) === 1 ? r.food_name : `${r.food_name} \u00d7${Number(r.quantity)}`;
+    const base = Number(r.quantity) === 1 ? r.food_name : `${r.food_name} \u00d7${Number(r.quantity)}`;
+    const item = r.day_seq != null ? `${r.day_seq}. ${base}` : base;
     if (last && at - last.lastAt <= MEAL_GAP_MS) {
       last.kcal += Number(r.kcal || 0); last.protein += Number(r.protein || 0);
       last.items.push(item); last.lastAt = at;
@@ -547,6 +554,38 @@ async function deleteMatching(phone, foodHints) {
   return matched; // aligned with foodHints; null entries = no match for that hint
 }
 
+const istToday = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+
+// Next per-day item number. Returns null when the day_seq column doesn't exist
+// yet (item-numbers.sql not run), which switches the whole feature off rather
+// than breaking logging.
+async function nextDaySeq(phone) {
+  const { data, error } = await supabase.from("user_logs")
+    .select("day_seq").eq("phone_number", phone).eq("date", istToday())
+    .order("day_seq", { ascending: false, nullsFirst: false }).limit(1);
+  if (error) return null;
+  return (Number(data && data[0] && data[0].day_seq) || 0) + 1;
+}
+
+// Today's live item numbers, for validating a user's reference before acting.
+async function todaySeqs(phone) {
+  const { data, error } = await supabase.from("user_logs")
+    .select("day_seq").eq("phone_number", phone).eq("date", istToday())
+    .not("day_seq", "is", null).order("day_seq");
+  if (error) return [];
+  return (data || []).map(r => Number(r.day_seq));
+}
+
+// Delete by explicit item number ("undo 14"). Day-scoped, so a stale number
+// from yesterday can never hit an unrelated row.
+async function deleteBySeq(phone, seqs) {
+  const { data, error } = await supabase.from("user_logs").delete()
+    .eq("phone_number", phone).eq("date", istToday()).in("day_seq", seqs)
+    .select("food_name, kcal, day_seq");
+  if (error) { console.error("deleteBySeq:", error.message); return null; }
+  return data || [];
+}
+
 // "Delete all entries": clear the whole IST day. The PRD's narrow undo stays
 // the default — this only fires when the user says an explicit all-scope word.
 async function deleteAllToday(phone) {
@@ -573,4 +612,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { supabase, acceptableRef, logMeal, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };
+module.exports = { supabase, acceptableRef, logMeal, deleteBySeq, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };

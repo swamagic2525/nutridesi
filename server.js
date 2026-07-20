@@ -8,7 +8,7 @@ const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
-const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
+const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, todaySeqs, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
 const { validateSignature, extractMessages, sendMessage, markRead } = require("./src/meta.js");
 const { logCorrectionEvent } = require("./src/correctionLogger.js");
@@ -187,7 +187,8 @@ function fmtItems(rows) {
     const qty = r.quantity === 1 ? "" : ` ×${r.quantity}`;
     const p = (r.matched_db_id || r.protein > 0) ? ` · ${Math.round(r.protein)}g protein` : "";
     const note = r.portionNote ? ` (${r.portionNote})` : "";
-    return `*${r.food_name}*${qty} — ${r.kcal} kcal${p}${note}`;
+    const n = r.day_seq != null ? `${r.day_seq}. ` : "";
+    return `${n}*${r.food_name}*${qty} — ${r.kcal} kcal${p}${note}`;
   });
 }
 
@@ -251,6 +252,30 @@ async function handleMessage(from, body, opts = {}) {
   }
 
   const profile = await getProfile(from);
+
+  // Item-number targeting: "undo 14", "delete 14, 15", "remove #3". A bare
+  // number counts as a row reference ONLY here, where a delete verb makes any
+  // other reading impossible — everywhere else numbers stay quantities. No LLM
+  // call, and it reaches any row from today rather than just the last batch.
+  const seqRef = trimmed.match(/^(?:undo|delete|remove)\s+(?:items?\s*)?#?(\d+(?:\s*(?:,|and|&|\s)+\s*#?\d+)*)\s*$/i);
+  // Only handles the message when today actually has numbered items; otherwise
+  // it falls through to the normal undo path rather than claiming nothing exists.
+  const availableSeqs = seqRef ? await todaySeqs(from) : [];
+  if (seqRef && availableSeqs.length) {
+    const seqs = [...new Set((seqRef[1].match(/\d+/g) || []).map(Number))];
+    const available = availableSeqs;
+    const missing = seqs.filter(s => !available.includes(s));
+    if (missing.length) {
+      return `No item ${missing.join(", ")} in today's log. Your items are ${available.join(", ")}.`;
+    }
+    const deleted = await deleteBySeq(from, seqs);
+    if (!deleted || !deleted.length) return "Couldn't remove that — nothing changed.";
+    logCorrectionEvent({ intent: "undo", rawMessage: body, parsed: { intent: "undo", items: [] },
+      batch: [], deleted, outcome: "removed_by_number" });
+    const total = await todayTotal(from);
+    const lines = deleted.map(r => `${r.day_seq}. ${r.food_name} — ${r.kcal} kcal`).join("\n");
+    return `\u{21A9}\u{FE0F} Removed:\n${lines}\n\n${dayLine(total, profile)}`;
+  }
 
   const pending = pendingQuery.get(from);
   if (/^(log it|log|ate it|had it|yes log it)$/i.test(trimmed) &&
