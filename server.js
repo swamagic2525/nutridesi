@@ -119,7 +119,8 @@ const RECENT_MAX = 50;
 const recentExchanges = [];
 const maskPhone = (p) => String(p || "").replace(/^(\+\d{2})\d+(\d{4})$/, "$1••••••$2");
 function recordExchange(from, inbound, reply) {
-  if (String(from).startsWith("+0000")) return;
+  // Same rule as metrics isTestPhone, plus +91-prefixed all-zero throwaways.
+  if (/^\+000|^\+910{5,}/.test(String(from))) return;
   recentExchanges.unshift({
     at: new Date().toISOString(), user: maskPhone(from),
     in: String(inbound || "(media)").slice(0, 160), out: String(reply || "").slice(0, 400),
@@ -584,7 +585,8 @@ app.post("/netlify-waitlist", async (req, res) => {
             waitlist_rank: nextRank,
             phone_number: classified.type === "phone" ? classified.norm : null,
           };
-          await supabase.from("founding_members").insert([row]);
+          const { error: insErr } = await supabase.from("founding_members").insert([row]);
+          if (insErr) throw new Error(insErr.message);
           console.log(`founding_members: #${nextRank} ${name || "(no name)"} · ${classified.type}`);
         }
       }
