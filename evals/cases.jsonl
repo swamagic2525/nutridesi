@@ -29,7 +29,7 @@
 {"id":"variant-lowfat-paneer","tags":["variant"],"input":"200g low fat paneer","expected":{"intent":"log","items":[{"db_id":107,"grams":200}]}}
 {"id":"variant-hp-peanut-butter","tags":["variant"],"input":"High protein peanut butter","expected":{"intent":"log","items":[{"db_id":110,"qty":1}]}}
 {"id":"unknown-cutlet","tags":["unknown"],"input":"2 aloo cutlet","expected":{"intent":"log","items":[{"db_id":null,"name_like":"cutlet","qty":2}]}}
-{"id":"unknown-shawarma","tags":["unknown"],"input":"chicken shawarma","expected":{"intent":"log","items":[{"db_id":null,"name_like":"shawarma"}]}}
+{"id":"unknown-shawarma","tags":["unknown","gap-promo"],"input":"chicken shawarma","expected":{"intent":"log","items":[{"db_id":271,"name_like":"shawarma"}]}}
 {"id":"cross-food-no-fake-match","tags":["unknown"],"input":"Ate some roasted chana","expected":{"intent":"log","items":[{"db_id":92,"qty":1}]}}
 {"id":"reg-diet-coke","tags":["regression"],"input":"diet coke","expected":{"intent":"log","items":[{"db_id":135,"qty":1}]}}
 {"id":"reg-thums-up","tags":["regression"],"input":"1 can thums up","expected":{"intent":"log","items":[{"db_id":136,"qty":1}]}}
@@ -108,3 +108,13 @@
 {"id":"real-typo-sweetner-chips","tags":["real","typo"],"input":"1 cup tea with sweetner and 1 Chase Protein Chips","expected":{"intent":"log","items":[{"db_id":31,"qty":1},{"db_id":113,"qty":1}]}}
 {"id":"real-trailing-itwas","tags":["real","messy"],"input":"1 peanut butter sandwich whole grain bread it was","expected":{"intent":"log","items":[{"db_id":99,"qty_any_of":[1,2]},{"db_id":72,"qty_any_of":[1,2]}]}}
 {"id":"real-grams-triple","tags":["real","grams"],"input":"100g basmati rice, 150g chicken breast, 150g mixed vegetables","expected":{"intent":"log","items":[{"db_id":7,"grams":100},{"db_id":68,"grams":150},{"db_id":29,"grams":150}]}}
+{"id":"street-momos-bare","tags":["street","vegdefault"],"input":"8 momos","expected":{"intent":"log","items":[{"db_id":251,"qty":8}]}}
+{"id":"street-momos-chicken","tags":["street","protein"],"input":"10 chicken momos","expected":{"intent":"log","items":[{"db_id":252,"qty":10}]}}
+{"id":"street-momos-fried","tags":["street"],"input":"6 fried momos","expected":{"intent":"log","items":[{"db_id":253,"qty":6}]}}
+{"id":"street-tikki-chaat","tags":["street"],"input":"ek plate aloo tikki chaat","expected":{"intent":"log","items":[{"db_id":257}]}}
+{"id":"street-misal","tags":["street"],"input":"misal pav khaya","expected":{"intent":"log","items":[{"db_id":263}]}}
+{"id":"street-dahi-vada","tags":["street"],"input":"2 dahi vada","expected":{"intent":"log","items":[{"db_id":259,"qty":2}]}}
+{"id":"street-bhutta","tags":["street"],"input":"1 bhutta","expected":{"intent":"log","items":[{"db_id":292,"qty":1}]}}
+{"id":"street-shawarma-roll","tags":["street","protein"],"input":"chicken shawarma roll","expected":{"intent":"log","items":[{"db_id":271}]}}
+{"id":"street-fries","tags":["street"],"input":"french fries","expected":{"intent":"log","items":[{"db_id":277}]}}
+{"id":"street-sugarcane","tags":["street"],"input":"ek glass ganne ka ras","expected":{"intent":"log","items":[{"db_id":290}]}}

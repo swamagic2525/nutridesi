@@ -10,6 +10,11 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 const MEAL_GAP_MS = 45 * 60 * 1000; // PRD: messages within 45 min = same meal
 
+// Logs are plain files on disk (~/Library/Logs) and the repo is public — a raw
+// phone number in a log line is user PII sitting in cleartext. Same masking the
+// metrics dashboard uses: +91••••••1234.
+const maskPhone = (p) => String(p || "").replace(/^(\+\d{2})\d+(\d{4})$/, "$1••••••$2");
+
 // Upserts the user; returns true when the phone number is brand-new (first
 // contact ever) so the caller can show a one-time welcome.
 async function ensureUser(phone) {
@@ -86,7 +91,18 @@ for (const f of FOODS) {
   ALIAS_TO_ID.set(f.name.toLowerCase(), f.id);
   for (const a of f.aliases) ALIAS_TO_ID.set(a.toLowerCase(), f.id);
 }
-const aliasRescue = (name) => ALIAS_TO_ID.get(String(name || "").trim().toLowerCase()) ?? null;
+// Exact match first; only if that misses do we try the plural the LLM often
+// returns ("idlis", "parathas", "momos"). Falling back rather than stripping
+// up front keeps foods whose singular ends in -s ("chips") matching themselves.
+function aliasRescue(name) {
+  const n = String(name || "").trim().toLowerCase();
+  if (!n) return null;
+  const exact = ALIAS_TO_ID.get(n);
+  if (exact != null) return exact;
+  if (n.endsWith("es") && ALIAS_TO_ID.has(n.slice(0, -2))) return ALIAS_TO_ID.get(n.slice(0, -2));
+  if (n.endsWith("s") && ALIAS_TO_ID.has(n.slice(0, -1))) return ALIAS_TO_ID.get(n.slice(0, -1));
+  return null;
+}
 
 // Bare category words span a huge calorie range ("sabji" is anywhere from 80 to
 // 250 kcal). We still log a sensible default rather than dead-end, but the user
@@ -159,7 +175,7 @@ function resolveItem(item) {
 
 function resolveItemBase(item) {
   const food = item.matched_db_id ? FOOD_BY_ID[item.matched_db_id] : null;
-  const grams = Number(item.grams);
+  let grams = Number(item.grams);
 
   // User-stated calories ("4 fish sticks have 230 cal") are ground truth: they
   // override the DB value and skip the INDB cross-reference (`stated` flag).
@@ -211,6 +227,11 @@ function resolveItemBase(item) {
   // Countable units (piece/slice/medium/fillet...) keep large counts (20 rotis).
   const PORTION_UNITS = new Set(["bowl", "plate", "glass", "katori", "cup", "serving", "100g"]);
   if (food && PORTION_UNITS.has(food.unit) && qty > 5) qty = 5;
+  // Same misread, but for a food we DIDN'T match: an unknown food has no unit,
+  // so it always estimates per-serving. Nobody eats 30 servings of one dish —
+  // a big count there is a gram weight the parser put in the wrong field
+  // ("100g kaju curry" -> quantity 100 -> 30 x 300 = 9,000 kcal). Treat it as grams.
+  if (!food && qty > 10 && !(grams > 0)) { grams = Math.min(qty, 2000); qty = 1; }
   if (food && qty === 0) qty = 0.5; // a matched food must log something, never 0
   const platter = !!food && PIECE_UNITS.has(food.unit)
     && SERVING_WORDS.test(String(item.food_name || "")) && qty <= 1;
@@ -380,17 +401,22 @@ async function resolveRows(parsed, opts = {}) {
 }
 
 async function logMeal(phone, parsed) {
+  // Pin the IST date ONCE for this message. todayTotal reads a date, and the
+  // insert is fire-and-forget seconds later — near midnight the DB's own
+  // `date` default would land on the next day, so the row would vanish from
+  // the total we just replied with. Writing it explicitly keeps them agreeing.
+  const date = istToday();
   // Previous total fetched in parallel with the user upsert (before the insert,
   // so no double-count); new items are added locally. Saves one DB round-trip.
   const [prevTotal, isNewUser, rows, seqStart] = await Promise.all([
-    todayTotal(phone), ensureUser(phone), resolveRows(parsed, { trackGaps: true }), nextDaySeq(phone),
+    todayTotal(phone, date), ensureUser(phone), resolveRows(parsed, { trackGaps: true }), nextDaySeq(phone, date),
   ]);
   const mealTime = parsed.meal_time_inferred || "snack";
-  rows.forEach(r => Object.assign(r, { phone_number: phone, meal_time: mealTime }));
+  rows.forEach(r => Object.assign(r, { phone_number: phone, meal_time: mealTime, date }));
 
   // If nothing parsed, log a single 300 kcal placeholder (Tier 4).
   if (rows.length === 0) {
-    rows.push({ phone_number: phone, meal_time: mealTime, food_name: "meal",
+    rows.push({ phone_number: phone, meal_time: mealTime, date, food_name: "meal",
       matched_db_id: null, quantity: 1, unit: "serving", kcal: 300,
       ...splitMacros(300), fiber: 0, is_estimate: true });
   }
@@ -423,13 +449,13 @@ async function logMeal(phone, parsed) {
   };
 }
 
-async function todayTotal(phone) {
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+async function todayTotal(phone, pinnedDate) {
+  const today = pinnedDate || istToday();
   const { data, error } = await supabase.from("user_logs")
     .select("kcal, protein, carbs, fat, fiber, logged_at").eq("phone_number", phone).eq("date", today)
     .order("logged_at", { ascending: true });
   if (error) console.error("SUPABASE SELECT FAILED:", error.message);
-  console.log(`todayTotal: phone=${phone} date=${today} rows=${(data||[]).length}`);
+  console.log(`todayTotal: phone=${maskPhone(phone)} date=${today} rows=${(data||[]).length}`);
   const totals = (data || []).reduce(
     (s, r) => ({
       kcal: s.kcal + Number(r.kcal || 0), protein: s.protein + Number(r.protein || 0),
@@ -559,9 +585,9 @@ const istToday = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/
 // Next per-day item number. Returns null when the day_seq column doesn't exist
 // yet (item-numbers.sql not run), which switches the whole feature off rather
 // than breaking logging.
-async function nextDaySeq(phone) {
+async function nextDaySeq(phone, pinnedDate) {
   const { data, error } = await supabase.from("user_logs")
-    .select("day_seq").eq("phone_number", phone).eq("date", istToday())
+    .select("day_seq").eq("phone_number", phone).eq("date", pinnedDate || istToday())
     .order("day_seq", { ascending: false, nullsFirst: false }).limit(1);
   if (error) return null;
   return (Number(data && data[0] && data[0].day_seq) || 0) + 1;

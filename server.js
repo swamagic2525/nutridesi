@@ -532,7 +532,7 @@ app.post("/whatsapp", async (req, res) => {
   if (isDuplicate(req.body.MessageSid)) {
     return res.type("text/xml").send(twiml.toString());
   }
-  res.on("finish", () => console.log(`${new Date().toISOString()} ${from} "${body.slice(0, 40)}" ${Date.now() - t0}ms`));
+  res.on("finish", () => console.log(`${new Date().toISOString()} ${maskPhone(from)} "${body.slice(0, 40)}" ${Date.now() - t0}ms`));
 
   try {
     const reply = await handleMessage(from, body, { media: hasMedia });
@@ -591,7 +591,7 @@ app.post("/meta-whatsapp", async (req, res) => {
         console.error("Meta reply failed:", sendErr.message);
       }
     }
-    console.log(`${new Date().toISOString()} ${from} "${text.slice(0, 40)}" ${Date.now() - t0}ms`);
+    console.log(`${new Date().toISOString()} ${maskPhone(from)} "${text.slice(0, 40)}" ${Date.now() - t0}ms`);
   }
 });
 

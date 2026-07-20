@@ -134,7 +134,7 @@ const FOODS = [
   { id: 128, name: "Potato (Boiled)",      aliases: ["potato","boiled potato","aloo boiled","uble aloo","boiled aloo"], unit: "medium", kcal: 115, p: 2.5, c: 26, f: 0.1, fb: 2.4, g: 150 },
   { id: 129, name: "Muskmelon",            aliases: ["muskmelon","kharbuja","cantaloupe","melon"], unit: "cup", kcal: 53, p: 1.3, c: 13, f: 0.3, fb: 1.4, g: 150 },
   { id: 130, name: "Clear Whey",           aliases: ["clear whey","clear whey protein","clear protein","juicy whey"], unit: "scoop", kcal: 85, p: 20, c: 1, f: 0.2, fb: 0, g: 30 },
-  { id: 131, name: "Honey Chilli Potato",  aliases: ["honey chilli potato","honey chili potato","chilli potato"], unit: "plate", kcal: 350, p: 4, c: 45, f: 18, fb: 3 },
+  { id: 131, name: "Honey Chilli Potato",  aliases: ["honey chilli potato","honey chili potato","chilli potato","honey potato","crispy honey potato"], unit: "plate", kcal: 350, p: 4, c: 45, f: 18, fb: 3 },
   { id: 132, name: "Coffee (with milk)",   aliases: ["coffee","milk coffee","filter coffee","instant coffee","nescafe","coffee with milk"], unit: "cup", kcal: 90, p: 2.5, c: 12, f: 3, fb: 0 },
   { id: 133, name: "Egg (Fried/Half Fry)", aliases: ["fried egg","half fry","egg half fry","half fried egg","anda fry","egg fry","sunny side up","bullseye egg"], unit: "piece", kcal: 90, p: 6.3, c: 0.4, f: 7, fb: 0 },
   { id: 134, name: "High-Protein Oats",    aliases: ["high protein oats","protein oats","yogabar oats","yoga bar oats","whey oats","protein oatmeal"], unit: "bowl", kcal: 145, p: 10.5, c: 22, f: 3.5, fb: 4, g: 40 },
@@ -153,7 +153,7 @@ const FOODS = [
   { id: 147, name: "Papad",                aliases: ["papad","papadum","appalam","fried papad","urad papad","roasted papad","urad dal papad","masala papad"], unit: "piece", kcal: 45, p: 2, c: 6, f: 1.5, fb: 0.5 },
   { id: 148, name: "Rasgulla",             aliases: ["rasgulla","rosogolla","rasgula","sponge rasgulla"], unit: "piece", kcal: 120, p: 2, c: 25, f: 1.5, fb: 0 },
   { id: 149, name: "Vada (Medu/Batata)",   aliases: ["vada","wada","medu vada","batata vada","aloo vada","urad vada"], unit: "piece", kcal: 140, p: 3, c: 15, f: 7, fb: 1.5 },
-  { id: 150, name: "Egg Bhurji",           aliases: ["egg bhurji","anda bhurji","bhurji","egg bhurji pav","scrambled eggs"], unit: "egg", kcal: 100, p: 6.5, c: 2, f: 7.5, fb: 0.3 },
+  { id: 150, name: "Egg Bhurji",           aliases: ["egg bhurji","anda bhurji","bhurji","egg bhurji pav","scrambled eggs","anda bhurji pav","egg burji"], unit: "egg", kcal: 100, p: 6.5, c: 2, f: 7.5, fb: 0.3 },
   { id: 151, name: "Almonds",              aliases: ["almond","almonds","badam","soaked almonds","roasted almonds","almond nuts"], unit: "piece", kcal: 7, p: 0.26, c: 0.24, f: 0.6, fb: 0.15, g: 1.2 },
   { id: 152, name: "Cashews",              aliases: ["cashew","cashews","kaju","roasted cashew","salted cashews","cashew nuts"], unit: "piece", kcal: 9, p: 0.3, c: 0.5, f: 0.7, fb: 0.05, g: 1.7 },
   { id: 153, name: "Walnut",               aliases: ["walnut","walnuts","akhrot","walnut half"], unit: "half", kcal: 13, p: 0.3, c: 0.3, f: 1.3, fb: 0.13, g: 2 },
@@ -227,7 +227,7 @@ const FOODS = [
   { id: 213, name: "Chicken Noodles",        aliases: ["chicken noodles","chicken hakka noodles","chicken chowmein"], unit: "plate", kcal: 460, p: 20, c: 55, f: 17, fb: 3 },
   { id: 214, name: "Onion Pakora",           aliases: ["onion pakora","pyaz pakora","pakora","pakoda","pakode","bhajiya","onion bhajji","kanda bhaji"], unit: "piece", kcal: 60, p: 1.5, c: 5, f: 3.8, fb: 0.7 },
   { id: 215, name: "Spring Roll (Veg)",      aliases: ["spring roll","veg spring roll","spring rolls"], unit: "piece", kcal: 120, p: 3, c: 15, f: 5.3, fb: 1 },
-  { id: 216, name: "Khasta Kachori",         aliases: ["kachori","khasta kachori","kachauri","pyaz kachori","raj kachori"], unit: "piece", kcal: 210, p: 4, c: 23, f: 11, fb: 1.5 },
+  { id: 216, name: "Khasta Kachori",         aliases: ["kachori","khasta kachori","kachauri","pyaz kachori"], unit: "piece", kcal: 210, p: 4, c: 23, f: 11, fb: 1.5 },
   { id: 217, name: "Hara Bhara Kebab",       aliases: ["hara bhara kebab","hara bhara kabab","veg kebab","hara kebab"], unit: "piece", kcal: 70, p: 2, c: 9, f: 2.9, fb: 1.5 },
 
   // --- Branded protein products (2026-07-20): values from manufacturer labels
@@ -281,6 +281,57 @@ const FOODS = [
   { id: 251, name: "Momos (Steamed Veg)",       aliases: ["momo","momos","steam momo","steamed momos","steamed momo","veg momos","veg momo","dim sum","veg steamed momos"], unit: "piece", kcal: 35, p: 1.2, c: 5, f: 1, fb: 0.5 },
   { id: 252, name: "Momos (Chicken)",            aliases: ["chicken momo","chicken momos","non veg momo","non veg momos","steamed chicken momos","chicken steam momo"], unit: "piece", kcal: 45, p: 3, c: 4, f: 1.5, fb: 0.3 },
   { id: 253, name: "Momos (Fried)",              aliases: ["fried momo","fried momos","tawa momo","tawa momos","kurkure momos","crispy momo","crispy momos","deep fried momos"], unit: "piece", kcal: 65, p: 1.5, c: 6, f: 3.5, fb: 0.5 },
+  { id: 254, name: "Momos (Tandoori)",           aliases: ["tandoori momo","tandoori momos","afghani momo","afghani momos","malai momos","peri peri momos"], unit: "piece", kcal: 55, p: 2, c: 5, f: 2.8, fb: 0.4 },
+  { id: 255, name: "Momos (Chilli/Gravy)",       aliases: ["chilli momo","chilli momos","gravy momo","gravy momos","schezwan momos","szechuan momos","saucy momos"], unit: "piece", kcal: 60, p: 1.8, c: 7, f: 2.8, fb: 0.6 },
+
+  // --- Street chaat (2026-07-20). Chaat plates are assembled, not single-
+  // ingredient: values are the standard vendor plate, not per-component.
+  { id: 256, name: "Aloo Tikki",                 aliases: ["aloo tikki","alu tikki","tikki","potato tikki","aloo patty"], unit: "piece", kcal: 150, p: 3, c: 22, f: 5.5, fb: 2.5, g: 70 },
+  { id: 257, name: "Aloo Tikki Chaat",           aliases: ["aloo tikki chaat","tikki chaat","aloo tikki plate"], unit: "plate", kcal: 320, p: 7, c: 45, f: 12, fb: 5 },
+  { id: 258, name: "Papdi Chaat",                aliases: ["papdi chaat","papri chaat","papdi","papadi chaat"], unit: "plate", kcal: 330, p: 7, c: 42, f: 15, fb: 4 },
+  { id: 259, name: "Dahi Vada",                  aliases: ["dahi vada","dahi bhalla","dahi bada","dahi wada","thayir vadai"], unit: "piece", kcal: 120, p: 4, c: 14, f: 5, fb: 1.5 },
+  { id: 260, name: "Raj Kachori",                aliases: ["raj kachori","raj kachauri","raj kachodi"], unit: "piece", kcal: 380, p: 8, c: 45, f: 18, fb: 4 },
+  { id: 261, name: "Ragda Pattice",              aliases: ["ragda pattice","ragda patties","ragda","ragda chaat"], unit: "plate", kcal: 400, p: 12, c: 58, f: 13, fb: 8 },
+  { id: 262, name: "Chinese Bhel",               aliases: ["chinese bhel","chinese bhel puri","crispy chinese bhel"], unit: "plate", kcal: 300, p: 6, c: 40, f: 13, fb: 3 },
+
+  // --- Mumbai / Maharashtra / Gujarat street ---
+  { id: 263, name: "Misal Pav",                  aliases: ["misal pav","misal","missal pav","usal pav","sev usal"], unit: "plate", kcal: 450, p: 16, c: 58, f: 17, fb: 11 },
+  { id: 264, name: "Dabeli",                     aliases: ["dabeli","kutchi dabeli","kacchi dabeli"], unit: "piece", kcal: 250, p: 5, c: 36, f: 9.5, fb: 3 },
+  { id: 265, name: "Sabudana Khichdi",           aliases: ["sabudana khichdi","sabudana","sago khichdi","sabudana kichdi","javvarisi"], unit: "bowl", kcal: 300, p: 4, c: 48, f: 11, fb: 2 },
+  { id: 266, name: "Sabudana Vada",              aliases: ["sabudana vada","sago vada","sabudana wada"], unit: "piece", kcal: 120, p: 2, c: 16, f: 5.5, fb: 1 },
+  { id: 267, name: "Khandvi",                    aliases: ["khandvi","khandavi","surali vadi"], unit: "piece", kcal: 35, p: 1.5, c: 4, f: 1.5, fb: 0.5 },
+  { id: 268, name: "Khakhra",                    aliases: ["khakhra","khakra","methi khakhra","masala khakhra"], unit: "piece", kcal: 40, p: 1.3, c: 6, f: 1.2, fb: 1, g: 10 },
+  { id: 269, name: "Litti Chokha",               aliases: ["litti chokha","litti","bihari litti","litti with chokha"], unit: "piece", kcal: 180, p: 5, c: 26, f: 6.5, fb: 3 },
+
+  // --- Rolls, breads, fast food ---
+  { id: 270, name: "Egg Roll",                   aliases: ["egg roll","anda roll","egg kathi roll","egg frankie"], unit: "piece", kcal: 350, p: 13, c: 34, f: 18, fb: 2 },
+  { id: 271, name: "Chicken Shawarma",           aliases: ["shawarma","chicken shawarma","shawarma roll","shwarma"], unit: "piece", kcal: 450, p: 26, c: 40, f: 21, fb: 3 },
+  { id: 272, name: "Amritsari Kulcha",           aliases: ["kulcha","amritsari kulcha","aloo kulcha","paneer kulcha"], unit: "piece", kcal: 330, p: 7, c: 45, f: 13, fb: 3 },
+  { id: 273, name: "Chole Kulche",               aliases: ["chole kulche","chana kulcha","kulche chole","chole kulcha"], unit: "plate", kcal: 500, p: 15, c: 70, f: 18, fb: 10 },
+  { id: 275, name: "Veg Burger",                 aliases: ["burger","veg burger","aloo tikki burger","veggie burger"], unit: "piece", kcal: 350, p: 9, c: 48, f: 13, fb: 3 },
+  { id: 276, name: "Chicken Burger",             aliases: ["chicken burger","chicken patty burger","zinger burger"], unit: "piece", kcal: 450, p: 22, c: 44, f: 21, fb: 2.5 },
+  { id: 277, name: "French Fries",               aliases: ["french fries","fries","finger chips","peri peri fries","salted fries"], unit: "serving", kcal: 320, p: 4, c: 42, f: 15, fb: 4, g: 100 },
+  { id: 278, name: "Pasta (Red Sauce)",          aliases: ["pasta","red sauce pasta","arrabbiata pasta","tomato pasta","penne pasta"], unit: "bowl", kcal: 350, p: 11, c: 55, f: 9, fb: 4 },
+  { id: 279, name: "Pasta (White Sauce)",        aliases: ["white sauce pasta","alfredo pasta","creamy pasta","cheesy pasta"], unit: "bowl", kcal: 430, p: 13, c: 50, f: 20, fb: 3 },
+
+  // --- Indo-Chinese starters ---
+  { id: 280, name: "Chilli Paneer",              aliases: ["chilli paneer","chili paneer","chilly paneer","paneer chilli dry"], unit: "bowl", kcal: 320, p: 16, c: 18, f: 21, fb: 2 },
+  { id: 281, name: "Chicken Lollipop",           aliases: ["chicken lollipop","lollipop","chicken lolipop","drums of heaven"], unit: "piece", kcal: 90, p: 7, c: 3, f: 6, fb: 0.2 },
+
+  // --- Mithai & desserts ---
+  { id: 283, name: "Puran Poli",                 aliases: ["puran poli","puranpoli","holige","obbattu"], unit: "piece", kcal: 250, p: 6, c: 42, f: 7, fb: 3 },
+  { id: 284, name: "Shrikhand",                  aliases: ["shrikhand","srikhand","kesar shrikhand","amrakhand"], unit: "bowl", kcal: 250, p: 7, c: 35, f: 9, fb: 0.3, g: 100 },
+  { id: 285, name: "Rabri",                      aliases: ["rabri","rabdi","basundi","malai rabri"], unit: "bowl", kcal: 230, p: 7, c: 26, f: 11, fb: 0, g: 100 },
+  { id: 286, name: "Imarti",                     aliases: ["imarti","jangiri","amriti"], unit: "piece", kcal: 110, p: 1.2, c: 24, f: 2.5, fb: 0.2 },
+  { id: 287, name: "Ghevar",                     aliases: ["ghevar","gheavar","malai ghevar","rajasthani ghevar"], unit: "piece", kcal: 300, p: 4, c: 40, f: 14, fb: 0.5 },
+  { id: 288, name: "Falooda",                    aliases: ["falooda","faluda","kulfi falooda","rose falooda"], unit: "glass", kcal: 350, p: 8, c: 55, f: 11, fb: 1 },
+
+  // --- Street drinks ---
+  { id: 289, name: "Cold Coffee",                aliases: ["cold coffee","iced coffee","cold coffee with ice cream","frappe"], unit: "glass", kcal: 250, p: 7, c: 35, f: 9, fb: 0 },
+  { id: 290, name: "Sugarcane Juice",            aliases: ["sugarcane juice","ganne ka ras","ganna juice","sugar cane juice"], unit: "glass", kcal: 180, p: 0.5, c: 45, f: 0.2, fb: 0.5, g: 250 },
+  { id: 291, name: "Aam Panna",                  aliases: ["aam panna","aam pana","raw mango drink","panna"], unit: "glass", kcal: 120, p: 0.5, c: 30, f: 0.2, fb: 0.8 },
+  { id: 292, name: "Bhutta (Roasted Corn)",      aliases: ["bhutta","roasted corn","bhutta corn","corn on the cob","challi"], unit: "piece", kcal: 110, p: 4, c: 24, f: 1.3, fb: 3 },
+  { id: 293, name: "Masala Corn (Cup)",          aliases: ["masala corn","sweet corn cup","corn cup","buttered corn","corn chaat"], unit: "cup", kcal: 180, p: 5, c: 30, f: 5.5, fb: 4 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
