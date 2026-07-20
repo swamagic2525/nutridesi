@@ -64,7 +64,7 @@ async function currentMetrics() {
 app.get("/metrics", metricsAuth, (_req, res) => res.type("html").send(metricsPage()));
 app.get("/metrics/data", metricsAuth, async (_req, res) => {
   // recent rides outside the 60s cache so the conversation feed is always live
-  try { return res.json({ ...(await currentMetrics()), recent: recentExchanges }); }
+  try { return res.json({ ...(await currentMetrics()), recent: await recentConversations() }); }
   catch (error) {
     console.error("metrics error:", error.message);
     return res.status(503).json({ error: "Metrics are temporarily unavailable. Check dashboard configuration." });
@@ -113,12 +113,15 @@ const WELCOME =
   "built this where you already are. Bigger version in ~30 days — feedback shapes it: " +
   "DM @swapnilgore2525 on Instagram, I read everything.";
 
-// Recent conversations for the founder dashboard. In-memory (wiped on restart),
-// phones masked, test numbers excluded, served only behind metrics basic auth.
+// Recent conversations for the founder dashboard: persisted to Supabase
+// message_log (24 h window survives restarts); the in-memory ring buffer is the
+// fallback until the table exists. Phones masked in the UI, test numbers
+// excluded, served only behind metrics basic auth.
 const RECENT_MAX = 50;
 const recentExchanges = [];
+let msgLogTableMissing = false;
 const maskPhone = (p) => String(p || "").replace(/^(\+\d{2})\d+(\d{4})$/, "$1••••••$2");
-function recordExchange(from, inbound, reply) {
+function recordExchange(from, inbound, reply, media = false) {
   // Same rule as metrics isTestPhone, plus +91-prefixed all-zero throwaways.
   if (/^\+000|^\+910{5,}/.test(String(from))) return;
   recentExchanges.unshift({
@@ -126,6 +129,25 @@ function recordExchange(from, inbound, reply) {
     in: String(inbound || "(media)").slice(0, 160), out: String(reply || "").slice(0, 400),
   });
   if (recentExchanges.length > RECENT_MAX) recentExchanges.pop();
+  supabase.from("message_log").insert([{
+    phone_number: from, body: String(inbound || "").slice(0, 500),
+    reply: String(reply || "").slice(0, 1500), media,
+  }]).then(({ error }) => {
+    if (error && !msgLogTableMissing) {
+      msgLogTableMissing = true;
+      console.error("message_log insert failed (run message-log.sql?):", error.message);
+    }
+  });
+}
+async function recentConversations() {
+  const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  const { data, error } = await supabase.from("message_log")
+    .select("phone_number, body, reply, at")
+    .gte("at", since).order("at", { ascending: false }).limit(200);
+  if (error || !data) return recentExchanges; // table not created yet
+  return data
+    .filter(r => !/^\+000|^\+910{5,}/.test(r.phone_number))
+    .map(r => ({ at: r.at, user: maskPhone(r.phone_number), in: r.body || "(media)", out: r.reply || "" }));
 }
 
 const MEDIA_REPLY =
@@ -462,7 +484,7 @@ app.post("/whatsapp", async (req, res) => {
   try {
     const reply = await handleMessage(from, body, { media: hasMedia });
     twiml.message(reply);
-    recordExchange(from, body, reply);
+    recordExchange(from, body, reply, hasMedia);
   } catch (err) {
     console.error("handler error:", err);
     twiml.message("✅ Logged: meal — 300 kcal (placeholder). Try again with more detail anytime.");
@@ -506,7 +528,7 @@ app.post("/meta-whatsapp", async (req, res) => {
       markRead(msgId);
       const reply = await handleMessage(from, text, { media });
       await sendMessage(from, reply);
-      recordExchange(from, text, reply);
+      recordExchange(from, text, reply, media);
     } catch (err) {
       console.error("handler error:", err);
       recordExchange(from, text, "(handler error → placeholder reply)");

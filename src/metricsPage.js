@@ -30,7 +30,7 @@ function metricsPage() {
   <section class="grid"><div class="section"><h2>Next-day return</h2><canvas id="nextDay"></canvas></div><div class="section"><h2>Food items / active user / day</h2><p class="note">Food rows, not incoming WhatsApp messages.</p><canvas id="engagement"></canvas></div></section>
   <section class="grid"><div class="section"><h2>Quality signals</h2><p class="note">Estimate rate = confidence/assumption signal · Uncurated rate = food-coverage gap.</p><canvas id="quality"></canvas></div><div class="section"><h2>Top uncurated foods · last 7 days</h2><ol class="list" id="uncurated"></ol></div></section>
   <section class="section"><h2>Goal adoption</h2><div class="metric" id="goalAdoption">—</div><p class="hint" id="goalHint">users with a protein goal set</p></section>
-  <section class="section convo" style="margin-top:18px"><h2>Recent conversations</h2><p class="note">Last 50 exchanges since server restart · phones masked · live (not cached) · test numbers excluded.</p><div style="overflow:auto;max-height:480px"><table><thead><tr><th style="width:52px">When</th><th style="width:110px">User</th><th>Message</th><th>Reply</th></tr></thead><tbody id="recent"></tbody></table></div></section>
+  <section class="section convo" style="margin-top:18px"><h2>Recent conversations</h2><p class="note">Last 24 hours (max 200) · phones masked · live (not cached) · test numbers excluded.</p><div style="overflow:auto;max-height:480px"><table><thead><tr><th style="width:52px">When</th><th style="width:110px">User</th><th>Message</th><th>Reply</th></tr></thead><tbody id="recent"></tbody></table></div></section>
   <footer id="footer">excludes test numbers · IST · loading…</footer>
 </main>
 <script>
@@ -60,7 +60,7 @@ function metricsPage() {
     data.topUncurated.forEach(row => { const li=document.createElement('li');li.textContent=row.foodName + ' · ' + row.count;list.appendChild(li) });
     const rec = document.getElementById('recent'); rec.replaceChildren();
     if (!(data.recent || []).length) { const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=4; td.textContent='No conversations since the last server restart.'; tr.appendChild(td); rec.appendChild(tr); }
-    (data.recent || []).forEach(x => { const tr=document.createElement('tr'); const when=new Date(x.at).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}); [when,x.user,x.in,x.out].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)}); rec.appendChild(tr); });
+    (data.recent || []).forEach(x => { const tr=document.createElement('tr'); const when=new Date(x.at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); [when,x.user,x.in,x.out].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)}); rec.appendChild(tr); });
     text('footer','excludes test numbers · IST · data as of ' + new Date(data.asOf).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}));
   }
   async function load() { const error=document.getElementById('error'); error.textContent=''; try { const response=await fetch('/metrics/data'); if(!response.ok) throw new Error('Could not load metrics ('+response.status+').'); render(await response.json()); } catch (err) { error.textContent=err.message; } }
