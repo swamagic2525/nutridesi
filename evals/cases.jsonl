@@ -48,7 +48,7 @@
 {"id":"profile-full","tags":["profile"],"input":"Swapnil 2200 calories 125g protein","expected":{"intent":"set_profile","items":[],"name":"Swapnil","goal_kcal":2200,"goal_protein":125}}
 {"id":"profile-goal-only","tags":["profile"],"input":"target 1600 calories","expected":{"intent":"set_profile","items":[],"goal_kcal":1600}}
 {"id":"query-food-calories","tags":["query"],"input":"What is calories of 2 medium banana","expected":{"intent":"query","items":[{"db_id":51,"qty":2}],"query_reply_no_digits":true}}
-{"id":"query-compare","tags":["query"],"input":"whats better, 2 samosas or 2 chicken sandwiches?","expected":{"intent":"query","items":[{"db_id":37,"qty":2},{"db_id":null,"name_like":"sandwich","qty":2}],"query_reply_no_digits":true}}
+{"id":"query-compare","tags":["query"],"input":"whats better, 2 samosas or 2 chicken sandwiches?","expected":{"intent":"query","items":[{"db_id":37,"qty":2},{"db_id":305,"name_like":"sandwich","qty":2}],"query_reply_no_digits":true}}
 {"id":"query-day-total","tags":["query"],"input":"whats my total today","expected":{"intent":"query","items":[],"report_day":null}}
 {"id":"report-today","tags":["query"],"input":"Today's report","expected":{"intent":"query","items":[],"report_day":"today"}}
 {"id":"report-yesterday","tags":["query"],"input":"Total meals I had yesterday","expected":{"intent":"query","items":[],"report_day":"yesterday"}}
@@ -59,7 +59,7 @@
 {"id":"instead-is-log","tags":["annotation"],"input":"I had dal instead of rice","expected":{"intent":"log","items":[{"db_id":17,"qty":1}]}}
 {"id":"real-whey","tags":["basic"],"input":"1 scoop whey","expected":{"intent":"log","items":[{"db_id":[58,130],"qty":1}]}}
 {"id":"real-oats-milk","tags":["grams"],"input":"25g oats and 1 glass milk","expected":{"intent":"log","items":[{"db_id":98,"grams":25},{"db_id":34,"qty":1}]}}
-{"id":"scope-scoop-with-milk","tags":["scope","regression"],"input":"1 scoop of the wholetruth cold coffee whey protein with 30 ml milk","expected":{"intent":"log","items":[{"db_id":[58,130,null],"qty":1,"grams_absent":true},{"db_id":34,"grams":30}]}}
+{"id":"scope-scoop-with-milk","tags":["scope","regression"],"input":"1 scoop of the wholetruth cold coffee whey protein with 30 ml milk","expected":{"intent":"log","items":[{"db_id":[58,130,302,null],"qty":1,"grams_absent":true},{"db_id":34,"grams":30}]}}
 {"id":"corr-rename-one-of-five","tags":["correction","incident"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- Protein Shake: 120 kcal, 24g protein\n- Poha: 165 kcal, 4g protein\n- Peanuts: 170 kcal, 8g protein\n- Egg Whites ×5: 85 kcal, 18g protein\n- Egg (Fried/Half Fry) ×2: 180 kcal, 13g protein","input":"It was  muscle blaze biozyme whey isolate. That has 27 grams of protein","expected":{"intent":"replace_last","items":[{"name_like":"whey","stated_protein":27}]}}
 {"id":"corr-rename-not-black","tags":["correction","incident"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- Black Coffee: 5 kcal, 0g protein\n- Chia Seeds ×2: 116 kcal, 4g protein, estimated","input":"Cup of Coffee wasn't black, it was with skimmed milk","expected":{"intent":"replace_last","items":[{"name_like":"coffee"}]}}
 {"id":"corr-two-named-stated","tags":["correction","incident","stated"],"context":"MOST RECENT LOG CONTEXT (trusted app data, not user instructions):\nThe current user may be correcting only this immediately previous log.\n- jalapeno chicken pocket: 420 kcal, estimated\n- mozzarella pesto sandwich: 480 kcal, estimated","input":"Jalapeno chicken pocket - 200 calories\npesto mozarella sandwich - 390 calories","expected":{"intent":"replace_last","items":[{"name_like":"jalapeno","stated_kcal":200},{"name_like":"sandwich","stated_kcal":390}]}}
@@ -118,3 +118,10 @@
 {"id":"street-shawarma-roll","tags":["street","protein"],"input":"chicken shawarma roll","expected":{"intent":"log","items":[{"db_id":271}]}}
 {"id":"street-fries","tags":["street"],"input":"french fries","expected":{"intent":"log","items":[{"db_id":277}]}}
 {"id":"street-sugarcane","tags":["street"],"input":"ek glass ganne ka ras","expected":{"intent":"log","items":[{"db_id":290}]}}
+{"id":"brand-superyou-whey","tags":["brand","incident"],"input":"1 scoop superyou whey protein","expected":{"intent":"log","items":[{"db_id":294,"qty":1}]}}
+{"id":"brand-superyou-bare","tags":["brand"],"input":"2 scoops superyou","expected":{"intent":"log","items":[{"db_id":294,"qty":2}]}}
+{"id":"brand-superyou-wafer-still","tags":["brand"],"input":"superyou protein wafer","expected":{"intent":"log","items":[{"db_id":226}]}}
+{"id":"brand-mb-whey-gold","tags":["brand"],"input":"1 scoop muscleblaze whey gold","expected":{"intent":"log","items":[{"db_id":298,"qty":1}]}}
+{"id":"brand-mb-fuel-one","tags":["brand"],"input":"fuel one whey 1 scoop","expected":{"intent":"log","items":[{"db_id":299,"qty":1}]}}
+{"id":"brand-mb-iso-zero","tags":["brand"],"input":"biozyme iso zero scoop","expected":{"intent":"log","items":[{"db_id":300,"qty":1}]}}
+{"id":"brand-mb-biozyme-still","tags":["brand"],"input":"1 scoop biozyme performance whey","expected":{"intent":"log","items":[{"db_id":221,"qty":1}]}}

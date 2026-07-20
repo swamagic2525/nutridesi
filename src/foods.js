@@ -111,7 +111,7 @@ const FOODS = [
   { id: 107, name: "Low-Fat Paneer",       aliases: ["low fat paneer","low-fat paneer","diet paneer","toned paneer","skimmed paneer","low fat cottage cheese"], unit: "100g", kcal: 160, p: 20, c: 5, f: 7, fb: 0 },
   { id: 108, name: "Low-Fat Milk",         aliases: ["toned milk","skimmed milk","skim milk","double toned milk","low fat milk","low-fat milk"], unit: "cup", kcal: 100, p: 8, c: 12, f: 2.5, fb: 0 },
   { id: 109, name: "Low-Fat Curd",         aliases: ["low fat curd","low-fat curd","low fat dahi","low fat yogurt","greek yogurt low fat","skimmed curd"], unit: "katori", kcal: 45, p: 4, c: 5, f: 1, fb: 0 },
-  { id: 110, name: "High-Protein Peanut Butter", aliases: ["high protein peanut butter","hp peanut butter","protein peanut butter","pintola high protein","myfitness peanut butter"], unit: "tbsp", kcal: 88, p: 5, c: 3, f: 6, fb: 1 },
+  { id: 110, name: "High-Protein Peanut Butter", aliases: ["high protein peanut butter","hp peanut butter","protein peanut butter","pintola high protein","myfitness peanut butter","muscleblaze peanut butter","mb peanut butter"], unit: "tbsp", kcal: 88, p: 5, c: 3, f: 6, fb: 1 },
   { id: 111, name: "High-Protein Roti",    aliases: ["high protein roti","protein roti","high protein atta roti","multigrain protein roti"], unit: "piece", kcal: 100, p: 5, c: 15, f: 2, fb: 3 },
   { id: 112, name: "High-Protein Bread",   aliases: ["high protein bread","protein bread"], unit: "slice", kcal: 80, p: 6, c: 12, f: 1.5, fb: 2 },
   { id: 113, name: "Protein Chips",        aliases: ["protein chips","protein puffs","roasted protein chips","open secret"], unit: "pack", kcal: 120, p: 10, c: 12, f: 4, fb: 2 },
@@ -332,6 +332,38 @@ const FOODS = [
   { id: 291, name: "Aam Panna",                  aliases: ["aam panna","aam pana","raw mango drink","panna"], unit: "glass", kcal: 120, p: 0.5, c: 30, f: 0.2, fb: 0.8 },
   { id: 292, name: "Bhutta (Roasted Corn)",      aliases: ["bhutta","roasted corn","bhutta corn","corn on the cob","challi"], unit: "piece", kcal: 110, p: 4, c: 24, f: 1.3, fb: 3 },
   { id: 293, name: "Masala Corn (Cup)",          aliases: ["masala corn","sweet corn cup","corn cup","buttered corn","corn chaat"], unit: "cup", kcal: 180, p: 5, c: 30, f: 5.5, fb: 4 },
+
+  // --- Brand range expansion, label-verified 2026-07-20 ---
+  // SuperYou PRO is FERMENTED YEAST protein, not whey — but users call every
+  // powder "whey", and without that alias "superyou whey protein" fell through
+  // to the wafer bar (10g protein) and under-counted by more than half.
+  // Label: 36g scoop, 124 kcal, 24g protein, 4g carb, 1.2g fat, 3g fibre.
+  { id: 294, name: "SuperYou PRO (Yeast Protein)", aliases: ["superyou","super you","superyou pro","superyou protein","superyou whey","superyou whey protein","superyou protein powder","superyou powder","fermented yeast protein","superyou chocolate protein","superyou cold coffee protein","superyou kesar badam","superyou strawberry protein","superyou vanilla protein"], unit: "scoop", kcal: 124, p: 24, c: 4, f: 1.2, fb: 3, g: 36 },
+  { id: 295, name: "SuperYou PRO Unflavoured",   aliases: ["superyou unflavoured","superyou unflavored","superyou plain","superyou pro unflavoured"], unit: "scoop", kcal: 130, p: 27, c: 3, f: 1.2, fb: 3, g: 36 },
+  { id: 296, name: "SuperYou Mini Protein Wafer", aliases: ["superyou mini wafer","superyou mini","mini protein wafer","superyou 5g wafer"], unit: "bar", kcal: 95, p: 5, c: 11, f: 4.5, fb: 1.5, g: 20 },
+  { id: 297, name: "SuperYou Protein Chips",     aliases: ["superyou chips","superyou protein chips","superyou multigrain chips","superyou baked chips"], unit: "pack", kcal: 165, p: 10, c: 19, f: 5, fb: 3, g: 40 },
+
+  // MuscleBlaze range beyond Biozyme/Raw/Gainer already at 221-225.
+  { id: 298, name: "MuscleBlaze Whey Gold",      aliases: ["mb whey gold","muscleblaze whey gold","whey gold","mb gold"], unit: "scoop", kcal: 110, p: 25, c: 1.8, f: 0.5, fb: 0, g: 30 },
+  { id: 299, name: "MuscleBlaze Fuel One Whey",  aliases: ["fuel one","fuel one whey","mb fuel one","muscleblaze fuel one","fuel one protein"], unit: "scoop", kcal: 133, p: 24, c: 5, f: 2.2, fb: 0, g: 33 },
+  { id: 300, name: "MuscleBlaze Biozyme Iso-Zero", aliases: ["iso zero","iso-zero","biozyme iso zero","mb iso zero","muscleblaze iso zero"], unit: "scoop", kcal: 121, p: 27, c: 1.6, f: 0.5, fb: 0, g: 33 },
+  // Biozyme Gold publishes 135.22 kcal / 26g protein but not carb+fat. The
+  // 31 kcal not accounted for by protein is split at the ~3g carb / 2g fat
+  // typical of the range; flagged here so a future label read can correct it.
+  { id: 301, name: "MuscleBlaze Biozyme Gold",   aliases: ["biozyme gold","mb biozyme gold","muscleblaze biozyme gold","biozyme gold whey"], unit: "scoop", kcal: 135, p: 26, c: 3, f: 2, fb: 0, g: 35 },
+
+  // The Whole Truth sells powders as well as the bars at 240/241. Without the
+  // powder, "wholetruth cold coffee whey protein" collapsed onto the 20g BAR
+  // (340 kcal, 20g protein) — same failure shape as SuperYou above: one brand,
+  // several product forms, only one of them curated.
+  // Label: 35g scoop, 134 kcal, 24.9g protein, 6.3g carb, 1.1g fat, 1.6g fibre.
+  { id: 302, name: "The Whole Truth Whey (Flavoured)", aliases: ["wholetruth whey","whole truth whey","the whole truth whey","twt whey","wholetruth protein powder","whole truth protein powder","wholetruth cold coffee whey","whole truth cold coffee protein","twt protein powder"], unit: "scoop", kcal: 134, p: 24.9, c: 6.3, f: 1.1, fb: 1.6, g: 35 },
+  { id: 303, name: "The Whole Truth Whey Concentrate (Unflavoured)", aliases: ["wholetruth unflavoured whey","whole truth whey concentrate","twt concentrate","wholetruth concentrate"], unit: "scoop", kcal: 125, p: 26, c: 2, f: 1.5, fb: 0, g: 32 },
+  { id: 304, name: "The Whole Truth Whey Isolate",  aliases: ["wholetruth isolate","whole truth isolate","twt isolate","wholetruth whey isolate"], unit: "scoop", kcal: 130, p: 30, c: 1, f: 0.5, fb: 0, g: 34 },
+
+  // "Chicken sandwich" was landing on Chicken Burger 276 — close, but a burger
+  // is not a sandwich and the DB only had the veg one (205).
+  { id: 305, name: "Chicken Sandwich",           aliases: ["chicken sandwich","grilled chicken sandwich","chicken mayo sandwich","chicken club sandwich"], unit: "sandwich", kcal: 320, p: 20, c: 30, f: 12, fb: 2 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
