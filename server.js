@@ -64,6 +64,7 @@ async function currentMetrics() {
 app.get("/metrics", metricsAuth, (_req, res) => res.type("html").send(metricsPage()));
 app.get("/metrics/data", metricsAuth, async (_req, res) => {
   // recent rides outside the 60s cache so the conversation feed is always live
+  res.set("Cache-Control", "no-store"); // a browser-cached payload looks like a frozen dashboard
   try { return res.json({ ...(await currentMetrics()), recent: await recentConversations() }); }
   catch (error) {
     console.error("metrics error:", error.message);

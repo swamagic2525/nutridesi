@@ -82,6 +82,10 @@ function metricsPage() {
   }
   async function load() { const error=document.getElementById('error'); error.textContent=''; try { const response=await fetch('/metrics/data'); if(!response.ok) throw new Error('Could not load metrics ('+response.status+').'); render(await response.json()); } catch (err) { error.textContent=err.message; } }
   document.getElementById('refresh').addEventListener('click',load); load();
+  // The dashboard is left open for long stretches; without these it silently
+  // shows whatever was true when the tab was opened.
+  setInterval(load, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 </script></body></html>`;
 }
 
