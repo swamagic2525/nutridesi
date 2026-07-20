@@ -89,3 +89,6 @@
 {"id":"undo-all-scope","tags":["undo"],"input":"Delete all entries","expected":{"intent":"undo","items":[]}}
 {"id":"gap-baati","tags":["gap-promo"],"input":"dal baati khayi aaj","expected":{"intent":"log","items":[{"db_id":17,"qty":1},{"db_id":243,"qty":1}]}}
 {"id":"gap-bun-omelette","tags":["gap-promo"],"input":"Bun omelette","expected":{"intent":"log","items":[{"db_id":244,"qty":1},{"db_id":44,"qty_any_of":[1,2]}]}}
+{"id":"gap-cheese-modifier","tags":["gap-promo"],"input":"3 egg omelette with cheese","expected":{"intent":"log","items":[{"db_id":44,"qty":3},{"db_id":245,"qty":1}]}}
+{"id":"gap-schezwan-dosa","tags":["gap-promo"],"input":"schezwan sada dosa khaya","expected":{"intent":"log","items":[{"db_id":246,"qty":1}]}}
+{"id":"gap-cheese-dosa","tags":["gap-promo"],"input":"cheese dosa","expected":{"intent":"log","items":[{"db_id":247,"qty":1}]}}

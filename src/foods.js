@@ -265,6 +265,9 @@ const FOODS = [
   // published values. "Dal baati" should parse as TWO items (Dal 17 + Baati).
   { id: 243, name: "Baati (ghee-dipped)",       aliases: ["baati","bati","rajasthani baati","churma baati"], unit: "piece", kcal: 200, p: 4, c: 26, f: 8.5, fb: 2.5, g: 45 },
   { id: 244, name: "Ladi Pav (Bun)",            aliases: ["pav","ladi pav","bun","bread bun","maska bun","pao"], unit: "piece", kcal: 120, p: 4, c: 22, f: 1.6, fb: 1, g: 40 },
+  { id: 245, name: "Cheese (Processed)",        aliases: ["cheese","cheese slice","amul cheese","processed cheese","cheese cube","cheez"], unit: "slice", kcal: 62, p: 3.7, c: 0.8, f: 5, fb: 0, g: 20 },
+  { id: 246, name: "Schezwan Dosa",             aliases: ["schezwan dosa","schezwan sada dosa","szechuan dosa","chinese dosa","schezvan dosa"], unit: "piece", kcal: 280, p: 5, c: 40, f: 11, fb: 2 },
+  { id: 247, name: "Cheese Dosa",               aliases: ["cheese dosa","cheese sada dosa"], unit: "piece", kcal: 250, p: 7, c: 30, f: 11, fb: 1.5 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
