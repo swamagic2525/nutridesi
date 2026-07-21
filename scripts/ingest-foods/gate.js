@@ -6,9 +6,15 @@ function gateReason(rec) {
   if (!Number.isFinite(grams) || grams <= 0) return "no_grams";
   const derived = p * 4 + c * 4 + f * 9;
   if (kcal > 0 && Math.abs(derived - kcal) / kcal > 0.30) return "macro_cal_mismatch";
-  if (!Number.isFinite(kcal_100g) || kcal_100g > 900 || kcal_100g < 5) return "absurd_density";
+  // Only a ceiling: nothing edible exceeds pure fat (~900/100g). No low floor —
+  // 0-cal items (Coke Zero, creatine, green tea) are valid, not parse errors.
+  if (!Number.isFinite(kcal_100g) || kcal_100g > 900) return "absurd_density";
   const n = String(name || "").trim();
-  if (!n || n.length > 60 || !/[a-z]/i.test(n)) return "bad_name";
+  if (!n || n.length > 80 || !/[a-z]/i.test(n)) return "bad_name";
+  // Nested parens are the combinatorial-permutation spam signature
+  // ("... (South Indian Tempering (Mustard & Curry Leaves)))"). Two separate
+  // parens like "ON Whey (Gold) (Chocolate)" are fine and don't match.
+  if (/\([^()]*\(/.test(n)) return "spam_name";
   return null;
 }
 

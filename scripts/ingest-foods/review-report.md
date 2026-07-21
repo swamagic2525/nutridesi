@@ -1,65 +1,145 @@
 # Bulk Food Ingestion — Review Report
 
-Generated: 2026-07-21T16:44:27.653Z
+Generated: 2026-07-21T16:48:59.573Z
 
 ## Funnel (per file)
 
 | File | Parsed | After gate | After collapse | After dedup | To load |
 |:-----|-------:|-----------:|---------------:|------------:|--------:|
-| Fitness_Commercial_Products_DB.md | 380 | 361 | 312 | 312 | 312 |
+| Fitness_Commercial_Products_DB.md | 380 | 376 | 322 | 322 | 322 |
 | Food_Nutrition_DB.md | 20 | 20 | 20 | 19 | 19 |
-| Indian_Household_Nutrition_Database_2500.md | 2500 | 2423 | 937 | 880 | 879 |
-| QuickCommerce_Restaurant_Food_DB_1000.md | 1000 | 857 | 856 | 855 | 400 |
+| Indian_Household_Nutrition_Database_2500.md | 2500 | 2316 | 904 | 847 | 846 |
+| QuickCommerce_Restaurant_Food_DB_1000.md | 1000 | 893 | 892 | 891 | 408 |
 
-**Total: 3900 parsed → 1610 to load.**
+**Total: 3900 parsed → 1595 to load.**
 
-## Rejected rows (239)
+## Rejected rows (295)
 
 - **macro_cal_mismatch**: 176
-- **bad_name**: 45
-- **absurd_density**: 18
+- **spam_name**: 119
 
 <details><summary>All rejected rows</summary>
 
-- The Whole Truth Natural Peanut Butter (Crunchy - Unsweetened) — bad_name
-- Optimum Nutrition (ON) Gold Standard 100% Whey (Double Rich Chocolate) — bad_name
-- Optimum Nutrition (ON) Gold Standard 100% Whey (Extreme Milk Chocolate) — bad_name
-- Optimum Nutrition (ON) Gold Standard 100% Whey (Vanilla Ice Cream) — bad_name
-- Optimum Nutrition (ON) Gold Standard 100% Whey (Delicious Strawberry) — bad_name
-- Wellcore Micronized Creatine Monohydrate — absurd_density
-- MuscleBlaze Creatine Monohydrate CreAMP — absurd_density
-- As-It-Is Creatine Monohydrate Powder — absurd_density
-- Optimum Nutrition (ON) Micronized Creatine Powder — absurd_density
-- Scivation XTEND BCAA (Mango Madness) — absurd_density
-- MyProtein Impact EAA (Plum) — absurd_density
-- As-It-Is L-Carnitine L-Tartrate Powder — absurd_density
-- Quest Nutrition Quest Protein Bar (Chocolate Chip Cookie Dough) — bad_name
 - Veeba Zero Sugar Tomato Ketchup — macro_cal_mismatch
 - Nutrabay Apple Cider Vinegar with Mother — macro_cal_mismatch
 - Kapiva Apple Cider Vinegar — macro_cal_mismatch
 - Heinz Zero Sugar Tomato Ketchup — macro_cal_mismatch
-- Zindagi Stevia Powder Natural Sweetener — absurd_density
-- Sugar Free Green Stevia Powder — absurd_density
 - Paneer Dosa (Homestyle Ghee) — macro_cal_mismatch
 - Paneer Dosa (Low Oil Diet) — macro_cal_mismatch
-- Green Moong Whole (South Indian Tempering (Mustard & Curry Leaves)) — bad_name
-- Kabuli Chana (South Indian Tempering (Mustard & Curry Leaves)) — bad_name
+- Toor Dal (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Toor Dal (Bengali Tempering (Panch Phoron)) — spam_name
+- Toor Dal (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Moong Dal (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Moong Dal (Bengali Tempering (Panch Phoron)) — spam_name
+- Moong Dal (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Masoor Dal (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Masoor Dal (Bengali Tempering (Panch Phoron)) — spam_name
+- Masoor Dal (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Chana Dal (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Chana Dal (Bengali Tempering (Panch Phoron)) — spam_name
+- Chana Dal (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Urad Dal (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Urad Dal (Bengali Tempering (Panch Phoron)) — spam_name
+- Urad Dal (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Mix Dal (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Mix Dal (Bengali Tempering (Panch Phoron)) — spam_name
+- Mix Dal (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Green Moong Whole (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Green Moong Whole (Bengali Tempering (Panch Phoron)) — spam_name
+- Green Moong Whole (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Kala Chana (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Kala Chana (Bengali Tempering (Panch Phoron)) — spam_name
+- Kala Chana (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Kabuli Chana (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Kabuli Chana (Bengali Tempering (Panch Phoron)) — spam_name
+- Kabuli Chana (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Rajma (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Rajma (Bengali Tempering (Panch Phoron)) — spam_name
+- Rajma (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Lobia (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Lobia (Bengali Tempering (Panch Phoron)) — spam_name
+- Lobia (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Moth Beans (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Moth Beans (Bengali Tempering (Panch Phoron)) — spam_name
+- Moth Beans (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Horsegram (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
+- Horsegram (Bengali Tempering (Panch Phoron)) — spam_name
+- Horsegram (Andhra Pappu (Spinach / Tomato / Mango)) — spam_name
+- Gobi (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Gobi (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Gobi (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Gobi (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Matar (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Matar (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Matar (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Matar (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Palak (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Palak (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Palak (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Palak (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Bhindi (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Bhindi (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Bhindi (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Bhindi (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Baingan (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Baingan (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Baingan (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Baingan (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Lauki (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Lauki (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Lauki (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Lauki (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Aloo (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Aloo (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Aloo (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
+- Paneer (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Paneer (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Paneer (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
+- Mushroom (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Mushroom (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Mushroom (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Mushroom (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Soya Chunks (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Soya Chunks (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Soya Chunks (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
+- Capsicum (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Capsicum (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Capsicum (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Capsicum (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Babycorn (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Babycorn (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Babycorn (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Babycorn (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Sweet Corn (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Sweet Corn (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Sweet Corn (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Sweet Corn (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Broccoli (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Broccoli (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Broccoli (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Broccoli (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Karela (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Karela (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Karela (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Karela (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Arbi (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Arbi (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Arbi (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Arbi (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Kaddu (Pumpkin) (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Kaddu (Pumpkin) (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Kaddu (Pumpkin) (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Kaddu (Pumpkin) (Gujarati Sweet & Sour Style) — macro_cal_mismatch
-- Chawli (Long Beans) (South Indian Poriyal (Mustard & Coconut)) — bad_name
+- Chawli (Long Beans) (Punjabi Dhaba Style (Extra Oil/Butter)) — spam_name
+- Chawli (Long Beans) (South Indian Poriyal (Mustard & Coconut)) — spam_name
+- Chawli (Long Beans) (Bengali Jhol (Mustard / Panch Phoron)) — spam_name
 - Chawli (Long Beans) (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Chicken Boneless (Korma (Almond-Cashew Gravy)) — spam_name
+- Chicken Boneless (Bengali Mustard Gravy (Sorshe)) — spam_name
+- Chicken Boneless (Tandoori Tikka Marinated (Dry)) — spam_name
+- Chicken With Bone (Korma (Almond-Cashew Gravy)) — spam_name
+- Chicken With Bone (Bengali Mustard Gravy (Sorshe)) — spam_name
+- Chicken With Bone (Tandoori Tikka Marinated (Dry)) — spam_name
 - Mutton / Lamb (Homestyle Curry) — macro_cal_mismatch
 - Mutton / Lamb (Dhaba Spicy Gravy) — macro_cal_mismatch
 - Mutton / Lamb (Korma (Almond-Cashew Gravy)) — macro_cal_mismatch
@@ -70,20 +150,31 @@ Generated: 2026-07-21T16:44:27.653Z
 - Mutton / Lamb (Mangalorean Ghee Roast) — macro_cal_mismatch
 - Mutton / Lamb (Tandoori Tikka Marinated (Dry)) — macro_cal_mismatch
 - Mutton / Lamb (Pan Fried Crispy Coating) — macro_cal_mismatch
-- Fish Fillet (Basa / Surmai / Rohu) (Korma (Almond-Cashew Gravy)) — bad_name
-- Fish Fillet (Basa / Surmai / Rohu) (Chettinad Black Pepper Gravy) — bad_name
-- Fish Fillet (Basa / Surmai / Rohu) (Kerala Coconut Fry / Roast) — bad_name
-- Fish Fillet (Basa / Surmai / Rohu) (Goan Portuguese Vindaloo) — bad_name
-- Fish Fillet (Basa / Surmai / Rohu) (Bengali Mustard Gravy (Sorshe)) — bad_name
-- Fish Fillet (Basa / Surmai / Rohu) (Tandoori Tikka Marinated (Dry)) — bad_name
-- Fish Fillet (Basa / Surmai / Rohu) (Pan Fried Crispy Coating) — bad_name
+- Fish Fillet (Basa / Surmai / Rohu) (Korma (Almond-Cashew Gravy)) — spam_name
+- Fish Fillet (Basa / Surmai / Rohu) (Bengali Mustard Gravy (Sorshe)) — spam_name
+- Fish Fillet (Basa / Surmai / Rohu) (Tandoori Tikka Marinated (Dry)) — spam_name
 - Prawns / Shrimp (Homestyle Curry) — macro_cal_mismatch
+- Prawns / Shrimp (Korma (Almond-Cashew Gravy)) — spam_name
 - Prawns / Shrimp (Chettinad Black Pepper Gravy) — macro_cal_mismatch
 - Prawns / Shrimp (Bengali Mustard Gravy (Sorshe)) — macro_cal_mismatch
 - Prawns / Shrimp (Tandoori Tikka Marinated (Dry)) — macro_cal_mismatch
-- Green Tea (Unsweetened) — absurd_density
+- Egg (2 whole) (Korma (Almond-Cashew Gravy)) — spam_name
+- Egg (2 whole) (Bengali Mustard Gravy (Sorshe)) — spam_name
+- Egg (2 whole) (Tandoori Tikka Marinated (Dry)) — spam_name
+- Crab (Korma (Almond-Cashew Gravy)) — spam_name
+- Crab (Bengali Mustard Gravy (Sorshe)) — spam_name
+- Crab (Tandoori Tikka Marinated (Dry)) — spam_name
+- Squid / Calamari (Korma (Almond-Cashew Gravy)) — spam_name
+- Squid / Calamari (Bengali Mustard Gravy (Sorshe)) — spam_name
+- Squid / Calamari (Tandoori Tikka Marinated (Dry)) — spam_name
 - Black Coffee (Unsweetened) — macro_cal_mismatch
-- Golden Turmeric Milk (Haldi Doodh) (Sugar-Free Stevia Sweetened) — bad_name
+- Chai (Jaggery (Gud) Sweetened) — spam_name
+- Filter Coffee (Jaggery (Gud) Sweetened) — spam_name
+- Badam Milk (Jaggery (Gud) Sweetened) — spam_name
+- Golden Turmeric Milk (Haldi Doodh) (Jaggery (Gud) Sweetened) — spam_name
+- Hot Chocolate Milk (Jaggery (Gud) Sweetened) — spam_name
+- Rose Milk (Jaggery (Gud) Sweetened) — spam_name
+- Pista Milk (Jaggery (Gud) Sweetened) — spam_name
 - Kerala Malabar Style Lentil Soup / Shorba - Var 2 — macro_cal_mismatch
 - Hyderabadi Style Lentil Soup / Shorba - Var 5 — macro_cal_mismatch
 - Kerala Malabar Style Lentil Soup / Shorba - Var 8 — macro_cal_mismatch
@@ -117,40 +208,26 @@ Generated: 2026-07-21T16:44:27.653Z
 - Kerala Malabar Style Lentil Soup / Shorba - Var 128 — macro_cal_mismatch
 - Hyderabadi Style Lentil Soup / Shorba - Var 131 — macro_cal_mismatch
 - Kerala Malabar Style Lentil Soup / Shorba - Var 134 — macro_cal_mismatch
-- McDonald's McCafe Americano — absurd_density
-- Starbucks Iced Americano (Grande) — absurd_density
 - Starbucks Cold Brew Black (Grande) — macro_cal_mismatch
 - Blue Tokai Cold Brew Bold — macro_cal_mismatch
-- Coca-Cola Zero Sugar — absurd_density
-- Pepsi Black Zero Sugar — absurd_density
-- Sprite Zero Sugar — absurd_density
 - Red Bull Sugarfree Energy Drink — macro_cal_mismatch
-- Monster Energy Ultra Zero Sugar (White) — absurd_density
-- Bisleri Club Soda Carbonated Water — absurd_density
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
 - Veeba Hummus Classic (Dips & Spread Packs) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - Behrouz Biryani Murgh Tandoori Kebabs (Biryani & Kebabs) — macro_cal_mismatch
 - Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
 - Veeba Garlic Mayo (Dips & Spread Packs) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
 - Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - EatFit Dal Makhani Khichdi Bowl (Healthy Meals & Bowls) — macro_cal_mismatch
 - Haldiram's Dry Petha (Sweets & Mithai) — macro_cal_mismatch
 - Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
-- Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — absurd_density
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - Behrouz Biryani Murgh Tandoori Kebabs (Biryani & Kebabs) — macro_cal_mismatch
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
 - Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Mother Dairy Rabri Cup (Packaged Desserts) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
@@ -159,15 +236,12 @@ Generated: 2026-07-21T16:44:27.653Z
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
 - Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Baskin Robbins Dutch Chocolate (Ice Cream Scoops) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
@@ -175,7 +249,6 @@ Generated: 2026-07-21T16:44:27.653Z
 - Behrouz Biryani Murgh Tandoori Kebabs (Biryani & Kebabs) — macro_cal_mismatch
 - KFC Popcorn Chicken Rice Bowl (Rolls & Bowls) — macro_cal_mismatch
 - Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - Subway Chana Patty Wrap (Salads & Wraps) — macro_cal_mismatch
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
@@ -183,86 +256,68 @@ Generated: 2026-07-21T16:44:27.653Z
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Baskin Robbins Roasted Almond (Ice Cream Scoops) — macro_cal_mismatch
 - Mother Dairy Mishti Doi Cup (Packaged Desserts) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Mother Dairy Rabri Cup (Packaged Desserts) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Domino's Pizza Cheesy Dip Classic (Pastas & Dips) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Baskin Robbins Alphonso Mango (Ice Cream Scoops) — macro_cal_mismatch
 - Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - Subway Chana Patty Wrap (Salads & Wraps) — macro_cal_mismatch
 - Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
 - Baskin Robbins Pralines & Cream (Ice Cream Scoops) — macro_cal_mismatch
 - Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - KFC Popcorn Chicken Rice Bowl (Rolls & Bowls) — macro_cal_mismatch
 - Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
 - Veeba Cheese Dip Classic (Dips & Spread Packs) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Domino's Pizza Cheesy Dip Classic (Pastas & Dips) — macro_cal_mismatch
 - Mother Dairy Rabri Cup (Packaged Desserts) — macro_cal_mismatch
 - Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - Baskin Robbins Alphonso Mango (Ice Cream Scoops) — macro_cal_mismatch
 - Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - Baskin Robbins Bavarian Chocolate (Ice Cream Scoops) — macro_cal_mismatch
 - Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Mother Dairy Rabri Cup (Packaged Desserts) — macro_cal_mismatch
 - Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - Subway Chana Patty Wrap (Salads & Wraps) — macro_cal_mismatch
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - EatFit Dal Makhani Khichdi Bowl (Healthy Meals & Bowls) — macro_cal_mismatch
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - KFC Popcorn Chicken Rice Bowl (Rolls & Bowls) — macro_cal_mismatch
 - Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - Behrouz Biryani Murgh Tandoori Kebabs (Biryani & Kebabs) — macro_cal_mismatch
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
 - Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
-- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
 - Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
 </details>
 
-## Collapse decisions (1536 dropped)
+## Collapse decisions (1467 dropped)
 
 <details><summary>All collapses (dropped → kept)</summary>
 
@@ -290,6 +345,7 @@ Generated: 2026-07-21T16:44:27.653Z
 - Asitis Nut Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
 - Sundrop Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
 - Sundrop Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- The Whole Truth Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
 - The Whole Truth Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
 - Nutriorg Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
 - Nutriorg Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
@@ -313,8 +369,12 @@ Generated: 2026-07-21T16:44:27.653Z
 - Nutriorg High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
 - Origins Nutritive Rolled Oats → True Elements Rolled Oats
 - Dymatize ISO100 Hydrolyzed Whey Isolate (Gourmet Chocolate) → Dymatize ISO100 Hydrolyzed Whey Isolate (Fudge Brownie)
+- Wellcore Micronized Creatine Monohydrate → As-It-Is Creatine Monohydrate Powder
+- MuscleBlaze Creatine Monohydrate CreAMP → As-It-Is Creatine Monohydrate Powder
+- Optimum Nutrition (ON) Micronized Creatine Powder → As-It-Is Creatine Monohydrate Powder
 - Nutrela Soya Chunks (Mini / Regular) → Nutrela Soya Granules
 - Veeba Tomato Ketchup No Onion No Garlic → Heinz Tomato Ketchup Classic
+- Zindagi Stevia Powder Natural Sweetener → Sugar Free Green Stevia Powder
 - Sabudana Khichdi (Fasting Meal) → Sabudana Khichdi
 - Sabudana Vada → Sabudana Vada
 - Paneer Paratha (Homestyle Ghee) → Paneer Paratha (Low Oil Diet)
@@ -451,41 +511,6 @@ Generated: 2026-07-21T16:44:27.653Z
 - Lobia (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
 - Moth Beans (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
 - Horsegram (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
-- Toor Dal (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
-- Toor Dal (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
-- Moong Dal (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
-- Moong Dal (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
-- Masoor Dal (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
-- Masoor Dal (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
-- Chana Dal (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
-- Chana Dal (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
-- Urad Dal (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
-- Urad Dal (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
-- Mix Dal (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
-- Mix Dal (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
-- Green Moong Whole (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
-- Kala Chana (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
-- Kala Chana (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
-- Kabuli Chana (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
-- Rajma (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
-- Lobia (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
-- Lobia (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
-- Moth Beans (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
-- Moth Beans (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
-- Horsegram (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
-- Horsegram (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
-- Toor Dal (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
-- Moong Dal (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
-- Masoor Dal (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
-- Chana Dal (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
-- Urad Dal (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
-- Mix Dal (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
-- Green Moong Whole (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
-- Kala Chana (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
-- Kabuli Chana (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
-- Lobia (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
-- Moth Beans (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
-- Horsegram (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
 - Paneer Do Pyaza → Handi Paneer
 - Matar (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
 - Palak (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
@@ -499,29 +524,6 @@ Generated: 2026-07-21T16:44:27.653Z
 - Arbi (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
 - Kaddu (Pumpkin) (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
 - Chawli (Long Beans) (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
-- Matar (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
-- Palak (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
-- Bhindi (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
-- Baingan (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
-- Lauki (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
-- Capsicum (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
-- Babycorn (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
-- Broccoli (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
-- Karela (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
-- Arbi (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
-- Kaddu (Pumpkin) (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
-- Chawli (Long Beans) (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
-- Matar (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
-- Palak (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
-- Bhindi (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
-- Baingan (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
-- Lauki (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
-- Capsicum (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
-- Babycorn (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
-- Broccoli (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
-- Karela (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
-- Arbi (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
-- Kaddu (Pumpkin) (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
 - Gobi (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
 - Matar (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
 - Matar (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
@@ -547,18 +549,6 @@ Generated: 2026-07-21T16:44:27.653Z
 - Kaddu (Pumpkin) (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
 - Chawli (Long Beans) (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
 - Chawli (Long Beans) (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
-- Matar (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
-- Palak (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
-- Bhindi (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
-- Baingan (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
-- Lauki (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
-- Capsicum (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
-- Babycorn (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
-- Broccoli (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
-- Karela (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
-- Arbi (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
-- Kaddu (Pumpkin) (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
-- Chawli (Long Beans) (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
 - Matar (Chettinad Masala) → Gobi (Chettinad Masala)
 - Palak (Chettinad Masala) → Gobi (Chettinad Masala)
 - Bhindi (Chettinad Masala) → Gobi (Chettinad Masala)
@@ -590,6 +580,7 @@ Generated: 2026-07-21T16:44:27.653Z
 - Sweet Corn (Maharashtrian Kanda-Lassun Masala) → Sweet Corn (Andhra Spicy Masala)
 - Chicken Boneless (Kerala Coconut Fry / Roast) → Chicken Boneless (Dhaba Spicy Gravy)
 - Chicken With Bone (Kerala Coconut Fry / Roast) → Chicken With Bone (Dhaba Spicy Gravy)
+- Fish Fillet (Basa / Surmai / Rohu) (Kerala Coconut Fry / Roast) → Fish Fillet (Basa / Surmai / Rohu) (Dhaba Spicy Gravy)
 - Prawns / Shrimp (Kerala Coconut Fry / Roast) → Prawns / Shrimp (Dhaba Spicy Gravy)
 - Egg (2 whole) (Kerala Coconut Fry / Roast) → Egg (2 whole) (Dhaba Spicy Gravy)
 - Crab (Kerala Coconut Fry / Roast) → Crab (Dhaba Spicy Gravy)
@@ -682,14 +673,9 @@ Generated: 2026-07-21T16:44:27.653Z
 - Hot Chocolate Milk (Skimmed Milk + Sugar) → Chai (Skimmed Milk + Sugar)
 - Rose Milk (Skimmed Milk + Sugar) → Chai (Skimmed Milk + Sugar)
 - Pista Milk (Skimmed Milk + Sugar) → Chai (Skimmed Milk + Sugar)
-- Filter Coffee (Jaggery (Gud) Sweetened) → Chai (Jaggery (Gud) Sweetened)
-- Badam Milk (Jaggery (Gud) Sweetened) → Chai (Jaggery (Gud) Sweetened)
-- Golden Turmeric Milk (Haldi Doodh) (Jaggery (Gud) Sweetened) → Chai (Jaggery (Gud) Sweetened)
-- Hot Chocolate Milk (Jaggery (Gud) Sweetened) → Chai (Jaggery (Gud) Sweetened)
-- Rose Milk (Jaggery (Gud) Sweetened) → Chai (Jaggery (Gud) Sweetened)
-- Pista Milk (Jaggery (Gud) Sweetened) → Chai (Jaggery (Gud) Sweetened)
 - Filter Coffee (Sugar-Free Stevia Sweetened) → Chai (Sugar-Free Stevia Sweetened)
 - Badam Milk (Sugar-Free Stevia Sweetened) → Chai (Sugar-Free Stevia Sweetened)
+- Golden Turmeric Milk (Haldi Doodh) (Sugar-Free Stevia Sweetened) → Chai (Sugar-Free Stevia Sweetened)
 - Hot Chocolate Milk (Sugar-Free Stevia Sweetened) → Chai (Sugar-Free Stevia Sweetened)
 - Rose Milk (Sugar-Free Stevia Sweetened) → Chai (Sugar-Free Stevia Sweetened)
 - Pista Milk (Sugar-Free Stevia Sweetened) → Chai (Sugar-Free Stevia Sweetened)
@@ -1809,102 +1795,102 @@ Generated: 2026-07-21T16:44:27.653Z
 | Food | Unit | kcal | Protein | kcal/100g |
 |:-----|:-----|-----:|--------:|----------:|
 | Alpino Chocolate Peanut Butter (Smooth) | 2 tbsp | 190 | 8 | 593.75 |
-| Bagrry's Crunchy Muesli Almond & Raisin | serving | 215 | 4.5 | 430 |
-| Slurrp Farm Millet Pancake Mix | serving | 180 | 5 | 360 |
-| Optimum Nutrition (ON) Gold Standard 100% Isolate | scoop | 110 | 25 | 366.67 |
-| As-It-Is Whey Protein Isolate 90% (Unflavored) | scoop | 112 | 27 | 373.33 |
-| Kapiva Slim Shake (Chocolate) | scoop | 125 | 12 | 357.14 |
-| RiteBite Max Protein Daily Bar (Choco Almond 10g Protein) | serving | 200 | 10 | 400 |
+| Bagrry's Protein Muesli with Whey | serving | 210 | 12 | 420 |
+| Kellogg's Pro Muesli High Protein | serving | 205 | 11.5 | 410 |
+| Nutriorg Certified Organic Steel Cut Oats | serving | 152 | 5.5 | 380 |
+| MyProtein Impact Whey Protein (Unflavored) | scoop | 100 | 21 | 400 |
+| Dymatize Elite 100% Whey (Rich Chocolate) | scoop | 140 | 25 | 388.89 |
+| Nutrabay Gold 100% Whey Protein (Rich Chocolate) | scoop | 128 | 25 | 387.88 |
+| RiteBite Max Protein Active Bar (Choco Slim 20g Protein) | serving | 260 | 20 | 388.06 |
 | Hyp Lean Protein Bar (Chocolate Brownie 10g) | serving | 140 | 10 | 350 |
-| Nutty Gritties Thai Chili Roasted Cashews | serving | 170 | 5 | 566.67 |
-| Amul Buffalo Milk (6.5% Fat) | serving | 92 | 3.5 | 92 |
-| Mother Dairy Classic Paneer | serving | 289 | 18 | 289 |
-| Sofit Soya Milk (Unsweetened Natural) | serving | 38 | 3.6 | 38 |
-| Eggee Brown Eggs Organic | egg | 74 | 6.5 | 148 |
-| Saffola Mealmaker Soya Chunks | Dry | 342 | 53 | 342 |
-| Imagine Meats Plant Based Chicken Keema | serving | 175 | 16.5 | 175 |
-| The Whole Truth 100% Sourdough Bread (Whole Wheat) | slice | 115 | 4.8 | 230 |
-| India Gate Brown Basmati Rice | Uncooked | 345 | 9 | 345 |
-| Veeba Eggless Mayonnaise Classic | tbsp | 90 | 0.2 | 600 |
-| Ching's Secret Schezwan Chutney | tbsp | 35 | 0.5 | 233.33 |
-| Amul Dark Chocolate 75% Cocoa | 3 squares | 116 | 1.6 | 580 |
+| Farmley Peri Peri Makhana | serving | 135 | 3 | 450 |
+| Amul Gold Full Cream Milk (6% Fat) | serving | 87 | 3.3 | 87 |
+| Amul Sugar Free Ice Cream | serving | 110 | 3.5 | 110 |
+| Epigamia Almond Milk (Unsweetened) | serving | 25 | 0.9 | 25 |
+| Verka Skimmed Milk | serving | 35 | 3.2 | 35 |
+| FreshToHome Chicken Breast Cuts | serving | 110 | 22.8 | 110 |
+| Venky's Chicken Breast Fillet | serving | 112 | 22.5 | 112 |
+| Harvest Gold White Bread Classic | 2 slices | 135 | 3.8 | 270 |
+| Patanjali Whole Wheat Atta | serving | 338 | 11.5 | 338 |
+| True Elements Quinoa Grain | serving | 368 | 14 | 368 |
+| The Whole Truth Dark Chocolate Sauce (No Added Sugar) | tbsp | 45 | 1 | 300 |
+| Slurrp Farm Jaggery Powder Organic | tbsp | 38 | 0.1 | 380 |
+| Amul Dark Chocolate 90% Bitter | 3 squares | 122 | 2.2 | 610 |
 | Amul Regular Butter | serving | 722 | 0.5 | 722 |
-| Pesarattu (Moong Dal Dosa) | dosa | 180 | 8.5 | 180 |
-| Puttu (Steamed Rice & Coconut) | portion | 230 | 4.5 | 191.67 |
-| Poori Masala | 3 puris + curry | 420 | 7.2 | 190.91 |
-| Aloo Paratha (Low Oil Diet) | pc | 290 | 7.5 | 223.08 |
-| Egg Paratha (Butter Loaded) | pc | 340 | 13 | 261.54 |
-| Tok Dal (Bengali Raw Mango Dal) | bowl | 125 | 6 | 83.33 |
-| Rajma Masala (Punjabi Red Kidney Beans) | bowl | 210 | 11 | 116.67 |
-| Aloo Matar | bowl | 150 | 4 | 100 |
-| Mix Veg Dry Sabzi | bowl | 140 | 3.8 | 93.33 |
-| Beans Carrot Poriyal | bowl | 90 | 2.5 | 75 |
-| Soya Chunks Curry | bowl | 210 | 22 | 116.67 |
-| Paneer (Homestyle Onion-Tomato) | bowl | 150 | 14 | 93.75 |
-| Soya Chunks (Punjabi Dhaba Style (Extra Oil/Butter)) | bowl | 210 | 18 | 131.25 |
-| Chicken Curry (Homestyle Indian) | bowl | 260 | 27 | 130 |
-| Chicken Kheema Matar | bowl | 330 | 27 | 183.33 |
-| Mutton Nalli Nihari | bowl | 480 | 28 | 192 |
-| Fish Fry Masala (Pomfret / Katla) | pc | 260 | 25 | 173.33 |
-| Chicken With Bone (Dhaba Spicy Gravy) | bowl / portion | 260 | 19 | 144.44 |
-| Egg (2 whole) (Homestyle Curry) | bowl / portion | 200 | 13 | 111.11 |
-| Crab (Tandoori Tikka Marinated (Dry)) | bowl / portion | 144 | 16 | 80 |
-| Veg Pulao (Matar / Mixed Veg) | bowl | 240 | 4.8 | 133.33 |
-| Khichdi Dal Plain (Moong Dal & Rice) | bowl | 210 | 7 | 105 |
-| Missi Roti (Besan + Wheat) | pc | 150 | 5.8 | 250 |
-| Jowar Flour (Sorghum) | raw | 349 | 10.4 | 349 |
-| Kala Chana Black Chickpeas (Raw) | raw | 360 | 20 | 360 |
-| Curd / Dahi (Low Fat / Toned) | serving | 45 | 4 | 45 |
-| Fortune Ragi Flour | raw | 345 | 12 | 345 |
-| Tata Sampann Ragi Flour | raw | 345 | 12 | 345 |
-| Organic Tattva Ragi Flour | raw | 345 | 12 | 345 |
-| Pav Bhaji (2 Maska Pavs + Bhaji) | plate | 580 | 12 | 165.71 |
-| Roasted Makhana (Fox Nuts Salted) | bowl | 115 | 3 | 383.33 |
-| Aloo Kachori | portion | 260 | 4 | 216.67 |
+| Oats Upma | bowl | 185 | 6.2 | 123.33 |
+| Egg Appam | pc | 175 | 7.5 | 159.09 |
+| Ragi Rotti (Finger Millet Roti) | pc | 195 | 4.2 | 195 |
+| Cheese Cheela (Low Oil Diet) | 2 pcs | 290 | 11 | 207.14 |
+| Sattu Paratha (Butter Loaded) | pc | 340 | 13 | 261.54 |
+| Kali Dal (Urad Whole) | bowl | 180 | 9 | 120 |
+| Garlic Rasam (Poondu Rasam) | bowl | 65 | 1.8 | 43.33 |
+| Rajma (Homestyle Low Oil) | bowl | 112 | 8 | 74.67 |
+| Bengali Alur Dom | bowl | 190 | 3.5 | 126.67 |
+| Lauki Chana Dal Sabzi | bowl | 140 | 6.5 | 93.33 |
+| Sev Tamatar Sabzi | bowl | 230 | 4.2 | 153.33 |
+| Aloo (Andhra Spicy Masala) | bowl | 165 | 3 | 103.13 |
+| Soya Chunks (Gujarati Sweet & Sour Style) | bowl | 172.5 | 18 | 107.81 |
+| Andhra Spicy Chicken Curry | bowl | 300 | 29 | 150 |
+| Chicken Reshmi Kebab (6 pcs) | portion | 310 | 30 | 172.22 |
+| Egg Masala (2 eggs - Spicy Red Gravy) | bowl | 260 | 14 | 130 |
+| Prawns Koliwada (Crispy Fried) | portion | 290 | 24 | 193.33 |
+| Fish Fillet (Basa / Surmai / Rohu) (Homestyle Curry) | bowl / portion | 180 | 18 | 100 |
+| Egg (2 whole) (Pan Fried Crispy Coating) | bowl / portion | 240 | 13 | 133.33 |
+| Brown Rice Steamed | bowl cooked | 170 | 4.2 | 113.33 |
+| Tomato Rice (Thakkali Sadam) | bowl | 250 | 4.2 | 138.89 |
+| Lachha Paratha (Layered Whole Wheat) | pc | 280 | 5.2 | 311.11 |
+| Maida (Refined Wheat Flour) | raw | 355 | 10 | 355 |
+| Green Moong Whole (Raw) | raw | 334 | 24 | 334 |
+| Coconut Oil (Cold Pressed Cooking) | tbsp | 90 | 0 | 900 |
+| Aashirvaad Sooji | raw | 345 | 12 | 345 |
+| Patanjali Sooji | raw | 345 | 12 | 345 |
+| 24 Mantra Organic Sugar Release Control Atta | raw | 345 | 12 | 345 |
+| Samosa (Aloo Filling) | pc | 210 | 4 | 262.5 |
+| Aloo Pakoda | plate | 260 | 4 | 216.67 |
+| Sundal (Chickpea / White Peas Tempering) | bowl | 160 | 7.5 | 133.33 |
+| Gobi Kachori | portion | 260 | 4 | 216.67 |
 | Gobi Tikhi Puri | portion | 260 | 4 | 216.67 |
-| Chicken Vada | portion | 300 | 14 | 250 |
-| Fish Mathri | portion | 300 | 14 | 250 |
-| Nannari Sharbat (Indian Sarsaparilla Syrup Drink) | lass 200ml | 130 | 0.2 | 65 |
-| Jalebi (Crispy Sugar Syrup) | 2 pcs | 300 | 1.8 | 375 |
-| Cham Cham / Chom Chom | 2 pcs | 260 | 5 | 260 |
-| Dates & Nuts (Sugar Free) Peda | portion | 300 | 5 | 375 |
-| Rose Elaichi Ladoo | portion | 260 | 5 | 325 |
-| Pista (Pistachio) Modak | portion | 260 | 5 | 325 |
-| Idli Podi (Gunpowder with Ghee / Oil) | tbsp | 70 | 2.2 | 466.67 |
-| Chettinad Special Chickpea Stew - Var 1 | bowl | 225 | 11.5 | 125 |
-| Maharashtrian Malvani Style Veg Korma - Var 3 | bowl | 245 | 5 | 136.11 |
-| North Indian Homestyle Lentil Soup / Shorba - Var 4 | bowl | 160 | 7.5 | 88.89 |
-| Andhra Spicy Style Chickpea Stew - Var 6 | bowl | 250 | 11.5 | 138.89 |
-| Chettinad Special Specialty Curry Gravy - Var 28 | bowl | 295 | 9 | 163.89 |
+| Fish Samosa | portion | 300 | 14 | 250 |
+| Chicken Mathri | portion | 300 | 14 | 250 |
+| Jaljeera (Cumin Mint Water) | lass 200ml | 45 | 0.5 | 22.5 |
+| Rava Ladoo (Semolina & Coconut) | 2 pcs | 270 | 3.8 | 450 |
+| Atta Halwa (Kada Prasad) | bowl | 360 | 4.8 | 300 |
+| Dates & Nuts (Sugar Free) Kheer / Payasam | portion | 300 | 5 | 375 |
+| Mango Halwa | portion | 260 | 5 | 325 |
+| Mango Barfi | portion | 260 | 5 | 325 |
+| Mango Sandesh | portion | 260 | 5 | 325 |
+| Sweet Mango Chutney / Chunda | tbsp | 48 | 0.1 | 320 |
+| Maharashtrian Malvani Style Regional Sweet Delight - Var 1 | pc | 280 | 5.5 | 466.67 |
+| North Indian Homestyle Stuffed Paratha Roll - Var 3 | pc | 385 | 10.5 | 240.63 |
+| Chettinad Special Specialty Curry Gravy - Var 4 | bowl | 295 | 9 | 163.89 |
+| Gujarati Jain Style Flavoured Rice Bowl - Var 6 | bowl | 330 | 5.5 | 165 |
+| Hyderabadi Style Veg Korma - Var 8 | bowl | 270 | 5 | 150 |
 | South Indian Brahmin Style Lentil Soup / Shorba - Var 9 | bowl | 185 | 7.5 | 102.78 |
-| Karnataka Udipi Style Mashed Vegetable Bhaji - Var 11 | bowl | 220 | 4.8 | 122.22 |
-| Hyderabadi Style Regional Sweet Delight - Var 12 | pc | 305 | 5.5 | 508.33 |
-| South Indian Brahmin Style Stuffed Paratha Roll - Var 14 | pc | 410 | 10.5 | 256.25 |
-| Gujarati Jain Style Kofta Curry - Var 16 | bowl | 285 | 7 | 158.33 |
-| Karnataka Udipi Style Regional Sweet Delight - Var 38 | pc | 255 | 5.5 | 425 |
-| Hyderabadi Style Stuffed Paratha Roll - Var 40 | pc | 360 | 10.5 | 225 |
-| South Indian Brahmin Style Veg Korma - Var 42 | bowl | 245 | 5 | 136.11 |
-| McDonald's Filet-O-Fish Burger | pc | 348 | 14 | 252.17 |
-| McDonald's Veg Pizza McPuff (2 pcs) | 2 pcs | 456 | 10.2 | 262.07 |
-| Domino's Pizza Choco Lava Cake | pc | 340 | 4.5 | 400 |
-| Subway Chicken Kofta Sub (6 inch) | sub | 380 | 22 | 172.73 |
-| KFC Fries (Medium) | portion | 290 | 4 | 290 |
+| Andhra Spicy Style Kofta Curry - Var 11 | bowl | 335 | 7 | 186.11 |
+| South Indian Brahmin Style Lentil Soup / Shorba - Var 33 | bowl | 185 | 7.5 | 102.78 |
+| Andhra Spicy Style Kofta Curry - Var 35 | bowl | 335 | 7 | 186.11 |
+| Chettinad Special Fried Snack Bowl - Var 15 | portion | 350 | 6 | 291.67 |
+| Karnataka Udipi Style Mashed Vegetable Bhaji - Var 17 | bowl | 220 | 4.8 | 122.22 |
+| Hyderabadi Style Regional Sweet Delight - Var 18 | pc | 305 | 5.5 | 508.33 |
+| Punjabi Dhaba Style Chickpea Stew - Var 20 | bowl | 275 | 11.5 | 152.78 |
+| Hyderabadi Style Regional Sweet Delight - Var 42 | pc | 305 | 5.5 | 508.33 |
+| McDonald's Chicken McNuggets (9 pcs) | portion | 342 | 22.2 | 237.5 |
+| Domino's Pizza Farmhouse Pizza (Personal) | personal pizza | 580 | 21 | 232 |
+| Domino's Pizza Taco Mexicana Veg | pc | 290 | 7 | 263.64 |
+| Subway Protein Scoop (Chicken Strip Addition) | scoop | 90 | 18 | 150 |
+| KFC Choco Mud Pie | pc | 260 | 3.5 | 325 |
 | Starbucks Butter Croissant | pc | 330 | 6 | 412.5 |
-| Chaayos Kulhad Chai | serving | 110 | 3.5 | 73.33 |
-| Faasos Reshmi Chicken Kebab Wrap | wrap | 460 | 24 | 219.05 |
-| Wow! Momo Chicken Moburg (Momo Burger) | pc | 420 | 18 | 233.33 |
-| Generic Indian Restaurant Dal Tadka | serving | 280 | 12 | 93.33 |
-| Generic South Indian Plain Dosa | dosa | 280 | 5 | 186.67 |
-| Generic Street Food Dabeli | pc | 260 | 5 | 236.36 |
-| Kurkure Naughty Tomato Puffcorn | serving | 156 | 1.9 | 520 |
-| Haldiram's Khatta Meetha Mix | serving | 162 | 3.2 | 540 |
-| Britannia Good Day Choco Chips Cookies | 4 biscuits | 150 | 2.1 | 500 |
-| Unibic Chocolate Chip Cookies | 3 cookies | 152 | 2 | 506.67 |
-| Cadbury 5 Star 3D Bar | serving | 102 | 1 | 510 |
-| Hershey's Bar Cookies 'N' Creme | serving | 132 | 1.8 | 528 |
-| Samyang Buldak 2x Spicy Hot Chicken Ramen | pack | 540 | 12 | 385.71 |
-| Godrej Yummiez Chicken Nuggets | serving | 220 | 13 | 220 |
-| Seven Up (7UP) Lemon Lime Soft Drink | serving | 115 | 0 | 46 |
-| Schweppes Tonic Water | serving | 85 | 0 | 34 |
-| Amul Tricone Butterscotch Cone | pc | 195 | 3.5 | 162.5 |
-| Haldiram's Rajma Rice Bowl (Quick Meal Combos) | portion | 362 | 12.5 | 181 |
+| Chai Point Egg Cheese Puff | pc | 330 | 10 | 300 |
+| Bikanervala Chole Kulche (2 Kulche) | plate | 620 | 16 | 163.16 |
+| Wow! Momo Steamed Veg Momos (5 pcs) | portion | 170 | 5.5 | 113.33 |
+| Taco Bell Cheesy Double Decker Taco Non-Veg | pc | 320 | 16 | 213.33 |
+| Generic Indian Restaurant Veg Pulao | serving | 340 | 6.5 | 121.43 |
+| Generic Chinese Sweet Corn Chicken Soup | serving | 140 | 8 | 56 |
+| Lay's Wafer Style Sundried Chilli | serving | 155 | 1.9 | 516.67 |
+| Too Yumm! Rings Tomato | serving | 130 | 2 | 433.33 |
+| Haldiram's Mini Samosa Snack | serving | 155 | 3.5 | 516.67 |
+| Britannia Milk Bikis Classic | 5 biscuits | 138 | 2.2 | 460 |
+| Cadbury Chocobakes Choco-Filled Cookie | 2 cookies | 158 | 1.9 | 526.67 |
+| Nestle KitKat 4 Finger Wafer Bar | serving | 192 | 2.7 | 505.26 |
+| Nestle Maggi Special Masala Oats Noodles | serving | 305 | 9.2 | 417.81 |
+| Knorr Thick Tomato Soup | powder | 52 | 0.8 | 346.67 |

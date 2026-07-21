@@ -60,8 +60,12 @@ assert.strictEqual(gateReason(good), null);
 assert.ok(gateReason({ ...good, f: 30 }), "macro-cal mismatch rejected");
 // absurd density
 assert.ok(gateReason({ ...good, grams: 5, kcal_100g: 4400 }), "kcal/100g>900 rejected");
+// zero-cal items are valid (Coke Zero, creatine): pass, not rejected as density
+assert.strictEqual(gateReason({ name: "Coke Zero", kcal: 0, p: 0, c: 0, f: 0, grams: 330, kcal_100g: 0 }), null, "zero-cal item passes");
 assert.ok(gateReason({ ...good, name: "" }), "empty name rejected");
-assert.ok(gateReason({ ...good, name: "x".repeat(61) }), "over-long name rejected");
+assert.strictEqual(gateReason({ ...good, name: "ON Gold Standard 100% Whey Isolate (Double Rich Chocolate Flavour)" }), null, "long brand name (<=80) passes");
+assert.ok(gateReason({ ...good, name: "x".repeat(81) }), "over-long name (>80) rejected");
+assert.strictEqual(gateReason({ ...good, name: "Green Moong (South Indian Tempering (Mustard & Curry Leaves))" }), "spam_name", "nested-paren spam rejected");
 console.log("gate: passed");
 
 const { collapse } = require("../scripts/ingest-foods/collapse.js");
