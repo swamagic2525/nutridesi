@@ -1,0 +1,1910 @@
+# Bulk Food Ingestion — Review Report
+
+Generated: 2026-07-21T16:44:27.653Z
+
+## Funnel (per file)
+
+| File | Parsed | After gate | After collapse | After dedup | To load |
+|:-----|-------:|-----------:|---------------:|------------:|--------:|
+| Fitness_Commercial_Products_DB.md | 380 | 361 | 312 | 312 | 312 |
+| Food_Nutrition_DB.md | 20 | 20 | 20 | 19 | 19 |
+| Indian_Household_Nutrition_Database_2500.md | 2500 | 2423 | 937 | 880 | 879 |
+| QuickCommerce_Restaurant_Food_DB_1000.md | 1000 | 857 | 856 | 855 | 400 |
+
+**Total: 3900 parsed → 1610 to load.**
+
+## Rejected rows (239)
+
+- **macro_cal_mismatch**: 176
+- **bad_name**: 45
+- **absurd_density**: 18
+
+<details><summary>All rejected rows</summary>
+
+- The Whole Truth Natural Peanut Butter (Crunchy - Unsweetened) — bad_name
+- Optimum Nutrition (ON) Gold Standard 100% Whey (Double Rich Chocolate) — bad_name
+- Optimum Nutrition (ON) Gold Standard 100% Whey (Extreme Milk Chocolate) — bad_name
+- Optimum Nutrition (ON) Gold Standard 100% Whey (Vanilla Ice Cream) — bad_name
+- Optimum Nutrition (ON) Gold Standard 100% Whey (Delicious Strawberry) — bad_name
+- Wellcore Micronized Creatine Monohydrate — absurd_density
+- MuscleBlaze Creatine Monohydrate CreAMP — absurd_density
+- As-It-Is Creatine Monohydrate Powder — absurd_density
+- Optimum Nutrition (ON) Micronized Creatine Powder — absurd_density
+- Scivation XTEND BCAA (Mango Madness) — absurd_density
+- MyProtein Impact EAA (Plum) — absurd_density
+- As-It-Is L-Carnitine L-Tartrate Powder — absurd_density
+- Quest Nutrition Quest Protein Bar (Chocolate Chip Cookie Dough) — bad_name
+- Veeba Zero Sugar Tomato Ketchup — macro_cal_mismatch
+- Nutrabay Apple Cider Vinegar with Mother — macro_cal_mismatch
+- Kapiva Apple Cider Vinegar — macro_cal_mismatch
+- Heinz Zero Sugar Tomato Ketchup — macro_cal_mismatch
+- Zindagi Stevia Powder Natural Sweetener — absurd_density
+- Sugar Free Green Stevia Powder — absurd_density
+- Paneer Dosa (Homestyle Ghee) — macro_cal_mismatch
+- Paneer Dosa (Low Oil Diet) — macro_cal_mismatch
+- Green Moong Whole (South Indian Tempering (Mustard & Curry Leaves)) — bad_name
+- Kabuli Chana (South Indian Tempering (Mustard & Curry Leaves)) — bad_name
+- Gobi (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Matar (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Palak (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Bhindi (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Baingan (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Lauki (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Mushroom (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Capsicum (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Babycorn (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Sweet Corn (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Broccoli (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Karela (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Arbi (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Kaddu (Pumpkin) (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Chawli (Long Beans) (South Indian Poriyal (Mustard & Coconut)) — bad_name
+- Chawli (Long Beans) (Gujarati Sweet & Sour Style) — macro_cal_mismatch
+- Mutton / Lamb (Homestyle Curry) — macro_cal_mismatch
+- Mutton / Lamb (Dhaba Spicy Gravy) — macro_cal_mismatch
+- Mutton / Lamb (Korma (Almond-Cashew Gravy)) — macro_cal_mismatch
+- Mutton / Lamb (Chettinad Black Pepper Gravy) — macro_cal_mismatch
+- Mutton / Lamb (Kerala Coconut Fry / Roast) — macro_cal_mismatch
+- Mutton / Lamb (Goan Portuguese Vindaloo) — macro_cal_mismatch
+- Mutton / Lamb (Bengali Mustard Gravy (Sorshe)) — macro_cal_mismatch
+- Mutton / Lamb (Mangalorean Ghee Roast) — macro_cal_mismatch
+- Mutton / Lamb (Tandoori Tikka Marinated (Dry)) — macro_cal_mismatch
+- Mutton / Lamb (Pan Fried Crispy Coating) — macro_cal_mismatch
+- Fish Fillet (Basa / Surmai / Rohu) (Korma (Almond-Cashew Gravy)) — bad_name
+- Fish Fillet (Basa / Surmai / Rohu) (Chettinad Black Pepper Gravy) — bad_name
+- Fish Fillet (Basa / Surmai / Rohu) (Kerala Coconut Fry / Roast) — bad_name
+- Fish Fillet (Basa / Surmai / Rohu) (Goan Portuguese Vindaloo) — bad_name
+- Fish Fillet (Basa / Surmai / Rohu) (Bengali Mustard Gravy (Sorshe)) — bad_name
+- Fish Fillet (Basa / Surmai / Rohu) (Tandoori Tikka Marinated (Dry)) — bad_name
+- Fish Fillet (Basa / Surmai / Rohu) (Pan Fried Crispy Coating) — bad_name
+- Prawns / Shrimp (Homestyle Curry) — macro_cal_mismatch
+- Prawns / Shrimp (Chettinad Black Pepper Gravy) — macro_cal_mismatch
+- Prawns / Shrimp (Bengali Mustard Gravy (Sorshe)) — macro_cal_mismatch
+- Prawns / Shrimp (Tandoori Tikka Marinated (Dry)) — macro_cal_mismatch
+- Green Tea (Unsweetened) — absurd_density
+- Black Coffee (Unsweetened) — macro_cal_mismatch
+- Golden Turmeric Milk (Haldi Doodh) (Sugar-Free Stevia Sweetened) — bad_name
+- Kerala Malabar Style Lentil Soup / Shorba - Var 2 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 5 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 8 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 14 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 17 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 23 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 26 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 29 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 35 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 38 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 44 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 47 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 50 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 56 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 59 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 65 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 68 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 71 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 77 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 80 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 86 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 89 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 92 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 98 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 101 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 107 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 110 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 113 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 119 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 122 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 128 — macro_cal_mismatch
+- Hyderabadi Style Lentil Soup / Shorba - Var 131 — macro_cal_mismatch
+- Kerala Malabar Style Lentil Soup / Shorba - Var 134 — macro_cal_mismatch
+- McDonald's McCafe Americano — absurd_density
+- Starbucks Iced Americano (Grande) — absurd_density
+- Starbucks Cold Brew Black (Grande) — macro_cal_mismatch
+- Blue Tokai Cold Brew Bold — macro_cal_mismatch
+- Coca-Cola Zero Sugar — absurd_density
+- Pepsi Black Zero Sugar — absurd_density
+- Sprite Zero Sugar — absurd_density
+- Red Bull Sugarfree Energy Drink — macro_cal_mismatch
+- Monster Energy Ultra Zero Sugar (White) — absurd_density
+- Bisleri Club Soda Carbonated Water — absurd_density
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Veeba Hummus Classic (Dips & Spread Packs) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- Behrouz Biryani Murgh Tandoori Kebabs (Biryani & Kebabs) — macro_cal_mismatch
+- Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Veeba Garlic Mayo (Dips & Spread Packs) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
+- Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- EatFit Dal Makhani Khichdi Bowl (Healthy Meals & Bowls) — macro_cal_mismatch
+- Haldiram's Dry Petha (Sweets & Mithai) — macro_cal_mismatch
+- Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — absurd_density
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- Behrouz Biryani Murgh Tandoori Kebabs (Biryani & Kebabs) — macro_cal_mismatch
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
+- Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Mother Dairy Rabri Cup (Packaged Desserts) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — macro_cal_mismatch
+- EatFit Dal Makhani Khichdi Bowl (Healthy Meals & Bowls) — macro_cal_mismatch
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
+- Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Baskin Robbins Dutch Chocolate (Ice Cream Scoops) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — macro_cal_mismatch
+- Behrouz Biryani Murgh Tandoori Kebabs (Biryani & Kebabs) — macro_cal_mismatch
+- KFC Popcorn Chicken Rice Bowl (Rolls & Bowls) — macro_cal_mismatch
+- Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- Subway Chana Patty Wrap (Salads & Wraps) — macro_cal_mismatch
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — macro_cal_mismatch
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Baskin Robbins Roasted Almond (Ice Cream Scoops) — macro_cal_mismatch
+- Mother Dairy Mishti Doi Cup (Packaged Desserts) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Mother Dairy Rabri Cup (Packaged Desserts) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Domino's Pizza Cheesy Dip Classic (Pastas & Dips) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Baskin Robbins Alphonso Mango (Ice Cream Scoops) — macro_cal_mismatch
+- Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- Subway Chana Patty Wrap (Salads & Wraps) — macro_cal_mismatch
+- Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
+- Baskin Robbins Pralines & Cream (Ice Cream Scoops) — macro_cal_mismatch
+- Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- KFC Popcorn Chicken Rice Bowl (Rolls & Bowls) — macro_cal_mismatch
+- Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
+- Veeba Cheese Dip Classic (Dips & Spread Packs) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Domino's Pizza Cheesy Dip Classic (Pastas & Dips) — macro_cal_mismatch
+- Mother Dairy Rabri Cup (Packaged Desserts) — macro_cal_mismatch
+- Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- Baskin Robbins Alphonso Mango (Ice Cream Scoops) — macro_cal_mismatch
+- Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- Baskin Robbins Bavarian Chocolate (Ice Cream Scoops) — macro_cal_mismatch
+- Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Mother Dairy Rabri Cup (Packaged Desserts) — macro_cal_mismatch
+- Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- Subway Chana Patty Wrap (Salads & Wraps) — macro_cal_mismatch
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- EatFit Dal Makhani Khichdi Bowl (Healthy Meals & Bowls) — macro_cal_mismatch
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- KFC Popcorn Chicken Rice Bowl (Rolls & Bowls) — macro_cal_mismatch
+- Raw Pressery Mango Smoothie (Cold Pressed Juices) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- Behrouz Biryani Murgh Tandoori Kebabs (Biryani & Kebabs) — macro_cal_mismatch
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Raw Pressery Pomegranate Juice (Cold Pressed Juices) — macro_cal_mismatch
+- Epigamia Cold Coffee Shake (Milkshakes & Drinks) — macro_cal_mismatch
+- Rebel Foods / Faasos Butter Chicken Rice Bowl (Quick Wraps & Bowls) — bad_name
+- McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
+- Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
+- Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
+</details>
+
+## Collapse decisions (1536 dropped)
+
+<details><summary>All collapses (dropped → kept)</summary>
+
+- MyFitness Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
+- MyFitness Chocolate Peanut Butter (Smooth) → Alpino Chocolate Peanut Butter (Smooth)
+- Pintola Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
+- Pintola Chocolate Peanut Butter (Smooth) → Alpino Chocolate Peanut Butter (Smooth)
+- Alpino Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
+- Yoga Bar Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
+- Yoga Bar Chocolate Peanut Butter (Smooth) → Alpino Chocolate Peanut Butter (Smooth)
+- Disano Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
+- Disano Chocolate Peanut Butter (Smooth) → Alpino Chocolate Peanut Butter (Smooth)
+- MyFitness Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- MyFitness Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Pintola Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Pintola Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Alpino Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Yoga Bar Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Yoga Bar Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Disano Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Disano Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- As-It-Is Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- As-It-Is Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Asitis Nut Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Asitis Nut Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Sundrop Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Sundrop Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- The Whole Truth Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Nutriorg Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Nutriorg Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- MyFitness High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Pintola High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Yoga Bar High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Disano High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- As-It-Is High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Asitis Nut High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Sundrop High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- The Whole Truth High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Nutriorg High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- MyFitness High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Pintola High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Yoga Bar High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Disano High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- As-It-Is High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Asitis Nut High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Sundrop High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- The Whole Truth High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Nutriorg High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Origins Nutritive Rolled Oats → True Elements Rolled Oats
+- Dymatize ISO100 Hydrolyzed Whey Isolate (Gourmet Chocolate) → Dymatize ISO100 Hydrolyzed Whey Isolate (Fudge Brownie)
+- Nutrela Soya Chunks (Mini / Regular) → Nutrela Soya Granules
+- Veeba Tomato Ketchup No Onion No Garlic → Heinz Tomato Ketchup Classic
+- Sabudana Khichdi (Fasting Meal) → Sabudana Khichdi
+- Sabudana Vada → Sabudana Vada
+- Paneer Paratha (Homestyle Ghee) → Paneer Paratha (Low Oil Diet)
+- Paneer Cheela (Homestyle Ghee) → Paneer Cheela (Low Oil Diet)
+- Cheese Dosa (Homestyle Ghee) → Cheese Dosa (Low Oil Diet)
+- Cheese Paratha (Homestyle Ghee) → Gobi Paratha (Butter Loaded)
+- Cheese Paratha (Low Oil Diet) → Gobi Paratha (Butter Loaded)
+- Methi Paratha (Butter Loaded) → Gobi Paratha (Butter Loaded)
+- Onion Paratha (Butter Loaded) → Gobi Paratha (Butter Loaded)
+- Palak Paratha (Butter Loaded) → Gobi Paratha (Butter Loaded)
+- Mixed Veg Paratha (Butter Loaded) → Gobi Paratha (Butter Loaded)
+- Tofu Paratha (Butter Loaded) → Gobi Paratha (Butter Loaded)
+- Mushroom Paratha (Butter Loaded) → Gobi Paratha (Butter Loaded)
+- Corn Paratha (Butter Loaded) → Gobi Paratha (Butter Loaded)
+- Cheese Cheela (Homestyle Ghee) → Cheese Cheela (Low Oil Diet)
+- Cheese Cheela (Butter Loaded) → Cheese Cheela (Low Oil Diet)
+- Aloo Dosa (Homestyle Ghee) → Aloo Dosa (Low Oil Diet)
+- Aloo Paratha (Homestyle Ghee) → Aloo Paratha (Low Oil Diet)
+- Aloo Cheela (Homestyle Ghee) → Aloo Cheela (Low Oil Diet)
+- Gobi Dosa (Homestyle Ghee) → Gobi Dosa (Low Oil Diet)
+- Methi Dosa (Homestyle Ghee) → Gobi Dosa (Low Oil Diet)
+- Methi Dosa (Low Oil Diet) → Gobi Dosa (Low Oil Diet)
+- Onion Dosa (Homestyle Ghee) → Gobi Dosa (Low Oil Diet)
+- Onion Dosa (Low Oil Diet) → Gobi Dosa (Low Oil Diet)
+- Palak Dosa (Homestyle Ghee) → Gobi Dosa (Low Oil Diet)
+- Palak Dosa (Low Oil Diet) → Gobi Dosa (Low Oil Diet)
+- Sattu Dosa (Homestyle Ghee) → Gobi Dosa (Low Oil Diet)
+- Sattu Dosa (Low Oil Diet) → Gobi Dosa (Low Oil Diet)
+- Mixed Veg Dosa (Homestyle Ghee) → Gobi Dosa (Low Oil Diet)
+- Mixed Veg Dosa (Low Oil Diet) → Gobi Dosa (Low Oil Diet)
+- Mushroom Dosa (Homestyle Ghee) → Gobi Dosa (Low Oil Diet)
+- Mushroom Dosa (Low Oil Diet) → Gobi Dosa (Low Oil Diet)
+- Corn Dosa (Homestyle Ghee) → Gobi Dosa (Low Oil Diet)
+- Corn Dosa (Low Oil Diet) → Gobi Dosa (Low Oil Diet)
+- Gobi Paratha (Homestyle Ghee) → Gobi Paratha (Low Oil Diet)
+- Methi Paratha (Homestyle Ghee) → Gobi Paratha (Low Oil Diet)
+- Methi Paratha (Low Oil Diet) → Gobi Paratha (Low Oil Diet)
+- Onion Paratha (Homestyle Ghee) → Gobi Paratha (Low Oil Diet)
+- Onion Paratha (Low Oil Diet) → Gobi Paratha (Low Oil Diet)
+- Palak Paratha (Homestyle Ghee) → Gobi Paratha (Low Oil Diet)
+- Palak Paratha (Low Oil Diet) → Gobi Paratha (Low Oil Diet)
+- Mixed Veg Paratha (Homestyle Ghee) → Gobi Paratha (Low Oil Diet)
+- Mixed Veg Paratha (Low Oil Diet) → Gobi Paratha (Low Oil Diet)
+- Tofu Paratha (Homestyle Ghee) → Gobi Paratha (Low Oil Diet)
+- Tofu Paratha (Low Oil Diet) → Gobi Paratha (Low Oil Diet)
+- Mushroom Paratha (Homestyle Ghee) → Gobi Paratha (Low Oil Diet)
+- Mushroom Paratha (Low Oil Diet) → Gobi Paratha (Low Oil Diet)
+- Corn Paratha (Homestyle Ghee) → Gobi Paratha (Low Oil Diet)
+- Corn Paratha (Low Oil Diet) → Gobi Paratha (Low Oil Diet)
+- Gobi Cheela (Homestyle Ghee) → Gobi Cheela (Low Oil Diet)
+- Methi Cheela (Homestyle Ghee) → Gobi Cheela (Low Oil Diet)
+- Methi Cheela (Low Oil Diet) → Gobi Cheela (Low Oil Diet)
+- Onion Cheela (Homestyle Ghee) → Gobi Cheela (Low Oil Diet)
+- Onion Cheela (Low Oil Diet) → Gobi Cheela (Low Oil Diet)
+- Palak Cheela (Homestyle Ghee) → Gobi Cheela (Low Oil Diet)
+- Palak Cheela (Low Oil Diet) → Gobi Cheela (Low Oil Diet)
+- Sattu Cheela (Homestyle Ghee) → Gobi Cheela (Low Oil Diet)
+- Sattu Cheela (Low Oil Diet) → Gobi Cheela (Low Oil Diet)
+- Mixed Veg Cheela (Homestyle Ghee) → Gobi Cheela (Low Oil Diet)
+- Mixed Veg Cheela (Low Oil Diet) → Gobi Cheela (Low Oil Diet)
+- Tofu Cheela (Homestyle Ghee) → Gobi Cheela (Low Oil Diet)
+- Tofu Cheela (Low Oil Diet) → Gobi Cheela (Low Oil Diet)
+- Mushroom Cheela (Homestyle Ghee) → Gobi Cheela (Low Oil Diet)
+- Mushroom Cheela (Low Oil Diet) → Gobi Cheela (Low Oil Diet)
+- Corn Cheela (Homestyle Ghee) → Gobi Cheela (Low Oil Diet)
+- Corn Cheela (Low Oil Diet) → Gobi Cheela (Low Oil Diet)
+- Methi Dosa (Butter Loaded) → Gobi Dosa (Butter Loaded)
+- Onion Dosa (Butter Loaded) → Gobi Dosa (Butter Loaded)
+- Palak Dosa (Butter Loaded) → Gobi Dosa (Butter Loaded)
+- Sattu Dosa (Butter Loaded) → Gobi Dosa (Butter Loaded)
+- Mixed Veg Dosa (Butter Loaded) → Gobi Dosa (Butter Loaded)
+- Mushroom Dosa (Butter Loaded) → Gobi Dosa (Butter Loaded)
+- Corn Dosa (Butter Loaded) → Gobi Dosa (Butter Loaded)
+- Methi Cheela (Butter Loaded) → Gobi Cheela (Butter Loaded)
+- Onion Cheela (Butter Loaded) → Gobi Cheela (Butter Loaded)
+- Palak Cheela (Butter Loaded) → Gobi Cheela (Butter Loaded)
+- Sattu Cheela (Butter Loaded) → Gobi Cheela (Butter Loaded)
+- Mixed Veg Cheela (Butter Loaded) → Gobi Cheela (Butter Loaded)
+- Tofu Cheela (Butter Loaded) → Gobi Cheela (Butter Loaded)
+- Mushroom Cheela (Butter Loaded) → Gobi Cheela (Butter Loaded)
+- Corn Cheela (Butter Loaded) → Gobi Cheela (Butter Loaded)
+- Sattu Paratha (Homestyle Ghee) → Sattu Paratha (Low Oil Diet)
+- Egg Dosa (Homestyle Ghee) → Egg Dosa (Low Oil Diet)
+- Tofu Dosa (Homestyle Ghee) → Egg Dosa (Low Oil Diet)
+- Tofu Dosa (Low Oil Diet) → Egg Dosa (Low Oil Diet)
+- Egg Paratha (Homestyle Ghee) → Egg Paratha (Low Oil Diet)
+- Egg Cheela (Homestyle Ghee) → Egg Cheela (Low Oil Diet)
+- Tofu Dosa (Butter Loaded) → Egg Dosa (Butter Loaded)
+- Toor Dal (Homestyle Low Oil) → Rajma (Homestyle Low Oil)
+- Moong Dal (Homestyle Low Oil) → Rajma (Homestyle Low Oil)
+- Masoor Dal (Homestyle Low Oil) → Rajma (Homestyle Low Oil)
+- Chana Dal (Homestyle Low Oil) → Rajma (Homestyle Low Oil)
+- Urad Dal (Homestyle Low Oil) → Rajma (Homestyle Low Oil)
+- Mix Dal (Homestyle Low Oil) → Rajma (Homestyle Low Oil)
+- Green Moong Whole (Homestyle Low Oil) → Rajma (Homestyle Low Oil)
+- Kala Chana (Homestyle Low Oil) → Rajma (Homestyle Low Oil)
+- Kabuli Chana (Homestyle Low Oil) → Rajma (Homestyle Low Oil)
+- Lobia (Homestyle Low Oil) → Rajma (Homestyle Low Oil)
+- Moth Beans (Homestyle Low Oil) → Rajma (Homestyle Low Oil)
+- Horsegram (Homestyle Low Oil) → Rajma (Homestyle Low Oil)
+- Toor Dal (Ghee Tadka) → Rajma (Ghee Tadka)
+- Moong Dal (Ghee Tadka) → Rajma (Ghee Tadka)
+- Masoor Dal (Ghee Tadka) → Rajma (Ghee Tadka)
+- Chana Dal (Ghee Tadka) → Rajma (Ghee Tadka)
+- Urad Dal (Ghee Tadka) → Rajma (Ghee Tadka)
+- Mix Dal (Ghee Tadka) → Rajma (Ghee Tadka)
+- Green Moong Whole (Ghee Tadka) → Rajma (Ghee Tadka)
+- Kala Chana (Ghee Tadka) → Rajma (Ghee Tadka)
+- Kabuli Chana (Ghee Tadka) → Rajma (Ghee Tadka)
+- Lobia (Ghee Tadka) → Rajma (Ghee Tadka)
+- Moth Beans (Ghee Tadka) → Rajma (Ghee Tadka)
+- Horsegram (Ghee Tadka) → Rajma (Ghee Tadka)
+- Toor Dal (Dhaba Style Butter Garlic) → Rajma (Dhaba Style Butter Garlic)
+- Moong Dal (Dhaba Style Butter Garlic) → Rajma (Dhaba Style Butter Garlic)
+- Masoor Dal (Dhaba Style Butter Garlic) → Rajma (Dhaba Style Butter Garlic)
+- Chana Dal (Dhaba Style Butter Garlic) → Rajma (Dhaba Style Butter Garlic)
+- Urad Dal (Dhaba Style Butter Garlic) → Rajma (Dhaba Style Butter Garlic)
+- Mix Dal (Dhaba Style Butter Garlic) → Rajma (Dhaba Style Butter Garlic)
+- Green Moong Whole (Dhaba Style Butter Garlic) → Rajma (Dhaba Style Butter Garlic)
+- Kala Chana (Dhaba Style Butter Garlic) → Rajma (Dhaba Style Butter Garlic)
+- Kabuli Chana (Dhaba Style Butter Garlic) → Rajma (Dhaba Style Butter Garlic)
+- Lobia (Dhaba Style Butter Garlic) → Rajma (Dhaba Style Butter Garlic)
+- Moth Beans (Dhaba Style Butter Garlic) → Rajma (Dhaba Style Butter Garlic)
+- Horsegram (Dhaba Style Butter Garlic) → Rajma (Dhaba Style Butter Garlic)
+- Toor Dal (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
+- Moong Dal (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
+- Masoor Dal (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
+- Chana Dal (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
+- Urad Dal (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
+- Mix Dal (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
+- Green Moong Whole (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
+- Kala Chana (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
+- Kabuli Chana (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
+- Lobia (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
+- Moth Beans (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
+- Horsegram (Pahadi / Himalayan Style) → Rajma (Pahadi / Himalayan Style)
+- Toor Dal (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
+- Toor Dal (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
+- Moong Dal (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
+- Moong Dal (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
+- Masoor Dal (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
+- Masoor Dal (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
+- Chana Dal (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
+- Chana Dal (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
+- Urad Dal (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
+- Urad Dal (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
+- Mix Dal (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
+- Mix Dal (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
+- Green Moong Whole (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
+- Kala Chana (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
+- Kala Chana (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
+- Kabuli Chana (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
+- Rajma (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
+- Lobia (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
+- Lobia (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
+- Moth Beans (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
+- Moth Beans (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
+- Horsegram (South Indian Tempering (Mustard & Curry Leaves)) → Rajma (Bengali Tempering (Panch Phoron))
+- Horsegram (Bengali Tempering (Panch Phoron)) → Rajma (Bengali Tempering (Panch Phoron))
+- Toor Dal (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
+- Moong Dal (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
+- Masoor Dal (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
+- Chana Dal (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
+- Urad Dal (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
+- Mix Dal (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
+- Green Moong Whole (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
+- Kala Chana (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
+- Kabuli Chana (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
+- Lobia (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
+- Moth Beans (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
+- Horsegram (Andhra Pappu (Spinach / Tomato / Mango)) → Rajma (Andhra Pappu (Spinach / Tomato / Mango))
+- Paneer Do Pyaza → Handi Paneer
+- Matar (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
+- Palak (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
+- Bhindi (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
+- Baingan (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
+- Lauki (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
+- Capsicum (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
+- Babycorn (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
+- Broccoli (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
+- Karela (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
+- Arbi (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
+- Kaddu (Pumpkin) (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
+- Chawli (Long Beans) (Homestyle Onion-Tomato) → Gobi (Homestyle Onion-Tomato)
+- Matar (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
+- Palak (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
+- Bhindi (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
+- Baingan (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
+- Lauki (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
+- Capsicum (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
+- Babycorn (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
+- Broccoli (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
+- Karela (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
+- Arbi (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
+- Kaddu (Pumpkin) (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
+- Chawli (Long Beans) (Punjabi Dhaba Style (Extra Oil/Butter)) → Gobi (Punjabi Dhaba Style (Extra Oil/Butter))
+- Matar (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
+- Palak (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
+- Bhindi (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
+- Baingan (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
+- Lauki (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
+- Capsicum (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
+- Babycorn (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
+- Broccoli (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
+- Karela (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
+- Arbi (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
+- Kaddu (Pumpkin) (South Indian Poriyal (Mustard & Coconut)) → Gobi (South Indian Poriyal (Mustard & Coconut))
+- Gobi (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Matar (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
+- Matar (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Palak (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
+- Palak (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Bhindi (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
+- Bhindi (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Baingan (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
+- Baingan (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Lauki (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
+- Lauki (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Capsicum (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
+- Capsicum (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Babycorn (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
+- Babycorn (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Broccoli (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
+- Broccoli (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Karela (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
+- Karela (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Arbi (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
+- Arbi (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Kaddu (Pumpkin) (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
+- Kaddu (Pumpkin) (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Chawli (Long Beans) (Andhra Spicy Masala) → Gobi (Andhra Spicy Masala)
+- Chawli (Long Beans) (Maharashtrian Kanda-Lassun Masala) → Gobi (Andhra Spicy Masala)
+- Matar (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
+- Palak (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
+- Bhindi (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
+- Baingan (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
+- Lauki (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
+- Capsicum (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
+- Babycorn (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
+- Broccoli (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
+- Karela (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
+- Arbi (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
+- Kaddu (Pumpkin) (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
+- Chawli (Long Beans) (Bengali Jhol (Mustard / Panch Phoron)) → Gobi (Bengali Jhol (Mustard / Panch Phoron))
+- Matar (Chettinad Masala) → Gobi (Chettinad Masala)
+- Palak (Chettinad Masala) → Gobi (Chettinad Masala)
+- Bhindi (Chettinad Masala) → Gobi (Chettinad Masala)
+- Baingan (Chettinad Masala) → Gobi (Chettinad Masala)
+- Lauki (Chettinad Masala) → Gobi (Chettinad Masala)
+- Capsicum (Chettinad Masala) → Gobi (Chettinad Masala)
+- Babycorn (Chettinad Masala) → Gobi (Chettinad Masala)
+- Broccoli (Chettinad Masala) → Gobi (Chettinad Masala)
+- Karela (Chettinad Masala) → Gobi (Chettinad Masala)
+- Arbi (Chettinad Masala) → Gobi (Chettinad Masala)
+- Kaddu (Pumpkin) (Chettinad Masala) → Gobi (Chettinad Masala)
+- Chawli (Long Beans) (Chettinad Masala) → Gobi (Chettinad Masala)
+- Matar (Mughlai Shahi White Gravy) → Gobi (Mughlai Shahi White Gravy)
+- Palak (Mughlai Shahi White Gravy) → Gobi (Mughlai Shahi White Gravy)
+- Bhindi (Mughlai Shahi White Gravy) → Gobi (Mughlai Shahi White Gravy)
+- Baingan (Mughlai Shahi White Gravy) → Gobi (Mughlai Shahi White Gravy)
+- Lauki (Mughlai Shahi White Gravy) → Gobi (Mughlai Shahi White Gravy)
+- Capsicum (Mughlai Shahi White Gravy) → Gobi (Mughlai Shahi White Gravy)
+- Babycorn (Mughlai Shahi White Gravy) → Gobi (Mughlai Shahi White Gravy)
+- Broccoli (Mughlai Shahi White Gravy) → Gobi (Mughlai Shahi White Gravy)
+- Karela (Mughlai Shahi White Gravy) → Gobi (Mughlai Shahi White Gravy)
+- Arbi (Mughlai Shahi White Gravy) → Gobi (Mughlai Shahi White Gravy)
+- Kaddu (Pumpkin) (Mughlai Shahi White Gravy) → Gobi (Mughlai Shahi White Gravy)
+- Chawli (Long Beans) (Mughlai Shahi White Gravy) → Gobi (Mughlai Shahi White Gravy)
+- Aloo (Maharashtrian Kanda-Lassun Masala) → Aloo (Andhra Spicy Masala)
+- Paneer (Maharashtrian Kanda-Lassun Masala) → Paneer (Andhra Spicy Masala)
+- Mushroom (Maharashtrian Kanda-Lassun Masala) → Mushroom (Andhra Spicy Masala)
+- Soya Chunks (Maharashtrian Kanda-Lassun Masala) → Soya Chunks (Andhra Spicy Masala)
+- Sweet Corn (Maharashtrian Kanda-Lassun Masala) → Sweet Corn (Andhra Spicy Masala)
+- Chicken Boneless (Kerala Coconut Fry / Roast) → Chicken Boneless (Dhaba Spicy Gravy)
+- Chicken With Bone (Kerala Coconut Fry / Roast) → Chicken With Bone (Dhaba Spicy Gravy)
+- Prawns / Shrimp (Kerala Coconut Fry / Roast) → Prawns / Shrimp (Dhaba Spicy Gravy)
+- Egg (2 whole) (Kerala Coconut Fry / Roast) → Egg (2 whole) (Dhaba Spicy Gravy)
+- Crab (Kerala Coconut Fry / Roast) → Crab (Dhaba Spicy Gravy)
+- Squid / Calamari (Kerala Coconut Fry / Roast) → Squid / Calamari (Dhaba Spicy Gravy)
+- Kerala Parotta (Layered Maida) → Coin Parotta (Mini)
+- Tamarind Basmati White Rice → Curd Brown Rice
+- Tamarind Sona Masoori Rice → Curd Brown Rice
+- Tamarind Brown Rice → Curd Brown Rice
+- Lemon Basmati White Rice → Curd Brown Rice
+- Lemon Sona Masoori Rice → Curd Brown Rice
+- Lemon Brown Rice → Curd Brown Rice
+- Tomato Basmati White Rice → Curd Brown Rice
+- Tomato Sona Masoori Rice → Curd Brown Rice
+- Tomato Brown Rice → Curd Brown Rice
+- Curd Basmati White Rice → Curd Brown Rice
+- Curd Sona Masoori Rice → Curd Brown Rice
+- Garlic Mint Basmati White Rice → Curd Brown Rice
+- Garlic Mint Sona Masoori Rice → Curd Brown Rice
+- Garlic Mint Brown Rice → Curd Brown Rice
+- Methi Basmati White Rice → Curd Brown Rice
+- Methi Sona Masoori Rice → Curd Brown Rice
+- Methi Brown Rice → Curd Brown Rice
+- Capsicum Basmati White Rice → Curd Brown Rice
+- Capsicum Sona Masoori Rice → Curd Brown Rice
+- Capsicum Brown Rice → Curd Brown Rice
+- Raw Mango (Pulihora) Basmati White Rice → Curd Brown Rice
+- Raw Mango (Pulihora) Sona Masoori Rice → Curd Brown Rice
+- Raw Mango (Pulihora) Brown Rice → Curd Brown Rice
+- Spinach (Palak) Basmati White Rice → Curd Brown Rice
+- Spinach (Palak) Sona Masoori Rice → Curd Brown Rice
+- Spinach (Palak) Brown Rice → Curd Brown Rice
+- Mushroom Basmati White Rice → Curd Brown Rice
+- Mushroom Sona Masoori Rice → Curd Brown Rice
+- Mushroom Brown Rice → Curd Brown Rice
+- Tamarind Foxtail Millet → Curd Foxtail Millet
+- Lemon Foxtail Millet → Curd Foxtail Millet
+- Tomato Foxtail Millet → Curd Foxtail Millet
+- Garlic Mint Foxtail Millet → Curd Foxtail Millet
+- Methi Foxtail Millet → Curd Foxtail Millet
+- Capsicum Foxtail Millet → Curd Foxtail Millet
+- Raw Mango (Pulihora) Foxtail Millet → Curd Foxtail Millet
+- Spinach (Palak) Foxtail Millet → Curd Foxtail Millet
+- Mushroom Foxtail Millet → Curd Foxtail Millet
+- Coconut Basmati White Rice → Coconut Brown Rice
+- Coconut Sona Masoori Rice → Coconut Brown Rice
+- Ghee Cumin Basmati White Rice → Coconut Brown Rice
+- Ghee Cumin Sona Masoori Rice → Coconut Brown Rice
+- Ghee Cumin Brown Rice → Coconut Brown Rice
+- Ghee Cumin Foxtail Millet → Coconut Foxtail Millet
+- Aashirvaad Multigrain Atta → Fortune Multigrain Atta
+- Patanjali Multigrain Atta → Fortune Multigrain Atta
+- Tata Sampann Multigrain Atta → Fortune Multigrain Atta
+- 24 Mantra Organic Multigrain Atta → Fortune Multigrain Atta
+- Organic Tattva Multigrain Atta → Fortune Multigrain Atta
+- Aashirvaad Besan → Fortune Besan
+- Patanjali Besan → Fortune Besan
+- Tata Sampann Besan → Fortune Besan
+- 24 Mantra Organic Besan → Fortune Besan
+- Organic Tattva Besan → Fortune Besan
+- Paneer Pakoda → Paneer Vada
+- Paneer Samosa → Paneer Vada
+- Paneer Kachori → Paneer Vada
+- Paneer Roll → Paneer Vada
+- Paneer Cutlet → Paneer Vada
+- Paneer Tikhi Puri → Paneer Vada
+- Paneer Mathri → Paneer Vada
+- Cheese Pakoda → Cheese Vada
+- Cheese Samosa → Cheese Vada
+- Cheese Kachori → Cheese Vada
+- Cheese Roll → Cheese Vada
+- Cheese Cutlet → Cheese Vada
+- Cheese Tikhi Puri → Cheese Vada
+- Cheese Mathri → Cheese Vada
+- Cardamom Chai (Elaichi Chai) → Ginger Chai (Adrak Chai)
+- Filter Coffee (Full Cream Milk + Sugar) → Chai (Full Cream Milk + Sugar)
+- Badam Milk (Full Cream Milk + Sugar) → Chai (Full Cream Milk + Sugar)
+- Golden Turmeric Milk (Haldi Doodh) (Full Cream Milk + Sugar) → Chai (Full Cream Milk + Sugar)
+- Hot Chocolate Milk (Full Cream Milk + Sugar) → Chai (Full Cream Milk + Sugar)
+- Rose Milk (Full Cream Milk + Sugar) → Chai (Full Cream Milk + Sugar)
+- Pista Milk (Full Cream Milk + Sugar) → Chai (Full Cream Milk + Sugar)
+- Filter Coffee (Toned Milk + Sugar) → Chai (Toned Milk + Sugar)
+- Badam Milk (Toned Milk + Sugar) → Chai (Toned Milk + Sugar)
+- Golden Turmeric Milk (Haldi Doodh) (Toned Milk + Sugar) → Chai (Toned Milk + Sugar)
+- Hot Chocolate Milk (Toned Milk + Sugar) → Chai (Toned Milk + Sugar)
+- Rose Milk (Toned Milk + Sugar) → Chai (Toned Milk + Sugar)
+- Pista Milk (Toned Milk + Sugar) → Chai (Toned Milk + Sugar)
+- Filter Coffee (Skimmed Milk + Sugar) → Chai (Skimmed Milk + Sugar)
+- Badam Milk (Skimmed Milk + Sugar) → Chai (Skimmed Milk + Sugar)
+- Golden Turmeric Milk (Haldi Doodh) (Skimmed Milk + Sugar) → Chai (Skimmed Milk + Sugar)
+- Hot Chocolate Milk (Skimmed Milk + Sugar) → Chai (Skimmed Milk + Sugar)
+- Rose Milk (Skimmed Milk + Sugar) → Chai (Skimmed Milk + Sugar)
+- Pista Milk (Skimmed Milk + Sugar) → Chai (Skimmed Milk + Sugar)
+- Filter Coffee (Jaggery (Gud) Sweetened) → Chai (Jaggery (Gud) Sweetened)
+- Badam Milk (Jaggery (Gud) Sweetened) → Chai (Jaggery (Gud) Sweetened)
+- Golden Turmeric Milk (Haldi Doodh) (Jaggery (Gud) Sweetened) → Chai (Jaggery (Gud) Sweetened)
+- Hot Chocolate Milk (Jaggery (Gud) Sweetened) → Chai (Jaggery (Gud) Sweetened)
+- Rose Milk (Jaggery (Gud) Sweetened) → Chai (Jaggery (Gud) Sweetened)
+- Pista Milk (Jaggery (Gud) Sweetened) → Chai (Jaggery (Gud) Sweetened)
+- Filter Coffee (Sugar-Free Stevia Sweetened) → Chai (Sugar-Free Stevia Sweetened)
+- Badam Milk (Sugar-Free Stevia Sweetened) → Chai (Sugar-Free Stevia Sweetened)
+- Hot Chocolate Milk (Sugar-Free Stevia Sweetened) → Chai (Sugar-Free Stevia Sweetened)
+- Rose Milk (Sugar-Free Stevia Sweetened) → Chai (Sugar-Free Stevia Sweetened)
+- Pista Milk (Sugar-Free Stevia Sweetened) → Chai (Sugar-Free Stevia Sweetened)
+- Karnataka Udipi Style Veg Korma - Var 22 → North Indian Homestyle Veg Korma - Var 1
+- North Indian Homestyle Veg Korma - Var 43 → North Indian Homestyle Veg Korma - Var 1
+- Karnataka Udipi Style Veg Korma - Var 64 → North Indian Homestyle Veg Korma - Var 1
+- North Indian Homestyle Veg Korma - Var 85 → North Indian Homestyle Veg Korma - Var 1
+- Karnataka Udipi Style Veg Korma - Var 106 → North Indian Homestyle Veg Korma - Var 1
+- North Indian Homestyle Veg Korma - Var 127 → North Indian Homestyle Veg Korma - Var 1
+- Gujarati Jain Style Kofta Curry - Var 22 → Punjabi Dhaba Style Kofta Curry - Var 1
+- Punjabi Dhaba Style Kofta Curry - Var 43 → Punjabi Dhaba Style Kofta Curry - Var 1
+- Gujarati Jain Style Kofta Curry - Var 64 → Punjabi Dhaba Style Kofta Curry - Var 1
+- Punjabi Dhaba Style Kofta Curry - Var 85 → Punjabi Dhaba Style Kofta Curry - Var 1
+- Gujarati Jain Style Kofta Curry - Var 106 → Punjabi Dhaba Style Kofta Curry - Var 1
+- Punjabi Dhaba Style Kofta Curry - Var 127 → Punjabi Dhaba Style Kofta Curry - Var 1
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 22 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 1
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 43 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 1
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 64 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 1
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 85 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 1
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 106 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 1
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 127 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 1
+- Bengali Traditional Chickpea Stew - Var 22 → Chettinad Special Chickpea Stew - Var 1
+- Chettinad Special Chickpea Stew - Var 43 → Chettinad Special Chickpea Stew - Var 1
+- Bengali Traditional Chickpea Stew - Var 64 → Chettinad Special Chickpea Stew - Var 1
+- Chettinad Special Chickpea Stew - Var 85 → Chettinad Special Chickpea Stew - Var 1
+- Bengali Traditional Chickpea Stew - Var 106 → Chettinad Special Chickpea Stew - Var 1
+- Chettinad Special Chickpea Stew - Var 127 → Chettinad Special Chickpea Stew - Var 1
+- Kerala Malabar Style Stuffed Paratha Roll - Var 1 → Hyderabadi Style Stuffed Paratha Roll - Var 22
+- Kerala Malabar Style Stuffed Paratha Roll - Var 43 → Hyderabadi Style Stuffed Paratha Roll - Var 22
+- Hyderabadi Style Stuffed Paratha Roll - Var 64 → Hyderabadi Style Stuffed Paratha Roll - Var 22
+- Kerala Malabar Style Stuffed Paratha Roll - Var 85 → Hyderabadi Style Stuffed Paratha Roll - Var 22
+- Hyderabadi Style Stuffed Paratha Roll - Var 106 → Hyderabadi Style Stuffed Paratha Roll - Var 22
+- Kerala Malabar Style Stuffed Paratha Roll - Var 127 → Hyderabadi Style Stuffed Paratha Roll - Var 22
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 22 → Andhra Spicy Style Flavoured Rice Bowl - Var 1
+- Andhra Spicy Style Flavoured Rice Bowl - Var 43 → Andhra Spicy Style Flavoured Rice Bowl - Var 1
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 64 → Andhra Spicy Style Flavoured Rice Bowl - Var 1
+- Andhra Spicy Style Flavoured Rice Bowl - Var 85 → Andhra Spicy Style Flavoured Rice Bowl - Var 1
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 106 → Andhra Spicy Style Flavoured Rice Bowl - Var 1
+- Andhra Spicy Style Flavoured Rice Bowl - Var 127 → Andhra Spicy Style Flavoured Rice Bowl - Var 1
+- North Indian Homestyle Lentil Soup / Shorba - Var 22 → Karnataka Udipi Style Lentil Soup / Shorba - Var 1
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 43 → Karnataka Udipi Style Lentil Soup / Shorba - Var 1
+- North Indian Homestyle Lentil Soup / Shorba - Var 64 → Karnataka Udipi Style Lentil Soup / Shorba - Var 1
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 85 → Karnataka Udipi Style Lentil Soup / Shorba - Var 1
+- North Indian Homestyle Lentil Soup / Shorba - Var 106 → Karnataka Udipi Style Lentil Soup / Shorba - Var 1
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 127 → Karnataka Udipi Style Lentil Soup / Shorba - Var 1
+- Punjabi Dhaba Style Fried Snack Bowl - Var 22 → Gujarati Jain Style Fried Snack Bowl - Var 1
+- Gujarati Jain Style Fried Snack Bowl - Var 43 → Gujarati Jain Style Fried Snack Bowl - Var 1
+- Punjabi Dhaba Style Fried Snack Bowl - Var 64 → Gujarati Jain Style Fried Snack Bowl - Var 1
+- Gujarati Jain Style Fried Snack Bowl - Var 85 → Gujarati Jain Style Fried Snack Bowl - Var 1
+- Punjabi Dhaba Style Fried Snack Bowl - Var 106 → Gujarati Jain Style Fried Snack Bowl - Var 1
+- Gujarati Jain Style Fried Snack Bowl - Var 127 → Gujarati Jain Style Fried Snack Bowl - Var 1
+- South Indian Brahmin Style Regional Sweet Delight - Var 22 → Maharashtrian Malvani Style Regional Sweet Delight - Var 1
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 43 → Maharashtrian Malvani Style Regional Sweet Delight - Var 1
+- South Indian Brahmin Style Regional Sweet Delight - Var 64 → Maharashtrian Malvani Style Regional Sweet Delight - Var 1
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 85 → Maharashtrian Malvani Style Regional Sweet Delight - Var 1
+- South Indian Brahmin Style Regional Sweet Delight - Var 106 → Maharashtrian Malvani Style Regional Sweet Delight - Var 1
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 127 → Maharashtrian Malvani Style Regional Sweet Delight - Var 1
+- Bengali Traditional Specialty Curry Gravy - Var 1 → Chettinad Special Specialty Curry Gravy - Var 22
+- Bengali Traditional Specialty Curry Gravy - Var 43 → Chettinad Special Specialty Curry Gravy - Var 22
+- Chettinad Special Specialty Curry Gravy - Var 64 → Chettinad Special Specialty Curry Gravy - Var 22
+- Bengali Traditional Specialty Curry Gravy - Var 85 → Chettinad Special Specialty Curry Gravy - Var 22
+- Chettinad Special Specialty Curry Gravy - Var 106 → Chettinad Special Specialty Curry Gravy - Var 22
+- Bengali Traditional Specialty Curry Gravy - Var 127 → Chettinad Special Specialty Curry Gravy - Var 22
+- Kerala Malabar Style Veg Korma - Var 23 → Hyderabadi Style Veg Korma - Var 2
+- Hyderabadi Style Veg Korma - Var 44 → Hyderabadi Style Veg Korma - Var 2
+- Kerala Malabar Style Veg Korma - Var 65 → Hyderabadi Style Veg Korma - Var 2
+- Hyderabadi Style Veg Korma - Var 86 → Hyderabadi Style Veg Korma - Var 2
+- Kerala Malabar Style Veg Korma - Var 107 → Hyderabadi Style Veg Korma - Var 2
+- Hyderabadi Style Veg Korma - Var 128 → Hyderabadi Style Veg Korma - Var 2
+- Rajasthani Royal Style Kofta Curry - Var 2 → Andhra Spicy Style Kofta Curry - Var 23
+- Rajasthani Royal Style Kofta Curry - Var 44 → Andhra Spicy Style Kofta Curry - Var 23
+- Andhra Spicy Style Kofta Curry - Var 65 → Andhra Spicy Style Kofta Curry - Var 23
+- Rajasthani Royal Style Kofta Curry - Var 86 → Andhra Spicy Style Kofta Curry - Var 23
+- Andhra Spicy Style Kofta Curry - Var 107 → Andhra Spicy Style Kofta Curry - Var 23
+- Rajasthani Royal Style Kofta Curry - Var 128 → Andhra Spicy Style Kofta Curry - Var 23
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 23 → North Indian Homestyle Mashed Vegetable Bhaji - Var 2
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 44 → North Indian Homestyle Mashed Vegetable Bhaji - Var 2
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 65 → North Indian Homestyle Mashed Vegetable Bhaji - Var 2
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 86 → North Indian Homestyle Mashed Vegetable Bhaji - Var 2
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 107 → North Indian Homestyle Mashed Vegetable Bhaji - Var 2
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 128 → North Indian Homestyle Mashed Vegetable Bhaji - Var 2
+- Gujarati Jain Style Chickpea Stew - Var 23 → Punjabi Dhaba Style Chickpea Stew - Var 2
+- Punjabi Dhaba Style Chickpea Stew - Var 44 → Punjabi Dhaba Style Chickpea Stew - Var 2
+- Gujarati Jain Style Chickpea Stew - Var 65 → Punjabi Dhaba Style Chickpea Stew - Var 2
+- Punjabi Dhaba Style Chickpea Stew - Var 86 → Punjabi Dhaba Style Chickpea Stew - Var 2
+- Gujarati Jain Style Chickpea Stew - Var 107 → Punjabi Dhaba Style Chickpea Stew - Var 2
+- Punjabi Dhaba Style Chickpea Stew - Var 128 → Punjabi Dhaba Style Chickpea Stew - Var 2
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 23 → South Indian Brahmin Style Stuffed Paratha Roll - Var 2
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 44 → South Indian Brahmin Style Stuffed Paratha Roll - Var 2
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 65 → South Indian Brahmin Style Stuffed Paratha Roll - Var 2
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 86 → South Indian Brahmin Style Stuffed Paratha Roll - Var 2
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 107 → South Indian Brahmin Style Stuffed Paratha Roll - Var 2
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 128 → South Indian Brahmin Style Stuffed Paratha Roll - Var 2
+- Bengali Traditional Flavoured Rice Bowl - Var 23 → Chettinad Special Flavoured Rice Bowl - Var 2
+- Chettinad Special Flavoured Rice Bowl - Var 44 → Chettinad Special Flavoured Rice Bowl - Var 2
+- Bengali Traditional Flavoured Rice Bowl - Var 65 → Chettinad Special Flavoured Rice Bowl - Var 2
+- Chettinad Special Flavoured Rice Bowl - Var 86 → Chettinad Special Flavoured Rice Bowl - Var 2
+- Bengali Traditional Flavoured Rice Bowl - Var 107 → Chettinad Special Flavoured Rice Bowl - Var 2
+- Chettinad Special Flavoured Rice Bowl - Var 128 → Chettinad Special Flavoured Rice Bowl - Var 2
+- Rajasthani Royal Style Fried Snack Bowl - Var 23 → Andhra Spicy Style Fried Snack Bowl - Var 2
+- Andhra Spicy Style Fried Snack Bowl - Var 44 → Andhra Spicy Style Fried Snack Bowl - Var 2
+- Rajasthani Royal Style Fried Snack Bowl - Var 65 → Andhra Spicy Style Fried Snack Bowl - Var 2
+- Andhra Spicy Style Fried Snack Bowl - Var 86 → Andhra Spicy Style Fried Snack Bowl - Var 2
+- Rajasthani Royal Style Fried Snack Bowl - Var 107 → Andhra Spicy Style Fried Snack Bowl - Var 2
+- Andhra Spicy Style Fried Snack Bowl - Var 128 → Andhra Spicy Style Fried Snack Bowl - Var 2
+- North Indian Homestyle Regional Sweet Delight - Var 23 → Karnataka Udipi Style Regional Sweet Delight - Var 2
+- Karnataka Udipi Style Regional Sweet Delight - Var 44 → Karnataka Udipi Style Regional Sweet Delight - Var 2
+- North Indian Homestyle Regional Sweet Delight - Var 65 → Karnataka Udipi Style Regional Sweet Delight - Var 2
+- Karnataka Udipi Style Regional Sweet Delight - Var 86 → Karnataka Udipi Style Regional Sweet Delight - Var 2
+- North Indian Homestyle Regional Sweet Delight - Var 107 → Karnataka Udipi Style Regional Sweet Delight - Var 2
+- Karnataka Udipi Style Regional Sweet Delight - Var 128 → Karnataka Udipi Style Regional Sweet Delight - Var 2
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 23 → Gujarati Jain Style Specialty Curry Gravy - Var 2
+- Gujarati Jain Style Specialty Curry Gravy - Var 44 → Gujarati Jain Style Specialty Curry Gravy - Var 2
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 65 → Gujarati Jain Style Specialty Curry Gravy - Var 2
+- Gujarati Jain Style Specialty Curry Gravy - Var 86 → Gujarati Jain Style Specialty Curry Gravy - Var 2
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 107 → Gujarati Jain Style Specialty Curry Gravy - Var 2
+- Gujarati Jain Style Specialty Curry Gravy - Var 128 → Gujarati Jain Style Specialty Curry Gravy - Var 2
+- South Indian Brahmin Style Veg Korma - Var 24 → Maharashtrian Malvani Style Veg Korma - Var 3
+- Maharashtrian Malvani Style Veg Korma - Var 45 → Maharashtrian Malvani Style Veg Korma - Var 3
+- South Indian Brahmin Style Veg Korma - Var 66 → Maharashtrian Malvani Style Veg Korma - Var 3
+- Maharashtrian Malvani Style Veg Korma - Var 87 → Maharashtrian Malvani Style Veg Korma - Var 3
+- South Indian Brahmin Style Veg Korma - Var 108 → Maharashtrian Malvani Style Veg Korma - Var 3
+- Maharashtrian Malvani Style Veg Korma - Var 129 → Maharashtrian Malvani Style Veg Korma - Var 3
+- Bengali Traditional Kofta Curry - Var 3 → Chettinad Special Kofta Curry - Var 24
+- Bengali Traditional Kofta Curry - Var 45 → Chettinad Special Kofta Curry - Var 24
+- Chettinad Special Kofta Curry - Var 66 → Chettinad Special Kofta Curry - Var 24
+- Bengali Traditional Kofta Curry - Var 87 → Chettinad Special Kofta Curry - Var 24
+- Chettinad Special Kofta Curry - Var 108 → Chettinad Special Kofta Curry - Var 24
+- Bengali Traditional Kofta Curry - Var 129 → Chettinad Special Kofta Curry - Var 24
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 24 → Hyderabadi Style Mashed Vegetable Bhaji - Var 3
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 45 → Hyderabadi Style Mashed Vegetable Bhaji - Var 3
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 66 → Hyderabadi Style Mashed Vegetable Bhaji - Var 3
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 87 → Hyderabadi Style Mashed Vegetable Bhaji - Var 3
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 108 → Hyderabadi Style Mashed Vegetable Bhaji - Var 3
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 129 → Hyderabadi Style Mashed Vegetable Bhaji - Var 3
+- Rajasthani Royal Style Chickpea Stew - Var 3 → Andhra Spicy Style Chickpea Stew - Var 24
+- Rajasthani Royal Style Chickpea Stew - Var 45 → Andhra Spicy Style Chickpea Stew - Var 24
+- Andhra Spicy Style Chickpea Stew - Var 66 → Andhra Spicy Style Chickpea Stew - Var 24
+- Rajasthani Royal Style Chickpea Stew - Var 87 → Andhra Spicy Style Chickpea Stew - Var 24
+- Andhra Spicy Style Chickpea Stew - Var 108 → Andhra Spicy Style Chickpea Stew - Var 24
+- Rajasthani Royal Style Chickpea Stew - Var 129 → Andhra Spicy Style Chickpea Stew - Var 24
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 24 → North Indian Homestyle Stuffed Paratha Roll - Var 3
+- North Indian Homestyle Stuffed Paratha Roll - Var 45 → North Indian Homestyle Stuffed Paratha Roll - Var 3
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 66 → North Indian Homestyle Stuffed Paratha Roll - Var 3
+- North Indian Homestyle Stuffed Paratha Roll - Var 87 → North Indian Homestyle Stuffed Paratha Roll - Var 3
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 108 → North Indian Homestyle Stuffed Paratha Roll - Var 3
+- North Indian Homestyle Stuffed Paratha Roll - Var 129 → North Indian Homestyle Stuffed Paratha Roll - Var 3
+- Gujarati Jain Style Flavoured Rice Bowl - Var 24 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 3
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 45 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 3
+- Gujarati Jain Style Flavoured Rice Bowl - Var 66 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 3
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 87 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 3
+- Gujarati Jain Style Flavoured Rice Bowl - Var 108 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 3
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 129 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 3
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 24 → South Indian Brahmin Style Lentil Soup / Shorba - Var 3
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 45 → South Indian Brahmin Style Lentil Soup / Shorba - Var 3
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 66 → South Indian Brahmin Style Lentil Soup / Shorba - Var 3
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 87 → South Indian Brahmin Style Lentil Soup / Shorba - Var 3
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 108 → South Indian Brahmin Style Lentil Soup / Shorba - Var 3
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 129 → South Indian Brahmin Style Lentil Soup / Shorba - Var 3
+- Bengali Traditional Fried Snack Bowl - Var 24 → Chettinad Special Fried Snack Bowl - Var 3
+- Chettinad Special Fried Snack Bowl - Var 45 → Chettinad Special Fried Snack Bowl - Var 3
+- Bengali Traditional Fried Snack Bowl - Var 66 → Chettinad Special Fried Snack Bowl - Var 3
+- Chettinad Special Fried Snack Bowl - Var 87 → Chettinad Special Fried Snack Bowl - Var 3
+- Bengali Traditional Fried Snack Bowl - Var 108 → Chettinad Special Fried Snack Bowl - Var 3
+- Chettinad Special Fried Snack Bowl - Var 129 → Chettinad Special Fried Snack Bowl - Var 3
+- Kerala Malabar Style Regional Sweet Delight - Var 3 → Hyderabadi Style Regional Sweet Delight - Var 24
+- Kerala Malabar Style Regional Sweet Delight - Var 45 → Hyderabadi Style Regional Sweet Delight - Var 24
+- Hyderabadi Style Regional Sweet Delight - Var 66 → Hyderabadi Style Regional Sweet Delight - Var 24
+- Kerala Malabar Style Regional Sweet Delight - Var 87 → Hyderabadi Style Regional Sweet Delight - Var 24
+- Hyderabadi Style Regional Sweet Delight - Var 108 → Hyderabadi Style Regional Sweet Delight - Var 24
+- Kerala Malabar Style Regional Sweet Delight - Var 129 → Hyderabadi Style Regional Sweet Delight - Var 24
+- Rajasthani Royal Style Specialty Curry Gravy - Var 24 → Andhra Spicy Style Specialty Curry Gravy - Var 3
+- Andhra Spicy Style Specialty Curry Gravy - Var 45 → Andhra Spicy Style Specialty Curry Gravy - Var 3
+- Rajasthani Royal Style Specialty Curry Gravy - Var 66 → Andhra Spicy Style Specialty Curry Gravy - Var 3
+- Andhra Spicy Style Specialty Curry Gravy - Var 87 → Andhra Spicy Style Specialty Curry Gravy - Var 3
+- Rajasthani Royal Style Specialty Curry Gravy - Var 108 → Andhra Spicy Style Specialty Curry Gravy - Var 3
+- Andhra Spicy Style Specialty Curry Gravy - Var 129 → Andhra Spicy Style Specialty Curry Gravy - Var 3
+- North Indian Homestyle Veg Korma - Var 25 → Karnataka Udipi Style Veg Korma - Var 4
+- Karnataka Udipi Style Veg Korma - Var 46 → Karnataka Udipi Style Veg Korma - Var 4
+- North Indian Homestyle Veg Korma - Var 67 → Karnataka Udipi Style Veg Korma - Var 4
+- Karnataka Udipi Style Veg Korma - Var 88 → Karnataka Udipi Style Veg Korma - Var 4
+- North Indian Homestyle Veg Korma - Var 109 → Karnataka Udipi Style Veg Korma - Var 4
+- Karnataka Udipi Style Veg Korma - Var 130 → Karnataka Udipi Style Veg Korma - Var 4
+- Punjabi Dhaba Style Kofta Curry - Var 25 → Gujarati Jain Style Kofta Curry - Var 4
+- Gujarati Jain Style Kofta Curry - Var 46 → Gujarati Jain Style Kofta Curry - Var 4
+- Punjabi Dhaba Style Kofta Curry - Var 67 → Gujarati Jain Style Kofta Curry - Var 4
+- Gujarati Jain Style Kofta Curry - Var 88 → Gujarati Jain Style Kofta Curry - Var 4
+- Punjabi Dhaba Style Kofta Curry - Var 109 → Gujarati Jain Style Kofta Curry - Var 4
+- Gujarati Jain Style Kofta Curry - Var 130 → Gujarati Jain Style Kofta Curry - Var 4
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 25 → Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 4
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 46 → Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 4
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 67 → Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 4
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 88 → Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 4
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 109 → Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 4
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 130 → Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 4
+- Bengali Traditional Chickpea Stew - Var 4 → Chettinad Special Chickpea Stew - Var 25
+- Bengali Traditional Chickpea Stew - Var 46 → Chettinad Special Chickpea Stew - Var 25
+- Chettinad Special Chickpea Stew - Var 67 → Chettinad Special Chickpea Stew - Var 25
+- Bengali Traditional Chickpea Stew - Var 88 → Chettinad Special Chickpea Stew - Var 25
+- Chettinad Special Chickpea Stew - Var 109 → Chettinad Special Chickpea Stew - Var 25
+- Bengali Traditional Chickpea Stew - Var 130 → Chettinad Special Chickpea Stew - Var 25
+- Kerala Malabar Style Stuffed Paratha Roll - Var 25 → Hyderabadi Style Stuffed Paratha Roll - Var 4
+- Hyderabadi Style Stuffed Paratha Roll - Var 46 → Hyderabadi Style Stuffed Paratha Roll - Var 4
+- Kerala Malabar Style Stuffed Paratha Roll - Var 67 → Hyderabadi Style Stuffed Paratha Roll - Var 4
+- Hyderabadi Style Stuffed Paratha Roll - Var 88 → Hyderabadi Style Stuffed Paratha Roll - Var 4
+- Kerala Malabar Style Stuffed Paratha Roll - Var 109 → Hyderabadi Style Stuffed Paratha Roll - Var 4
+- Hyderabadi Style Stuffed Paratha Roll - Var 130 → Hyderabadi Style Stuffed Paratha Roll - Var 4
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 4 → Andhra Spicy Style Flavoured Rice Bowl - Var 25
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 46 → Andhra Spicy Style Flavoured Rice Bowl - Var 25
+- Andhra Spicy Style Flavoured Rice Bowl - Var 67 → Andhra Spicy Style Flavoured Rice Bowl - Var 25
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 88 → Andhra Spicy Style Flavoured Rice Bowl - Var 25
+- Andhra Spicy Style Flavoured Rice Bowl - Var 109 → Andhra Spicy Style Flavoured Rice Bowl - Var 25
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 130 → Andhra Spicy Style Flavoured Rice Bowl - Var 25
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 25 → North Indian Homestyle Lentil Soup / Shorba - Var 4
+- North Indian Homestyle Lentil Soup / Shorba - Var 46 → North Indian Homestyle Lentil Soup / Shorba - Var 4
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 67 → North Indian Homestyle Lentil Soup / Shorba - Var 4
+- North Indian Homestyle Lentil Soup / Shorba - Var 88 → North Indian Homestyle Lentil Soup / Shorba - Var 4
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 109 → North Indian Homestyle Lentil Soup / Shorba - Var 4
+- North Indian Homestyle Lentil Soup / Shorba - Var 130 → North Indian Homestyle Lentil Soup / Shorba - Var 4
+- Gujarati Jain Style Fried Snack Bowl - Var 25 → Punjabi Dhaba Style Fried Snack Bowl - Var 4
+- Punjabi Dhaba Style Fried Snack Bowl - Var 46 → Punjabi Dhaba Style Fried Snack Bowl - Var 4
+- Gujarati Jain Style Fried Snack Bowl - Var 67 → Punjabi Dhaba Style Fried Snack Bowl - Var 4
+- Punjabi Dhaba Style Fried Snack Bowl - Var 88 → Punjabi Dhaba Style Fried Snack Bowl - Var 4
+- Gujarati Jain Style Fried Snack Bowl - Var 109 → Punjabi Dhaba Style Fried Snack Bowl - Var 4
+- Punjabi Dhaba Style Fried Snack Bowl - Var 130 → Punjabi Dhaba Style Fried Snack Bowl - Var 4
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 25 → South Indian Brahmin Style Regional Sweet Delight - Var 4
+- South Indian Brahmin Style Regional Sweet Delight - Var 46 → South Indian Brahmin Style Regional Sweet Delight - Var 4
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 67 → South Indian Brahmin Style Regional Sweet Delight - Var 4
+- South Indian Brahmin Style Regional Sweet Delight - Var 88 → South Indian Brahmin Style Regional Sweet Delight - Var 4
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 109 → South Indian Brahmin Style Regional Sweet Delight - Var 4
+- South Indian Brahmin Style Regional Sweet Delight - Var 130 → South Indian Brahmin Style Regional Sweet Delight - Var 4
+- Bengali Traditional Specialty Curry Gravy - Var 25 → Chettinad Special Specialty Curry Gravy - Var 4
+- Chettinad Special Specialty Curry Gravy - Var 46 → Chettinad Special Specialty Curry Gravy - Var 4
+- Bengali Traditional Specialty Curry Gravy - Var 67 → Chettinad Special Specialty Curry Gravy - Var 4
+- Chettinad Special Specialty Curry Gravy - Var 88 → Chettinad Special Specialty Curry Gravy - Var 4
+- Bengali Traditional Specialty Curry Gravy - Var 109 → Chettinad Special Specialty Curry Gravy - Var 4
+- Chettinad Special Specialty Curry Gravy - Var 130 → Chettinad Special Specialty Curry Gravy - Var 4
+- Kerala Malabar Style Veg Korma - Var 5 → Hyderabadi Style Veg Korma - Var 26
+- Kerala Malabar Style Veg Korma - Var 47 → Hyderabadi Style Veg Korma - Var 26
+- Hyderabadi Style Veg Korma - Var 68 → Hyderabadi Style Veg Korma - Var 26
+- Kerala Malabar Style Veg Korma - Var 89 → Hyderabadi Style Veg Korma - Var 26
+- Hyderabadi Style Veg Korma - Var 110 → Hyderabadi Style Veg Korma - Var 26
+- Kerala Malabar Style Veg Korma - Var 131 → Hyderabadi Style Veg Korma - Var 26
+- Rajasthani Royal Style Kofta Curry - Var 26 → Andhra Spicy Style Kofta Curry - Var 5
+- Andhra Spicy Style Kofta Curry - Var 47 → Andhra Spicy Style Kofta Curry - Var 5
+- Rajasthani Royal Style Kofta Curry - Var 68 → Andhra Spicy Style Kofta Curry - Var 5
+- Andhra Spicy Style Kofta Curry - Var 89 → Andhra Spicy Style Kofta Curry - Var 5
+- Rajasthani Royal Style Kofta Curry - Var 110 → Andhra Spicy Style Kofta Curry - Var 5
+- Andhra Spicy Style Kofta Curry - Var 131 → Andhra Spicy Style Kofta Curry - Var 5
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 26 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 5
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 47 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 5
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 68 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 5
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 89 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 5
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 110 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 5
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 131 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 5
+- Punjabi Dhaba Style Chickpea Stew - Var 26 → Gujarati Jain Style Chickpea Stew - Var 5
+- Gujarati Jain Style Chickpea Stew - Var 47 → Gujarati Jain Style Chickpea Stew - Var 5
+- Punjabi Dhaba Style Chickpea Stew - Var 68 → Gujarati Jain Style Chickpea Stew - Var 5
+- Gujarati Jain Style Chickpea Stew - Var 89 → Gujarati Jain Style Chickpea Stew - Var 5
+- Punjabi Dhaba Style Chickpea Stew - Var 110 → Gujarati Jain Style Chickpea Stew - Var 5
+- Gujarati Jain Style Chickpea Stew - Var 131 → Gujarati Jain Style Chickpea Stew - Var 5
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 26 → Maharashtrian Malvani Style Stuffed Paratha Roll - Var 5
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 47 → Maharashtrian Malvani Style Stuffed Paratha Roll - Var 5
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 68 → Maharashtrian Malvani Style Stuffed Paratha Roll - Var 5
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 89 → Maharashtrian Malvani Style Stuffed Paratha Roll - Var 5
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 110 → Maharashtrian Malvani Style Stuffed Paratha Roll - Var 5
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 131 → Maharashtrian Malvani Style Stuffed Paratha Roll - Var 5
+- Bengali Traditional Flavoured Rice Bowl - Var 5 → Chettinad Special Flavoured Rice Bowl - Var 26
+- Bengali Traditional Flavoured Rice Bowl - Var 47 → Chettinad Special Flavoured Rice Bowl - Var 26
+- Chettinad Special Flavoured Rice Bowl - Var 68 → Chettinad Special Flavoured Rice Bowl - Var 26
+- Bengali Traditional Flavoured Rice Bowl - Var 89 → Chettinad Special Flavoured Rice Bowl - Var 26
+- Chettinad Special Flavoured Rice Bowl - Var 110 → Chettinad Special Flavoured Rice Bowl - Var 26
+- Bengali Traditional Flavoured Rice Bowl - Var 131 → Chettinad Special Flavoured Rice Bowl - Var 26
+- Rajasthani Royal Style Fried Snack Bowl - Var 5 → Andhra Spicy Style Fried Snack Bowl - Var 26
+- Rajasthani Royal Style Fried Snack Bowl - Var 47 → Andhra Spicy Style Fried Snack Bowl - Var 26
+- Andhra Spicy Style Fried Snack Bowl - Var 68 → Andhra Spicy Style Fried Snack Bowl - Var 26
+- Rajasthani Royal Style Fried Snack Bowl - Var 89 → Andhra Spicy Style Fried Snack Bowl - Var 26
+- Andhra Spicy Style Fried Snack Bowl - Var 110 → Andhra Spicy Style Fried Snack Bowl - Var 26
+- Rajasthani Royal Style Fried Snack Bowl - Var 131 → Andhra Spicy Style Fried Snack Bowl - Var 26
+- Karnataka Udipi Style Regional Sweet Delight - Var 26 → North Indian Homestyle Regional Sweet Delight - Var 5
+- North Indian Homestyle Regional Sweet Delight - Var 47 → North Indian Homestyle Regional Sweet Delight - Var 5
+- Karnataka Udipi Style Regional Sweet Delight - Var 68 → North Indian Homestyle Regional Sweet Delight - Var 5
+- North Indian Homestyle Regional Sweet Delight - Var 89 → North Indian Homestyle Regional Sweet Delight - Var 5
+- Karnataka Udipi Style Regional Sweet Delight - Var 110 → North Indian Homestyle Regional Sweet Delight - Var 5
+- North Indian Homestyle Regional Sweet Delight - Var 131 → North Indian Homestyle Regional Sweet Delight - Var 5
+- Gujarati Jain Style Specialty Curry Gravy - Var 26 → Punjabi Dhaba Style Specialty Curry Gravy - Var 5
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 47 → Punjabi Dhaba Style Specialty Curry Gravy - Var 5
+- Gujarati Jain Style Specialty Curry Gravy - Var 68 → Punjabi Dhaba Style Specialty Curry Gravy - Var 5
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 89 → Punjabi Dhaba Style Specialty Curry Gravy - Var 5
+- Gujarati Jain Style Specialty Curry Gravy - Var 110 → Punjabi Dhaba Style Specialty Curry Gravy - Var 5
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 131 → Punjabi Dhaba Style Specialty Curry Gravy - Var 5
+- Maharashtrian Malvani Style Veg Korma - Var 27 → South Indian Brahmin Style Veg Korma - Var 6
+- South Indian Brahmin Style Veg Korma - Var 48 → South Indian Brahmin Style Veg Korma - Var 6
+- Maharashtrian Malvani Style Veg Korma - Var 69 → South Indian Brahmin Style Veg Korma - Var 6
+- South Indian Brahmin Style Veg Korma - Var 90 → South Indian Brahmin Style Veg Korma - Var 6
+- Maharashtrian Malvani Style Veg Korma - Var 111 → South Indian Brahmin Style Veg Korma - Var 6
+- South Indian Brahmin Style Veg Korma - Var 132 → South Indian Brahmin Style Veg Korma - Var 6
+- Bengali Traditional Kofta Curry - Var 27 → Chettinad Special Kofta Curry - Var 6
+- Chettinad Special Kofta Curry - Var 48 → Chettinad Special Kofta Curry - Var 6
+- Bengali Traditional Kofta Curry - Var 69 → Chettinad Special Kofta Curry - Var 6
+- Chettinad Special Kofta Curry - Var 90 → Chettinad Special Kofta Curry - Var 6
+- Bengali Traditional Kofta Curry - Var 111 → Chettinad Special Kofta Curry - Var 6
+- Chettinad Special Kofta Curry - Var 132 → Chettinad Special Kofta Curry - Var 6
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 6 → Hyderabadi Style Mashed Vegetable Bhaji - Var 27
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 48 → Hyderabadi Style Mashed Vegetable Bhaji - Var 27
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 69 → Hyderabadi Style Mashed Vegetable Bhaji - Var 27
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 90 → Hyderabadi Style Mashed Vegetable Bhaji - Var 27
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 111 → Hyderabadi Style Mashed Vegetable Bhaji - Var 27
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 132 → Hyderabadi Style Mashed Vegetable Bhaji - Var 27
+- Rajasthani Royal Style Chickpea Stew - Var 27 → Andhra Spicy Style Chickpea Stew - Var 6
+- Andhra Spicy Style Chickpea Stew - Var 48 → Andhra Spicy Style Chickpea Stew - Var 6
+- Rajasthani Royal Style Chickpea Stew - Var 69 → Andhra Spicy Style Chickpea Stew - Var 6
+- Andhra Spicy Style Chickpea Stew - Var 90 → Andhra Spicy Style Chickpea Stew - Var 6
+- Rajasthani Royal Style Chickpea Stew - Var 111 → Andhra Spicy Style Chickpea Stew - Var 6
+- Andhra Spicy Style Chickpea Stew - Var 132 → Andhra Spicy Style Chickpea Stew - Var 6
+- North Indian Homestyle Stuffed Paratha Roll - Var 27 → Karnataka Udipi Style Stuffed Paratha Roll - Var 6
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 48 → Karnataka Udipi Style Stuffed Paratha Roll - Var 6
+- North Indian Homestyle Stuffed Paratha Roll - Var 69 → Karnataka Udipi Style Stuffed Paratha Roll - Var 6
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 90 → Karnataka Udipi Style Stuffed Paratha Roll - Var 6
+- North Indian Homestyle Stuffed Paratha Roll - Var 111 → Karnataka Udipi Style Stuffed Paratha Roll - Var 6
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 132 → Karnataka Udipi Style Stuffed Paratha Roll - Var 6
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 27 → Gujarati Jain Style Flavoured Rice Bowl - Var 6
+- Gujarati Jain Style Flavoured Rice Bowl - Var 48 → Gujarati Jain Style Flavoured Rice Bowl - Var 6
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 69 → Gujarati Jain Style Flavoured Rice Bowl - Var 6
+- Gujarati Jain Style Flavoured Rice Bowl - Var 90 → Gujarati Jain Style Flavoured Rice Bowl - Var 6
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 111 → Gujarati Jain Style Flavoured Rice Bowl - Var 6
+- Gujarati Jain Style Flavoured Rice Bowl - Var 132 → Gujarati Jain Style Flavoured Rice Bowl - Var 6
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 27 → Maharashtrian Malvani Style Lentil Soup / Shorba - Var 6
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 48 → Maharashtrian Malvani Style Lentil Soup / Shorba - Var 6
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 69 → Maharashtrian Malvani Style Lentil Soup / Shorba - Var 6
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 90 → Maharashtrian Malvani Style Lentil Soup / Shorba - Var 6
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 111 → Maharashtrian Malvani Style Lentil Soup / Shorba - Var 6
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 132 → Maharashtrian Malvani Style Lentil Soup / Shorba - Var 6
+- Bengali Traditional Fried Snack Bowl - Var 6 → Chettinad Special Fried Snack Bowl - Var 27
+- Bengali Traditional Fried Snack Bowl - Var 48 → Chettinad Special Fried Snack Bowl - Var 27
+- Chettinad Special Fried Snack Bowl - Var 69 → Chettinad Special Fried Snack Bowl - Var 27
+- Bengali Traditional Fried Snack Bowl - Var 90 → Chettinad Special Fried Snack Bowl - Var 27
+- Chettinad Special Fried Snack Bowl - Var 111 → Chettinad Special Fried Snack Bowl - Var 27
+- Bengali Traditional Fried Snack Bowl - Var 132 → Chettinad Special Fried Snack Bowl - Var 27
+- Kerala Malabar Style Regional Sweet Delight - Var 27 → Hyderabadi Style Regional Sweet Delight - Var 6
+- Hyderabadi Style Regional Sweet Delight - Var 48 → Hyderabadi Style Regional Sweet Delight - Var 6
+- Kerala Malabar Style Regional Sweet Delight - Var 69 → Hyderabadi Style Regional Sweet Delight - Var 6
+- Hyderabadi Style Regional Sweet Delight - Var 90 → Hyderabadi Style Regional Sweet Delight - Var 6
+- Kerala Malabar Style Regional Sweet Delight - Var 111 → Hyderabadi Style Regional Sweet Delight - Var 6
+- Hyderabadi Style Regional Sweet Delight - Var 132 → Hyderabadi Style Regional Sweet Delight - Var 6
+- Rajasthani Royal Style Specialty Curry Gravy - Var 6 → Andhra Spicy Style Specialty Curry Gravy - Var 27
+- Rajasthani Royal Style Specialty Curry Gravy - Var 48 → Andhra Spicy Style Specialty Curry Gravy - Var 27
+- Andhra Spicy Style Specialty Curry Gravy - Var 69 → Andhra Spicy Style Specialty Curry Gravy - Var 27
+- Rajasthani Royal Style Specialty Curry Gravy - Var 90 → Andhra Spicy Style Specialty Curry Gravy - Var 27
+- Andhra Spicy Style Specialty Curry Gravy - Var 111 → Andhra Spicy Style Specialty Curry Gravy - Var 27
+- Rajasthani Royal Style Specialty Curry Gravy - Var 132 → Andhra Spicy Style Specialty Curry Gravy - Var 27
+- Karnataka Udipi Style Veg Korma - Var 28 → North Indian Homestyle Veg Korma - Var 7
+- North Indian Homestyle Veg Korma - Var 49 → North Indian Homestyle Veg Korma - Var 7
+- Karnataka Udipi Style Veg Korma - Var 70 → North Indian Homestyle Veg Korma - Var 7
+- North Indian Homestyle Veg Korma - Var 91 → North Indian Homestyle Veg Korma - Var 7
+- Karnataka Udipi Style Veg Korma - Var 112 → North Indian Homestyle Veg Korma - Var 7
+- North Indian Homestyle Veg Korma - Var 133 → North Indian Homestyle Veg Korma - Var 7
+- Gujarati Jain Style Kofta Curry - Var 28 → Punjabi Dhaba Style Kofta Curry - Var 7
+- Punjabi Dhaba Style Kofta Curry - Var 49 → Punjabi Dhaba Style Kofta Curry - Var 7
+- Gujarati Jain Style Kofta Curry - Var 70 → Punjabi Dhaba Style Kofta Curry - Var 7
+- Punjabi Dhaba Style Kofta Curry - Var 91 → Punjabi Dhaba Style Kofta Curry - Var 7
+- Gujarati Jain Style Kofta Curry - Var 112 → Punjabi Dhaba Style Kofta Curry - Var 7
+- Punjabi Dhaba Style Kofta Curry - Var 133 → Punjabi Dhaba Style Kofta Curry - Var 7
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 28 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 7
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 49 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 7
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 70 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 7
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 91 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 7
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 112 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 7
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 133 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 7
+- Bengali Traditional Chickpea Stew - Var 28 → Chettinad Special Chickpea Stew - Var 7
+- Chettinad Special Chickpea Stew - Var 49 → Chettinad Special Chickpea Stew - Var 7
+- Bengali Traditional Chickpea Stew - Var 70 → Chettinad Special Chickpea Stew - Var 7
+- Chettinad Special Chickpea Stew - Var 91 → Chettinad Special Chickpea Stew - Var 7
+- Bengali Traditional Chickpea Stew - Var 112 → Chettinad Special Chickpea Stew - Var 7
+- Chettinad Special Chickpea Stew - Var 133 → Chettinad Special Chickpea Stew - Var 7
+- Kerala Malabar Style Stuffed Paratha Roll - Var 7 → Hyderabadi Style Stuffed Paratha Roll - Var 28
+- Kerala Malabar Style Stuffed Paratha Roll - Var 49 → Hyderabadi Style Stuffed Paratha Roll - Var 28
+- Hyderabadi Style Stuffed Paratha Roll - Var 70 → Hyderabadi Style Stuffed Paratha Roll - Var 28
+- Kerala Malabar Style Stuffed Paratha Roll - Var 91 → Hyderabadi Style Stuffed Paratha Roll - Var 28
+- Hyderabadi Style Stuffed Paratha Roll - Var 112 → Hyderabadi Style Stuffed Paratha Roll - Var 28
+- Kerala Malabar Style Stuffed Paratha Roll - Var 133 → Hyderabadi Style Stuffed Paratha Roll - Var 28
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 28 → Andhra Spicy Style Flavoured Rice Bowl - Var 7
+- Andhra Spicy Style Flavoured Rice Bowl - Var 49 → Andhra Spicy Style Flavoured Rice Bowl - Var 7
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 70 → Andhra Spicy Style Flavoured Rice Bowl - Var 7
+- Andhra Spicy Style Flavoured Rice Bowl - Var 91 → Andhra Spicy Style Flavoured Rice Bowl - Var 7
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 112 → Andhra Spicy Style Flavoured Rice Bowl - Var 7
+- Andhra Spicy Style Flavoured Rice Bowl - Var 133 → Andhra Spicy Style Flavoured Rice Bowl - Var 7
+- North Indian Homestyle Lentil Soup / Shorba - Var 28 → Karnataka Udipi Style Lentil Soup / Shorba - Var 7
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 49 → Karnataka Udipi Style Lentil Soup / Shorba - Var 7
+- North Indian Homestyle Lentil Soup / Shorba - Var 70 → Karnataka Udipi Style Lentil Soup / Shorba - Var 7
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 91 → Karnataka Udipi Style Lentil Soup / Shorba - Var 7
+- North Indian Homestyle Lentil Soup / Shorba - Var 112 → Karnataka Udipi Style Lentil Soup / Shorba - Var 7
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 133 → Karnataka Udipi Style Lentil Soup / Shorba - Var 7
+- Punjabi Dhaba Style Fried Snack Bowl - Var 28 → Gujarati Jain Style Fried Snack Bowl - Var 7
+- Gujarati Jain Style Fried Snack Bowl - Var 49 → Gujarati Jain Style Fried Snack Bowl - Var 7
+- Punjabi Dhaba Style Fried Snack Bowl - Var 70 → Gujarati Jain Style Fried Snack Bowl - Var 7
+- Gujarati Jain Style Fried Snack Bowl - Var 91 → Gujarati Jain Style Fried Snack Bowl - Var 7
+- Punjabi Dhaba Style Fried Snack Bowl - Var 112 → Gujarati Jain Style Fried Snack Bowl - Var 7
+- Gujarati Jain Style Fried Snack Bowl - Var 133 → Gujarati Jain Style Fried Snack Bowl - Var 7
+- South Indian Brahmin Style Regional Sweet Delight - Var 28 → Maharashtrian Malvani Style Regional Sweet Delight - Var 7
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 49 → Maharashtrian Malvani Style Regional Sweet Delight - Var 7
+- South Indian Brahmin Style Regional Sweet Delight - Var 70 → Maharashtrian Malvani Style Regional Sweet Delight - Var 7
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 91 → Maharashtrian Malvani Style Regional Sweet Delight - Var 7
+- South Indian Brahmin Style Regional Sweet Delight - Var 112 → Maharashtrian Malvani Style Regional Sweet Delight - Var 7
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 133 → Maharashtrian Malvani Style Regional Sweet Delight - Var 7
+- Bengali Traditional Specialty Curry Gravy - Var 7 → Chettinad Special Specialty Curry Gravy - Var 28
+- Bengali Traditional Specialty Curry Gravy - Var 49 → Chettinad Special Specialty Curry Gravy - Var 28
+- Chettinad Special Specialty Curry Gravy - Var 70 → Chettinad Special Specialty Curry Gravy - Var 28
+- Bengali Traditional Specialty Curry Gravy - Var 91 → Chettinad Special Specialty Curry Gravy - Var 28
+- Chettinad Special Specialty Curry Gravy - Var 112 → Chettinad Special Specialty Curry Gravy - Var 28
+- Bengali Traditional Specialty Curry Gravy - Var 133 → Chettinad Special Specialty Curry Gravy - Var 28
+- Kerala Malabar Style Veg Korma - Var 29 → Hyderabadi Style Veg Korma - Var 8
+- Hyderabadi Style Veg Korma - Var 50 → Hyderabadi Style Veg Korma - Var 8
+- Kerala Malabar Style Veg Korma - Var 71 → Hyderabadi Style Veg Korma - Var 8
+- Hyderabadi Style Veg Korma - Var 92 → Hyderabadi Style Veg Korma - Var 8
+- Kerala Malabar Style Veg Korma - Var 113 → Hyderabadi Style Veg Korma - Var 8
+- Hyderabadi Style Veg Korma - Var 134 → Hyderabadi Style Veg Korma - Var 8
+- Rajasthani Royal Style Kofta Curry - Var 8 → Andhra Spicy Style Kofta Curry - Var 29
+- Rajasthani Royal Style Kofta Curry - Var 50 → Andhra Spicy Style Kofta Curry - Var 29
+- Andhra Spicy Style Kofta Curry - Var 71 → Andhra Spicy Style Kofta Curry - Var 29
+- Rajasthani Royal Style Kofta Curry - Var 92 → Andhra Spicy Style Kofta Curry - Var 29
+- Andhra Spicy Style Kofta Curry - Var 113 → Andhra Spicy Style Kofta Curry - Var 29
+- Rajasthani Royal Style Kofta Curry - Var 134 → Andhra Spicy Style Kofta Curry - Var 29
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 29 → North Indian Homestyle Mashed Vegetable Bhaji - Var 8
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 50 → North Indian Homestyle Mashed Vegetable Bhaji - Var 8
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 71 → North Indian Homestyle Mashed Vegetable Bhaji - Var 8
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 92 → North Indian Homestyle Mashed Vegetable Bhaji - Var 8
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 113 → North Indian Homestyle Mashed Vegetable Bhaji - Var 8
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 134 → North Indian Homestyle Mashed Vegetable Bhaji - Var 8
+- Gujarati Jain Style Chickpea Stew - Var 29 → Punjabi Dhaba Style Chickpea Stew - Var 8
+- Punjabi Dhaba Style Chickpea Stew - Var 50 → Punjabi Dhaba Style Chickpea Stew - Var 8
+- Gujarati Jain Style Chickpea Stew - Var 71 → Punjabi Dhaba Style Chickpea Stew - Var 8
+- Punjabi Dhaba Style Chickpea Stew - Var 92 → Punjabi Dhaba Style Chickpea Stew - Var 8
+- Gujarati Jain Style Chickpea Stew - Var 113 → Punjabi Dhaba Style Chickpea Stew - Var 8
+- Punjabi Dhaba Style Chickpea Stew - Var 134 → Punjabi Dhaba Style Chickpea Stew - Var 8
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 29 → South Indian Brahmin Style Stuffed Paratha Roll - Var 8
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 50 → South Indian Brahmin Style Stuffed Paratha Roll - Var 8
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 71 → South Indian Brahmin Style Stuffed Paratha Roll - Var 8
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 92 → South Indian Brahmin Style Stuffed Paratha Roll - Var 8
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 113 → South Indian Brahmin Style Stuffed Paratha Roll - Var 8
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 134 → South Indian Brahmin Style Stuffed Paratha Roll - Var 8
+- Bengali Traditional Flavoured Rice Bowl - Var 29 → Chettinad Special Flavoured Rice Bowl - Var 8
+- Chettinad Special Flavoured Rice Bowl - Var 50 → Chettinad Special Flavoured Rice Bowl - Var 8
+- Bengali Traditional Flavoured Rice Bowl - Var 71 → Chettinad Special Flavoured Rice Bowl - Var 8
+- Chettinad Special Flavoured Rice Bowl - Var 92 → Chettinad Special Flavoured Rice Bowl - Var 8
+- Bengali Traditional Flavoured Rice Bowl - Var 113 → Chettinad Special Flavoured Rice Bowl - Var 8
+- Chettinad Special Flavoured Rice Bowl - Var 134 → Chettinad Special Flavoured Rice Bowl - Var 8
+- Rajasthani Royal Style Fried Snack Bowl - Var 29 → Andhra Spicy Style Fried Snack Bowl - Var 8
+- Andhra Spicy Style Fried Snack Bowl - Var 50 → Andhra Spicy Style Fried Snack Bowl - Var 8
+- Rajasthani Royal Style Fried Snack Bowl - Var 71 → Andhra Spicy Style Fried Snack Bowl - Var 8
+- Andhra Spicy Style Fried Snack Bowl - Var 92 → Andhra Spicy Style Fried Snack Bowl - Var 8
+- Rajasthani Royal Style Fried Snack Bowl - Var 113 → Andhra Spicy Style Fried Snack Bowl - Var 8
+- Andhra Spicy Style Fried Snack Bowl - Var 134 → Andhra Spicy Style Fried Snack Bowl - Var 8
+- North Indian Homestyle Regional Sweet Delight - Var 29 → Karnataka Udipi Style Regional Sweet Delight - Var 8
+- Karnataka Udipi Style Regional Sweet Delight - Var 50 → Karnataka Udipi Style Regional Sweet Delight - Var 8
+- North Indian Homestyle Regional Sweet Delight - Var 71 → Karnataka Udipi Style Regional Sweet Delight - Var 8
+- Karnataka Udipi Style Regional Sweet Delight - Var 92 → Karnataka Udipi Style Regional Sweet Delight - Var 8
+- North Indian Homestyle Regional Sweet Delight - Var 113 → Karnataka Udipi Style Regional Sweet Delight - Var 8
+- Karnataka Udipi Style Regional Sweet Delight - Var 134 → Karnataka Udipi Style Regional Sweet Delight - Var 8
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 29 → Gujarati Jain Style Specialty Curry Gravy - Var 8
+- Gujarati Jain Style Specialty Curry Gravy - Var 50 → Gujarati Jain Style Specialty Curry Gravy - Var 8
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 71 → Gujarati Jain Style Specialty Curry Gravy - Var 8
+- Gujarati Jain Style Specialty Curry Gravy - Var 92 → Gujarati Jain Style Specialty Curry Gravy - Var 8
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 113 → Gujarati Jain Style Specialty Curry Gravy - Var 8
+- Gujarati Jain Style Specialty Curry Gravy - Var 134 → Gujarati Jain Style Specialty Curry Gravy - Var 8
+- South Indian Brahmin Style Veg Korma - Var 30 → Maharashtrian Malvani Style Veg Korma - Var 9
+- Maharashtrian Malvani Style Veg Korma - Var 51 → Maharashtrian Malvani Style Veg Korma - Var 9
+- South Indian Brahmin Style Veg Korma - Var 72 → Maharashtrian Malvani Style Veg Korma - Var 9
+- Maharashtrian Malvani Style Veg Korma - Var 93 → Maharashtrian Malvani Style Veg Korma - Var 9
+- South Indian Brahmin Style Veg Korma - Var 114 → Maharashtrian Malvani Style Veg Korma - Var 9
+- Maharashtrian Malvani Style Veg Korma - Var 135 → Maharashtrian Malvani Style Veg Korma - Var 9
+- Bengali Traditional Kofta Curry - Var 9 → Chettinad Special Kofta Curry - Var 30
+- Bengali Traditional Kofta Curry - Var 51 → Chettinad Special Kofta Curry - Var 30
+- Chettinad Special Kofta Curry - Var 72 → Chettinad Special Kofta Curry - Var 30
+- Bengali Traditional Kofta Curry - Var 93 → Chettinad Special Kofta Curry - Var 30
+- Chettinad Special Kofta Curry - Var 114 → Chettinad Special Kofta Curry - Var 30
+- Bengali Traditional Kofta Curry - Var 135 → Chettinad Special Kofta Curry - Var 30
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 30 → Hyderabadi Style Mashed Vegetable Bhaji - Var 9
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 51 → Hyderabadi Style Mashed Vegetable Bhaji - Var 9
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 72 → Hyderabadi Style Mashed Vegetable Bhaji - Var 9
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 93 → Hyderabadi Style Mashed Vegetable Bhaji - Var 9
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 114 → Hyderabadi Style Mashed Vegetable Bhaji - Var 9
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 135 → Hyderabadi Style Mashed Vegetable Bhaji - Var 9
+- Rajasthani Royal Style Chickpea Stew - Var 9 → Andhra Spicy Style Chickpea Stew - Var 30
+- Rajasthani Royal Style Chickpea Stew - Var 51 → Andhra Spicy Style Chickpea Stew - Var 30
+- Andhra Spicy Style Chickpea Stew - Var 72 → Andhra Spicy Style Chickpea Stew - Var 30
+- Rajasthani Royal Style Chickpea Stew - Var 93 → Andhra Spicy Style Chickpea Stew - Var 30
+- Andhra Spicy Style Chickpea Stew - Var 114 → Andhra Spicy Style Chickpea Stew - Var 30
+- Rajasthani Royal Style Chickpea Stew - Var 135 → Andhra Spicy Style Chickpea Stew - Var 30
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 30 → North Indian Homestyle Stuffed Paratha Roll - Var 9
+- North Indian Homestyle Stuffed Paratha Roll - Var 51 → North Indian Homestyle Stuffed Paratha Roll - Var 9
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 72 → North Indian Homestyle Stuffed Paratha Roll - Var 9
+- North Indian Homestyle Stuffed Paratha Roll - Var 93 → North Indian Homestyle Stuffed Paratha Roll - Var 9
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 114 → North Indian Homestyle Stuffed Paratha Roll - Var 9
+- North Indian Homestyle Stuffed Paratha Roll - Var 135 → North Indian Homestyle Stuffed Paratha Roll - Var 9
+- Gujarati Jain Style Flavoured Rice Bowl - Var 30 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 9
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 51 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 9
+- Gujarati Jain Style Flavoured Rice Bowl - Var 72 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 9
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 93 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 9
+- Gujarati Jain Style Flavoured Rice Bowl - Var 114 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 9
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 135 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 9
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 30 → South Indian Brahmin Style Lentil Soup / Shorba - Var 9
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 51 → South Indian Brahmin Style Lentil Soup / Shorba - Var 9
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 72 → South Indian Brahmin Style Lentil Soup / Shorba - Var 9
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 93 → South Indian Brahmin Style Lentil Soup / Shorba - Var 9
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 114 → South Indian Brahmin Style Lentil Soup / Shorba - Var 9
+- Bengali Traditional Fried Snack Bowl - Var 30 → Chettinad Special Fried Snack Bowl - Var 9
+- Chettinad Special Fried Snack Bowl - Var 51 → Chettinad Special Fried Snack Bowl - Var 9
+- Bengali Traditional Fried Snack Bowl - Var 72 → Chettinad Special Fried Snack Bowl - Var 9
+- Chettinad Special Fried Snack Bowl - Var 93 → Chettinad Special Fried Snack Bowl - Var 9
+- Bengali Traditional Fried Snack Bowl - Var 114 → Chettinad Special Fried Snack Bowl - Var 9
+- Kerala Malabar Style Regional Sweet Delight - Var 9 → Hyderabadi Style Regional Sweet Delight - Var 30
+- Kerala Malabar Style Regional Sweet Delight - Var 51 → Hyderabadi Style Regional Sweet Delight - Var 30
+- Hyderabadi Style Regional Sweet Delight - Var 72 → Hyderabadi Style Regional Sweet Delight - Var 30
+- Kerala Malabar Style Regional Sweet Delight - Var 93 → Hyderabadi Style Regional Sweet Delight - Var 30
+- Hyderabadi Style Regional Sweet Delight - Var 114 → Hyderabadi Style Regional Sweet Delight - Var 30
+- Rajasthani Royal Style Specialty Curry Gravy - Var 30 → Andhra Spicy Style Specialty Curry Gravy - Var 9
+- Andhra Spicy Style Specialty Curry Gravy - Var 51 → Andhra Spicy Style Specialty Curry Gravy - Var 9
+- Rajasthani Royal Style Specialty Curry Gravy - Var 72 → Andhra Spicy Style Specialty Curry Gravy - Var 9
+- Andhra Spicy Style Specialty Curry Gravy - Var 93 → Andhra Spicy Style Specialty Curry Gravy - Var 9
+- Rajasthani Royal Style Specialty Curry Gravy - Var 114 → Andhra Spicy Style Specialty Curry Gravy - Var 9
+- North Indian Homestyle Veg Korma - Var 31 → Karnataka Udipi Style Veg Korma - Var 10
+- Karnataka Udipi Style Veg Korma - Var 52 → Karnataka Udipi Style Veg Korma - Var 10
+- North Indian Homestyle Veg Korma - Var 73 → Karnataka Udipi Style Veg Korma - Var 10
+- Karnataka Udipi Style Veg Korma - Var 94 → Karnataka Udipi Style Veg Korma - Var 10
+- North Indian Homestyle Veg Korma - Var 115 → Karnataka Udipi Style Veg Korma - Var 10
+- Punjabi Dhaba Style Kofta Curry - Var 31 → Gujarati Jain Style Kofta Curry - Var 10
+- Gujarati Jain Style Kofta Curry - Var 52 → Gujarati Jain Style Kofta Curry - Var 10
+- Punjabi Dhaba Style Kofta Curry - Var 73 → Gujarati Jain Style Kofta Curry - Var 10
+- Gujarati Jain Style Kofta Curry - Var 94 → Gujarati Jain Style Kofta Curry - Var 10
+- Punjabi Dhaba Style Kofta Curry - Var 115 → Gujarati Jain Style Kofta Curry - Var 10
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 10 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 31
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 52 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 31
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 73 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 31
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 94 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 31
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 115 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 31
+- Bengali Traditional Chickpea Stew - Var 10 → Chettinad Special Chickpea Stew - Var 31
+- Bengali Traditional Chickpea Stew - Var 52 → Chettinad Special Chickpea Stew - Var 31
+- Chettinad Special Chickpea Stew - Var 73 → Chettinad Special Chickpea Stew - Var 31
+- Bengali Traditional Chickpea Stew - Var 94 → Chettinad Special Chickpea Stew - Var 31
+- Chettinad Special Chickpea Stew - Var 115 → Chettinad Special Chickpea Stew - Var 31
+- Kerala Malabar Style Stuffed Paratha Roll - Var 31 → Hyderabadi Style Stuffed Paratha Roll - Var 10
+- Hyderabadi Style Stuffed Paratha Roll - Var 52 → Hyderabadi Style Stuffed Paratha Roll - Var 10
+- Kerala Malabar Style Stuffed Paratha Roll - Var 73 → Hyderabadi Style Stuffed Paratha Roll - Var 10
+- Hyderabadi Style Stuffed Paratha Roll - Var 94 → Hyderabadi Style Stuffed Paratha Roll - Var 10
+- Kerala Malabar Style Stuffed Paratha Roll - Var 115 → Hyderabadi Style Stuffed Paratha Roll - Var 10
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 10 → Andhra Spicy Style Flavoured Rice Bowl - Var 31
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 52 → Andhra Spicy Style Flavoured Rice Bowl - Var 31
+- Andhra Spicy Style Flavoured Rice Bowl - Var 73 → Andhra Spicy Style Flavoured Rice Bowl - Var 31
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 94 → Andhra Spicy Style Flavoured Rice Bowl - Var 31
+- Andhra Spicy Style Flavoured Rice Bowl - Var 115 → Andhra Spicy Style Flavoured Rice Bowl - Var 31
+- North Indian Homestyle Lentil Soup / Shorba - Var 10 → Karnataka Udipi Style Lentil Soup / Shorba - Var 31
+- North Indian Homestyle Lentil Soup / Shorba - Var 52 → Karnataka Udipi Style Lentil Soup / Shorba - Var 31
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 73 → Karnataka Udipi Style Lentil Soup / Shorba - Var 31
+- North Indian Homestyle Lentil Soup / Shorba - Var 94 → Karnataka Udipi Style Lentil Soup / Shorba - Var 31
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 115 → Karnataka Udipi Style Lentil Soup / Shorba - Var 31
+- Gujarati Jain Style Fried Snack Bowl - Var 31 → Punjabi Dhaba Style Fried Snack Bowl - Var 10
+- Punjabi Dhaba Style Fried Snack Bowl - Var 52 → Punjabi Dhaba Style Fried Snack Bowl - Var 10
+- Gujarati Jain Style Fried Snack Bowl - Var 73 → Punjabi Dhaba Style Fried Snack Bowl - Var 10
+- Punjabi Dhaba Style Fried Snack Bowl - Var 94 → Punjabi Dhaba Style Fried Snack Bowl - Var 10
+- Gujarati Jain Style Fried Snack Bowl - Var 115 → Punjabi Dhaba Style Fried Snack Bowl - Var 10
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 31 → South Indian Brahmin Style Regional Sweet Delight - Var 10
+- South Indian Brahmin Style Regional Sweet Delight - Var 52 → South Indian Brahmin Style Regional Sweet Delight - Var 10
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 73 → South Indian Brahmin Style Regional Sweet Delight - Var 10
+- South Indian Brahmin Style Regional Sweet Delight - Var 94 → South Indian Brahmin Style Regional Sweet Delight - Var 10
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 115 → South Indian Brahmin Style Regional Sweet Delight - Var 10
+- Bengali Traditional Specialty Curry Gravy - Var 31 → Chettinad Special Specialty Curry Gravy - Var 10
+- Chettinad Special Specialty Curry Gravy - Var 52 → Chettinad Special Specialty Curry Gravy - Var 10
+- Bengali Traditional Specialty Curry Gravy - Var 73 → Chettinad Special Specialty Curry Gravy - Var 10
+- Chettinad Special Specialty Curry Gravy - Var 94 → Chettinad Special Specialty Curry Gravy - Var 10
+- Bengali Traditional Specialty Curry Gravy - Var 115 → Chettinad Special Specialty Curry Gravy - Var 10
+- Kerala Malabar Style Veg Korma - Var 11 → Hyderabadi Style Veg Korma - Var 32
+- Kerala Malabar Style Veg Korma - Var 53 → Hyderabadi Style Veg Korma - Var 32
+- Hyderabadi Style Veg Korma - Var 74 → Hyderabadi Style Veg Korma - Var 32
+- Kerala Malabar Style Veg Korma - Var 95 → Hyderabadi Style Veg Korma - Var 32
+- Hyderabadi Style Veg Korma - Var 116 → Hyderabadi Style Veg Korma - Var 32
+- Rajasthani Royal Style Kofta Curry - Var 32 → Andhra Spicy Style Kofta Curry - Var 11
+- Andhra Spicy Style Kofta Curry - Var 53 → Andhra Spicy Style Kofta Curry - Var 11
+- Rajasthani Royal Style Kofta Curry - Var 74 → Andhra Spicy Style Kofta Curry - Var 11
+- Andhra Spicy Style Kofta Curry - Var 95 → Andhra Spicy Style Kofta Curry - Var 11
+- Rajasthani Royal Style Kofta Curry - Var 116 → Andhra Spicy Style Kofta Curry - Var 11
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 32 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 11
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 53 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 11
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 74 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 11
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 95 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 11
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 116 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 11
+- Punjabi Dhaba Style Chickpea Stew - Var 32 → Gujarati Jain Style Chickpea Stew - Var 11
+- Gujarati Jain Style Chickpea Stew - Var 53 → Gujarati Jain Style Chickpea Stew - Var 11
+- Punjabi Dhaba Style Chickpea Stew - Var 74 → Gujarati Jain Style Chickpea Stew - Var 11
+- Gujarati Jain Style Chickpea Stew - Var 95 → Gujarati Jain Style Chickpea Stew - Var 11
+- Punjabi Dhaba Style Chickpea Stew - Var 116 → Gujarati Jain Style Chickpea Stew - Var 11
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 11 → South Indian Brahmin Style Stuffed Paratha Roll - Var 32
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 53 → South Indian Brahmin Style Stuffed Paratha Roll - Var 32
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 74 → South Indian Brahmin Style Stuffed Paratha Roll - Var 32
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 95 → South Indian Brahmin Style Stuffed Paratha Roll - Var 32
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 116 → South Indian Brahmin Style Stuffed Paratha Roll - Var 32
+- Bengali Traditional Flavoured Rice Bowl - Var 11 → Chettinad Special Flavoured Rice Bowl - Var 32
+- Bengali Traditional Flavoured Rice Bowl - Var 53 → Chettinad Special Flavoured Rice Bowl - Var 32
+- Chettinad Special Flavoured Rice Bowl - Var 74 → Chettinad Special Flavoured Rice Bowl - Var 32
+- Bengali Traditional Flavoured Rice Bowl - Var 95 → Chettinad Special Flavoured Rice Bowl - Var 32
+- Chettinad Special Flavoured Rice Bowl - Var 116 → Chettinad Special Flavoured Rice Bowl - Var 32
+- Kerala Malabar Style Lentil Soup / Shorba - Var 32 → Hyderabadi Style Lentil Soup / Shorba - Var 11
+- Hyderabadi Style Lentil Soup / Shorba - Var 53 → Hyderabadi Style Lentil Soup / Shorba - Var 11
+- Kerala Malabar Style Lentil Soup / Shorba - Var 74 → Hyderabadi Style Lentil Soup / Shorba - Var 11
+- Hyderabadi Style Lentil Soup / Shorba - Var 95 → Hyderabadi Style Lentil Soup / Shorba - Var 11
+- Kerala Malabar Style Lentil Soup / Shorba - Var 116 → Hyderabadi Style Lentil Soup / Shorba - Var 11
+- Rajasthani Royal Style Fried Snack Bowl - Var 11 → Andhra Spicy Style Fried Snack Bowl - Var 32
+- Rajasthani Royal Style Fried Snack Bowl - Var 53 → Andhra Spicy Style Fried Snack Bowl - Var 32
+- Andhra Spicy Style Fried Snack Bowl - Var 74 → Andhra Spicy Style Fried Snack Bowl - Var 32
+- Rajasthani Royal Style Fried Snack Bowl - Var 95 → Andhra Spicy Style Fried Snack Bowl - Var 32
+- Andhra Spicy Style Fried Snack Bowl - Var 116 → Andhra Spicy Style Fried Snack Bowl - Var 32
+- North Indian Homestyle Regional Sweet Delight - Var 11 → Karnataka Udipi Style Regional Sweet Delight - Var 32
+- North Indian Homestyle Regional Sweet Delight - Var 53 → Karnataka Udipi Style Regional Sweet Delight - Var 32
+- Karnataka Udipi Style Regional Sweet Delight - Var 74 → Karnataka Udipi Style Regional Sweet Delight - Var 32
+- North Indian Homestyle Regional Sweet Delight - Var 95 → Karnataka Udipi Style Regional Sweet Delight - Var 32
+- Karnataka Udipi Style Regional Sweet Delight - Var 116 → Karnataka Udipi Style Regional Sweet Delight - Var 32
+- Gujarati Jain Style Specialty Curry Gravy - Var 32 → Punjabi Dhaba Style Specialty Curry Gravy - Var 11
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 53 → Punjabi Dhaba Style Specialty Curry Gravy - Var 11
+- Gujarati Jain Style Specialty Curry Gravy - Var 74 → Punjabi Dhaba Style Specialty Curry Gravy - Var 11
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 95 → Punjabi Dhaba Style Specialty Curry Gravy - Var 11
+- Gujarati Jain Style Specialty Curry Gravy - Var 116 → Punjabi Dhaba Style Specialty Curry Gravy - Var 11
+- Maharashtrian Malvani Style Veg Korma - Var 33 → South Indian Brahmin Style Veg Korma - Var 12
+- South Indian Brahmin Style Veg Korma - Var 54 → South Indian Brahmin Style Veg Korma - Var 12
+- Maharashtrian Malvani Style Veg Korma - Var 75 → South Indian Brahmin Style Veg Korma - Var 12
+- South Indian Brahmin Style Veg Korma - Var 96 → South Indian Brahmin Style Veg Korma - Var 12
+- Maharashtrian Malvani Style Veg Korma - Var 117 → South Indian Brahmin Style Veg Korma - Var 12
+- Bengali Traditional Kofta Curry - Var 33 → Chettinad Special Kofta Curry - Var 12
+- Chettinad Special Kofta Curry - Var 54 → Chettinad Special Kofta Curry - Var 12
+- Bengali Traditional Kofta Curry - Var 75 → Chettinad Special Kofta Curry - Var 12
+- Chettinad Special Kofta Curry - Var 96 → Chettinad Special Kofta Curry - Var 12
+- Bengali Traditional Kofta Curry - Var 117 → Chettinad Special Kofta Curry - Var 12
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 12 → Hyderabadi Style Mashed Vegetable Bhaji - Var 33
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 54 → Hyderabadi Style Mashed Vegetable Bhaji - Var 33
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 75 → Hyderabadi Style Mashed Vegetable Bhaji - Var 33
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 96 → Hyderabadi Style Mashed Vegetable Bhaji - Var 33
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 117 → Hyderabadi Style Mashed Vegetable Bhaji - Var 33
+- Rajasthani Royal Style Chickpea Stew - Var 33 → Andhra Spicy Style Chickpea Stew - Var 12
+- Andhra Spicy Style Chickpea Stew - Var 54 → Andhra Spicy Style Chickpea Stew - Var 12
+- Rajasthani Royal Style Chickpea Stew - Var 75 → Andhra Spicy Style Chickpea Stew - Var 12
+- Andhra Spicy Style Chickpea Stew - Var 96 → Andhra Spicy Style Chickpea Stew - Var 12
+- Rajasthani Royal Style Chickpea Stew - Var 117 → Andhra Spicy Style Chickpea Stew - Var 12
+- North Indian Homestyle Stuffed Paratha Roll - Var 33 → Karnataka Udipi Style Stuffed Paratha Roll - Var 12
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 54 → Karnataka Udipi Style Stuffed Paratha Roll - Var 12
+- North Indian Homestyle Stuffed Paratha Roll - Var 75 → Karnataka Udipi Style Stuffed Paratha Roll - Var 12
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 96 → Karnataka Udipi Style Stuffed Paratha Roll - Var 12
+- North Indian Homestyle Stuffed Paratha Roll - Var 117 → Karnataka Udipi Style Stuffed Paratha Roll - Var 12
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 33 → Gujarati Jain Style Flavoured Rice Bowl - Var 12
+- Gujarati Jain Style Flavoured Rice Bowl - Var 54 → Gujarati Jain Style Flavoured Rice Bowl - Var 12
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 75 → Gujarati Jain Style Flavoured Rice Bowl - Var 12
+- Gujarati Jain Style Flavoured Rice Bowl - Var 96 → Gujarati Jain Style Flavoured Rice Bowl - Var 12
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 117 → Gujarati Jain Style Flavoured Rice Bowl - Var 12
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 12 → South Indian Brahmin Style Lentil Soup / Shorba - Var 33
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 54 → South Indian Brahmin Style Lentil Soup / Shorba - Var 33
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 75 → South Indian Brahmin Style Lentil Soup / Shorba - Var 33
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 96 → South Indian Brahmin Style Lentil Soup / Shorba - Var 33
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 117 → South Indian Brahmin Style Lentil Soup / Shorba - Var 33
+- Bengali Traditional Fried Snack Bowl - Var 12 → Chettinad Special Fried Snack Bowl - Var 33
+- Bengali Traditional Fried Snack Bowl - Var 54 → Chettinad Special Fried Snack Bowl - Var 33
+- Chettinad Special Fried Snack Bowl - Var 75 → Chettinad Special Fried Snack Bowl - Var 33
+- Bengali Traditional Fried Snack Bowl - Var 96 → Chettinad Special Fried Snack Bowl - Var 33
+- Chettinad Special Fried Snack Bowl - Var 117 → Chettinad Special Fried Snack Bowl - Var 33
+- Kerala Malabar Style Regional Sweet Delight - Var 33 → Hyderabadi Style Regional Sweet Delight - Var 12
+- Hyderabadi Style Regional Sweet Delight - Var 54 → Hyderabadi Style Regional Sweet Delight - Var 12
+- Kerala Malabar Style Regional Sweet Delight - Var 75 → Hyderabadi Style Regional Sweet Delight - Var 12
+- Hyderabadi Style Regional Sweet Delight - Var 96 → Hyderabadi Style Regional Sweet Delight - Var 12
+- Kerala Malabar Style Regional Sweet Delight - Var 117 → Hyderabadi Style Regional Sweet Delight - Var 12
+- Rajasthani Royal Style Specialty Curry Gravy - Var 12 → Andhra Spicy Style Specialty Curry Gravy - Var 33
+- Rajasthani Royal Style Specialty Curry Gravy - Var 54 → Andhra Spicy Style Specialty Curry Gravy - Var 33
+- Andhra Spicy Style Specialty Curry Gravy - Var 75 → Andhra Spicy Style Specialty Curry Gravy - Var 33
+- Rajasthani Royal Style Specialty Curry Gravy - Var 96 → Andhra Spicy Style Specialty Curry Gravy - Var 33
+- Andhra Spicy Style Specialty Curry Gravy - Var 117 → Andhra Spicy Style Specialty Curry Gravy - Var 33
+- North Indian Homestyle Veg Korma - Var 13 → Karnataka Udipi Style Veg Korma - Var 34
+- North Indian Homestyle Veg Korma - Var 55 → Karnataka Udipi Style Veg Korma - Var 34
+- Karnataka Udipi Style Veg Korma - Var 76 → Karnataka Udipi Style Veg Korma - Var 34
+- North Indian Homestyle Veg Korma - Var 97 → Karnataka Udipi Style Veg Korma - Var 34
+- Karnataka Udipi Style Veg Korma - Var 118 → Karnataka Udipi Style Veg Korma - Var 34
+- Gujarati Jain Style Kofta Curry - Var 34 → Punjabi Dhaba Style Kofta Curry - Var 13
+- Punjabi Dhaba Style Kofta Curry - Var 55 → Punjabi Dhaba Style Kofta Curry - Var 13
+- Gujarati Jain Style Kofta Curry - Var 76 → Punjabi Dhaba Style Kofta Curry - Var 13
+- Punjabi Dhaba Style Kofta Curry - Var 97 → Punjabi Dhaba Style Kofta Curry - Var 13
+- Gujarati Jain Style Kofta Curry - Var 118 → Punjabi Dhaba Style Kofta Curry - Var 13
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 34 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 13
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 55 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 13
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 76 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 13
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 97 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 13
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 118 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 13
+- Bengali Traditional Chickpea Stew - Var 34 → Chettinad Special Chickpea Stew - Var 13
+- Chettinad Special Chickpea Stew - Var 55 → Chettinad Special Chickpea Stew - Var 13
+- Bengali Traditional Chickpea Stew - Var 76 → Chettinad Special Chickpea Stew - Var 13
+- Chettinad Special Chickpea Stew - Var 97 → Chettinad Special Chickpea Stew - Var 13
+- Bengali Traditional Chickpea Stew - Var 118 → Chettinad Special Chickpea Stew - Var 13
+- Kerala Malabar Style Stuffed Paratha Roll - Var 13 → Hyderabadi Style Stuffed Paratha Roll - Var 34
+- Kerala Malabar Style Stuffed Paratha Roll - Var 55 → Hyderabadi Style Stuffed Paratha Roll - Var 34
+- Hyderabadi Style Stuffed Paratha Roll - Var 76 → Hyderabadi Style Stuffed Paratha Roll - Var 34
+- Kerala Malabar Style Stuffed Paratha Roll - Var 97 → Hyderabadi Style Stuffed Paratha Roll - Var 34
+- Hyderabadi Style Stuffed Paratha Roll - Var 118 → Hyderabadi Style Stuffed Paratha Roll - Var 34
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 34 → Andhra Spicy Style Flavoured Rice Bowl - Var 13
+- Andhra Spicy Style Flavoured Rice Bowl - Var 55 → Andhra Spicy Style Flavoured Rice Bowl - Var 13
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 76 → Andhra Spicy Style Flavoured Rice Bowl - Var 13
+- Andhra Spicy Style Flavoured Rice Bowl - Var 97 → Andhra Spicy Style Flavoured Rice Bowl - Var 13
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 118 → Andhra Spicy Style Flavoured Rice Bowl - Var 13
+- North Indian Homestyle Lentil Soup / Shorba - Var 34 → Karnataka Udipi Style Lentil Soup / Shorba - Var 13
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 55 → Karnataka Udipi Style Lentil Soup / Shorba - Var 13
+- North Indian Homestyle Lentil Soup / Shorba - Var 76 → Karnataka Udipi Style Lentil Soup / Shorba - Var 13
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 97 → Karnataka Udipi Style Lentil Soup / Shorba - Var 13
+- North Indian Homestyle Lentil Soup / Shorba - Var 118 → Karnataka Udipi Style Lentil Soup / Shorba - Var 13
+- Punjabi Dhaba Style Fried Snack Bowl - Var 34 → Gujarati Jain Style Fried Snack Bowl - Var 13
+- Gujarati Jain Style Fried Snack Bowl - Var 55 → Gujarati Jain Style Fried Snack Bowl - Var 13
+- Punjabi Dhaba Style Fried Snack Bowl - Var 76 → Gujarati Jain Style Fried Snack Bowl - Var 13
+- Gujarati Jain Style Fried Snack Bowl - Var 97 → Gujarati Jain Style Fried Snack Bowl - Var 13
+- Punjabi Dhaba Style Fried Snack Bowl - Var 118 → Gujarati Jain Style Fried Snack Bowl - Var 13
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 13 → South Indian Brahmin Style Regional Sweet Delight - Var 34
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 55 → South Indian Brahmin Style Regional Sweet Delight - Var 34
+- South Indian Brahmin Style Regional Sweet Delight - Var 76 → South Indian Brahmin Style Regional Sweet Delight - Var 34
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 97 → South Indian Brahmin Style Regional Sweet Delight - Var 34
+- South Indian Brahmin Style Regional Sweet Delight - Var 118 → South Indian Brahmin Style Regional Sweet Delight - Var 34
+- Bengali Traditional Specialty Curry Gravy - Var 13 → Chettinad Special Specialty Curry Gravy - Var 34
+- Bengali Traditional Specialty Curry Gravy - Var 55 → Chettinad Special Specialty Curry Gravy - Var 34
+- Chettinad Special Specialty Curry Gravy - Var 76 → Chettinad Special Specialty Curry Gravy - Var 34
+- Bengali Traditional Specialty Curry Gravy - Var 97 → Chettinad Special Specialty Curry Gravy - Var 34
+- Chettinad Special Specialty Curry Gravy - Var 118 → Chettinad Special Specialty Curry Gravy - Var 34
+- Kerala Malabar Style Veg Korma - Var 35 → Hyderabadi Style Veg Korma - Var 14
+- Hyderabadi Style Veg Korma - Var 56 → Hyderabadi Style Veg Korma - Var 14
+- Kerala Malabar Style Veg Korma - Var 77 → Hyderabadi Style Veg Korma - Var 14
+- Hyderabadi Style Veg Korma - Var 98 → Hyderabadi Style Veg Korma - Var 14
+- Kerala Malabar Style Veg Korma - Var 119 → Hyderabadi Style Veg Korma - Var 14
+- Rajasthani Royal Style Kofta Curry - Var 14 → Andhra Spicy Style Kofta Curry - Var 35
+- Rajasthani Royal Style Kofta Curry - Var 56 → Andhra Spicy Style Kofta Curry - Var 35
+- Andhra Spicy Style Kofta Curry - Var 77 → Andhra Spicy Style Kofta Curry - Var 35
+- Rajasthani Royal Style Kofta Curry - Var 98 → Andhra Spicy Style Kofta Curry - Var 35
+- Andhra Spicy Style Kofta Curry - Var 119 → Andhra Spicy Style Kofta Curry - Var 35
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 14 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 35
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 56 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 35
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 77 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 35
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 98 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 35
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 119 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 35
+- Gujarati Jain Style Chickpea Stew - Var 35 → Punjabi Dhaba Style Chickpea Stew - Var 14
+- Punjabi Dhaba Style Chickpea Stew - Var 56 → Punjabi Dhaba Style Chickpea Stew - Var 14
+- Gujarati Jain Style Chickpea Stew - Var 77 → Punjabi Dhaba Style Chickpea Stew - Var 14
+- Punjabi Dhaba Style Chickpea Stew - Var 98 → Punjabi Dhaba Style Chickpea Stew - Var 14
+- Gujarati Jain Style Chickpea Stew - Var 119 → Punjabi Dhaba Style Chickpea Stew - Var 14
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 35 → South Indian Brahmin Style Stuffed Paratha Roll - Var 14
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 56 → South Indian Brahmin Style Stuffed Paratha Roll - Var 14
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 77 → South Indian Brahmin Style Stuffed Paratha Roll - Var 14
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 98 → South Indian Brahmin Style Stuffed Paratha Roll - Var 14
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 119 → South Indian Brahmin Style Stuffed Paratha Roll - Var 14
+- Bengali Traditional Flavoured Rice Bowl - Var 35 → Chettinad Special Flavoured Rice Bowl - Var 14
+- Chettinad Special Flavoured Rice Bowl - Var 56 → Chettinad Special Flavoured Rice Bowl - Var 14
+- Bengali Traditional Flavoured Rice Bowl - Var 77 → Chettinad Special Flavoured Rice Bowl - Var 14
+- Chettinad Special Flavoured Rice Bowl - Var 98 → Chettinad Special Flavoured Rice Bowl - Var 14
+- Bengali Traditional Flavoured Rice Bowl - Var 119 → Chettinad Special Flavoured Rice Bowl - Var 14
+- Rajasthani Royal Style Fried Snack Bowl - Var 35 → Andhra Spicy Style Fried Snack Bowl - Var 14
+- Andhra Spicy Style Fried Snack Bowl - Var 56 → Andhra Spicy Style Fried Snack Bowl - Var 14
+- Rajasthani Royal Style Fried Snack Bowl - Var 77 → Andhra Spicy Style Fried Snack Bowl - Var 14
+- Andhra Spicy Style Fried Snack Bowl - Var 98 → Andhra Spicy Style Fried Snack Bowl - Var 14
+- Rajasthani Royal Style Fried Snack Bowl - Var 119 → Andhra Spicy Style Fried Snack Bowl - Var 14
+- North Indian Homestyle Regional Sweet Delight - Var 35 → Karnataka Udipi Style Regional Sweet Delight - Var 14
+- Karnataka Udipi Style Regional Sweet Delight - Var 56 → Karnataka Udipi Style Regional Sweet Delight - Var 14
+- North Indian Homestyle Regional Sweet Delight - Var 77 → Karnataka Udipi Style Regional Sweet Delight - Var 14
+- Karnataka Udipi Style Regional Sweet Delight - Var 98 → Karnataka Udipi Style Regional Sweet Delight - Var 14
+- North Indian Homestyle Regional Sweet Delight - Var 119 → Karnataka Udipi Style Regional Sweet Delight - Var 14
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 35 → Gujarati Jain Style Specialty Curry Gravy - Var 14
+- Gujarati Jain Style Specialty Curry Gravy - Var 56 → Gujarati Jain Style Specialty Curry Gravy - Var 14
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 77 → Gujarati Jain Style Specialty Curry Gravy - Var 14
+- Gujarati Jain Style Specialty Curry Gravy - Var 98 → Gujarati Jain Style Specialty Curry Gravy - Var 14
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 119 → Gujarati Jain Style Specialty Curry Gravy - Var 14
+- Maharashtrian Malvani Style Veg Korma - Var 15 → South Indian Brahmin Style Veg Korma - Var 36
+- Maharashtrian Malvani Style Veg Korma - Var 57 → South Indian Brahmin Style Veg Korma - Var 36
+- South Indian Brahmin Style Veg Korma - Var 78 → South Indian Brahmin Style Veg Korma - Var 36
+- Maharashtrian Malvani Style Veg Korma - Var 99 → South Indian Brahmin Style Veg Korma - Var 36
+- South Indian Brahmin Style Veg Korma - Var 120 → South Indian Brahmin Style Veg Korma - Var 36
+- Bengali Traditional Kofta Curry - Var 15 → Chettinad Special Kofta Curry - Var 36
+- Bengali Traditional Kofta Curry - Var 57 → Chettinad Special Kofta Curry - Var 36
+- Chettinad Special Kofta Curry - Var 78 → Chettinad Special Kofta Curry - Var 36
+- Bengali Traditional Kofta Curry - Var 99 → Chettinad Special Kofta Curry - Var 36
+- Chettinad Special Kofta Curry - Var 120 → Chettinad Special Kofta Curry - Var 36
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 36 → Hyderabadi Style Mashed Vegetable Bhaji - Var 15
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 57 → Hyderabadi Style Mashed Vegetable Bhaji - Var 15
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 78 → Hyderabadi Style Mashed Vegetable Bhaji - Var 15
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 99 → Hyderabadi Style Mashed Vegetable Bhaji - Var 15
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 120 → Hyderabadi Style Mashed Vegetable Bhaji - Var 15
+- Rajasthani Royal Style Chickpea Stew - Var 15 → Andhra Spicy Style Chickpea Stew - Var 36
+- Rajasthani Royal Style Chickpea Stew - Var 57 → Andhra Spicy Style Chickpea Stew - Var 36
+- Andhra Spicy Style Chickpea Stew - Var 78 → Andhra Spicy Style Chickpea Stew - Var 36
+- Rajasthani Royal Style Chickpea Stew - Var 99 → Andhra Spicy Style Chickpea Stew - Var 36
+- Andhra Spicy Style Chickpea Stew - Var 120 → Andhra Spicy Style Chickpea Stew - Var 36
+- North Indian Homestyle Stuffed Paratha Roll - Var 15 → Karnataka Udipi Style Stuffed Paratha Roll - Var 36
+- North Indian Homestyle Stuffed Paratha Roll - Var 57 → Karnataka Udipi Style Stuffed Paratha Roll - Var 36
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 78 → Karnataka Udipi Style Stuffed Paratha Roll - Var 36
+- North Indian Homestyle Stuffed Paratha Roll - Var 99 → Karnataka Udipi Style Stuffed Paratha Roll - Var 36
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 120 → Karnataka Udipi Style Stuffed Paratha Roll - Var 36
+- Gujarati Jain Style Flavoured Rice Bowl - Var 36 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 15
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 57 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 15
+- Gujarati Jain Style Flavoured Rice Bowl - Var 78 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 15
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 99 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 15
+- Gujarati Jain Style Flavoured Rice Bowl - Var 120 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 15
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 36 → South Indian Brahmin Style Lentil Soup / Shorba - Var 15
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 57 → South Indian Brahmin Style Lentil Soup / Shorba - Var 15
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 78 → South Indian Brahmin Style Lentil Soup / Shorba - Var 15
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 99 → South Indian Brahmin Style Lentil Soup / Shorba - Var 15
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 120 → South Indian Brahmin Style Lentil Soup / Shorba - Var 15
+- Bengali Traditional Fried Snack Bowl - Var 36 → Chettinad Special Fried Snack Bowl - Var 15
+- Chettinad Special Fried Snack Bowl - Var 57 → Chettinad Special Fried Snack Bowl - Var 15
+- Bengali Traditional Fried Snack Bowl - Var 78 → Chettinad Special Fried Snack Bowl - Var 15
+- Chettinad Special Fried Snack Bowl - Var 99 → Chettinad Special Fried Snack Bowl - Var 15
+- Bengali Traditional Fried Snack Bowl - Var 120 → Chettinad Special Fried Snack Bowl - Var 15
+- Kerala Malabar Style Regional Sweet Delight - Var 15 → Hyderabadi Style Regional Sweet Delight - Var 36
+- Kerala Malabar Style Regional Sweet Delight - Var 57 → Hyderabadi Style Regional Sweet Delight - Var 36
+- Hyderabadi Style Regional Sweet Delight - Var 78 → Hyderabadi Style Regional Sweet Delight - Var 36
+- Kerala Malabar Style Regional Sweet Delight - Var 99 → Hyderabadi Style Regional Sweet Delight - Var 36
+- Hyderabadi Style Regional Sweet Delight - Var 120 → Hyderabadi Style Regional Sweet Delight - Var 36
+- Rajasthani Royal Style Specialty Curry Gravy - Var 36 → Andhra Spicy Style Specialty Curry Gravy - Var 15
+- Andhra Spicy Style Specialty Curry Gravy - Var 57 → Andhra Spicy Style Specialty Curry Gravy - Var 15
+- Rajasthani Royal Style Specialty Curry Gravy - Var 78 → Andhra Spicy Style Specialty Curry Gravy - Var 15
+- Andhra Spicy Style Specialty Curry Gravy - Var 99 → Andhra Spicy Style Specialty Curry Gravy - Var 15
+- Rajasthani Royal Style Specialty Curry Gravy - Var 120 → Andhra Spicy Style Specialty Curry Gravy - Var 15
+- North Indian Homestyle Veg Korma - Var 37 → Karnataka Udipi Style Veg Korma - Var 16
+- Karnataka Udipi Style Veg Korma - Var 58 → Karnataka Udipi Style Veg Korma - Var 16
+- North Indian Homestyle Veg Korma - Var 79 → Karnataka Udipi Style Veg Korma - Var 16
+- Karnataka Udipi Style Veg Korma - Var 100 → Karnataka Udipi Style Veg Korma - Var 16
+- North Indian Homestyle Veg Korma - Var 121 → Karnataka Udipi Style Veg Korma - Var 16
+- Punjabi Dhaba Style Kofta Curry - Var 37 → Gujarati Jain Style Kofta Curry - Var 16
+- Gujarati Jain Style Kofta Curry - Var 58 → Gujarati Jain Style Kofta Curry - Var 16
+- Punjabi Dhaba Style Kofta Curry - Var 79 → Gujarati Jain Style Kofta Curry - Var 16
+- Gujarati Jain Style Kofta Curry - Var 100 → Gujarati Jain Style Kofta Curry - Var 16
+- Punjabi Dhaba Style Kofta Curry - Var 121 → Gujarati Jain Style Kofta Curry - Var 16
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 16 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 37
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 58 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 37
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 79 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 37
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 100 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 37
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 121 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 37
+- Bengali Traditional Chickpea Stew - Var 16 → Chettinad Special Chickpea Stew - Var 37
+- Bengali Traditional Chickpea Stew - Var 58 → Chettinad Special Chickpea Stew - Var 37
+- Chettinad Special Chickpea Stew - Var 79 → Chettinad Special Chickpea Stew - Var 37
+- Bengali Traditional Chickpea Stew - Var 100 → Chettinad Special Chickpea Stew - Var 37
+- Chettinad Special Chickpea Stew - Var 121 → Chettinad Special Chickpea Stew - Var 37
+- Kerala Malabar Style Stuffed Paratha Roll - Var 37 → Hyderabadi Style Stuffed Paratha Roll - Var 16
+- Hyderabadi Style Stuffed Paratha Roll - Var 58 → Hyderabadi Style Stuffed Paratha Roll - Var 16
+- Kerala Malabar Style Stuffed Paratha Roll - Var 79 → Hyderabadi Style Stuffed Paratha Roll - Var 16
+- Hyderabadi Style Stuffed Paratha Roll - Var 100 → Hyderabadi Style Stuffed Paratha Roll - Var 16
+- Kerala Malabar Style Stuffed Paratha Roll - Var 121 → Hyderabadi Style Stuffed Paratha Roll - Var 16
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 16 → Andhra Spicy Style Flavoured Rice Bowl - Var 37
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 58 → Andhra Spicy Style Flavoured Rice Bowl - Var 37
+- Andhra Spicy Style Flavoured Rice Bowl - Var 79 → Andhra Spicy Style Flavoured Rice Bowl - Var 37
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 100 → Andhra Spicy Style Flavoured Rice Bowl - Var 37
+- Andhra Spicy Style Flavoured Rice Bowl - Var 121 → Andhra Spicy Style Flavoured Rice Bowl - Var 37
+- North Indian Homestyle Lentil Soup / Shorba - Var 16 → Karnataka Udipi Style Lentil Soup / Shorba - Var 37
+- North Indian Homestyle Lentil Soup / Shorba - Var 58 → Karnataka Udipi Style Lentil Soup / Shorba - Var 37
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 79 → Karnataka Udipi Style Lentil Soup / Shorba - Var 37
+- North Indian Homestyle Lentil Soup / Shorba - Var 100 → Karnataka Udipi Style Lentil Soup / Shorba - Var 37
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 121 → Karnataka Udipi Style Lentil Soup / Shorba - Var 37
+- Gujarati Jain Style Fried Snack Bowl - Var 37 → Punjabi Dhaba Style Fried Snack Bowl - Var 16
+- Punjabi Dhaba Style Fried Snack Bowl - Var 58 → Punjabi Dhaba Style Fried Snack Bowl - Var 16
+- Gujarati Jain Style Fried Snack Bowl - Var 79 → Punjabi Dhaba Style Fried Snack Bowl - Var 16
+- Punjabi Dhaba Style Fried Snack Bowl - Var 100 → Punjabi Dhaba Style Fried Snack Bowl - Var 16
+- Gujarati Jain Style Fried Snack Bowl - Var 121 → Punjabi Dhaba Style Fried Snack Bowl - Var 16
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 37 → South Indian Brahmin Style Regional Sweet Delight - Var 16
+- South Indian Brahmin Style Regional Sweet Delight - Var 58 → South Indian Brahmin Style Regional Sweet Delight - Var 16
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 79 → South Indian Brahmin Style Regional Sweet Delight - Var 16
+- South Indian Brahmin Style Regional Sweet Delight - Var 100 → South Indian Brahmin Style Regional Sweet Delight - Var 16
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 121 → South Indian Brahmin Style Regional Sweet Delight - Var 16
+- Bengali Traditional Specialty Curry Gravy - Var 37 → Chettinad Special Specialty Curry Gravy - Var 16
+- Chettinad Special Specialty Curry Gravy - Var 58 → Chettinad Special Specialty Curry Gravy - Var 16
+- Bengali Traditional Specialty Curry Gravy - Var 79 → Chettinad Special Specialty Curry Gravy - Var 16
+- Chettinad Special Specialty Curry Gravy - Var 100 → Chettinad Special Specialty Curry Gravy - Var 16
+- Bengali Traditional Specialty Curry Gravy - Var 121 → Chettinad Special Specialty Curry Gravy - Var 16
+- Kerala Malabar Style Veg Korma - Var 17 → Hyderabadi Style Veg Korma - Var 38
+- Kerala Malabar Style Veg Korma - Var 59 → Hyderabadi Style Veg Korma - Var 38
+- Hyderabadi Style Veg Korma - Var 80 → Hyderabadi Style Veg Korma - Var 38
+- Kerala Malabar Style Veg Korma - Var 101 → Hyderabadi Style Veg Korma - Var 38
+- Hyderabadi Style Veg Korma - Var 122 → Hyderabadi Style Veg Korma - Var 38
+- Rajasthani Royal Style Kofta Curry - Var 38 → Andhra Spicy Style Kofta Curry - Var 17
+- Andhra Spicy Style Kofta Curry - Var 59 → Andhra Spicy Style Kofta Curry - Var 17
+- Rajasthani Royal Style Kofta Curry - Var 80 → Andhra Spicy Style Kofta Curry - Var 17
+- Andhra Spicy Style Kofta Curry - Var 101 → Andhra Spicy Style Kofta Curry - Var 17
+- Rajasthani Royal Style Kofta Curry - Var 122 → Andhra Spicy Style Kofta Curry - Var 17
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 38 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 17
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 59 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 17
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 80 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 17
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 101 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 17
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 122 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 17
+- Punjabi Dhaba Style Chickpea Stew - Var 38 → Gujarati Jain Style Chickpea Stew - Var 17
+- Gujarati Jain Style Chickpea Stew - Var 59 → Gujarati Jain Style Chickpea Stew - Var 17
+- Punjabi Dhaba Style Chickpea Stew - Var 80 → Gujarati Jain Style Chickpea Stew - Var 17
+- Gujarati Jain Style Chickpea Stew - Var 101 → Gujarati Jain Style Chickpea Stew - Var 17
+- Punjabi Dhaba Style Chickpea Stew - Var 122 → Gujarati Jain Style Chickpea Stew - Var 17
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 17 → South Indian Brahmin Style Stuffed Paratha Roll - Var 38
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 59 → South Indian Brahmin Style Stuffed Paratha Roll - Var 38
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 80 → South Indian Brahmin Style Stuffed Paratha Roll - Var 38
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 101 → South Indian Brahmin Style Stuffed Paratha Roll - Var 38
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 122 → South Indian Brahmin Style Stuffed Paratha Roll - Var 38
+- Bengali Traditional Flavoured Rice Bowl - Var 17 → Chettinad Special Flavoured Rice Bowl - Var 38
+- Bengali Traditional Flavoured Rice Bowl - Var 59 → Chettinad Special Flavoured Rice Bowl - Var 38
+- Chettinad Special Flavoured Rice Bowl - Var 80 → Chettinad Special Flavoured Rice Bowl - Var 38
+- Bengali Traditional Flavoured Rice Bowl - Var 101 → Chettinad Special Flavoured Rice Bowl - Var 38
+- Chettinad Special Flavoured Rice Bowl - Var 122 → Chettinad Special Flavoured Rice Bowl - Var 38
+- Rajasthani Royal Style Fried Snack Bowl - Var 17 → Andhra Spicy Style Fried Snack Bowl - Var 38
+- Rajasthani Royal Style Fried Snack Bowl - Var 59 → Andhra Spicy Style Fried Snack Bowl - Var 38
+- Andhra Spicy Style Fried Snack Bowl - Var 80 → Andhra Spicy Style Fried Snack Bowl - Var 38
+- Rajasthani Royal Style Fried Snack Bowl - Var 101 → Andhra Spicy Style Fried Snack Bowl - Var 38
+- Andhra Spicy Style Fried Snack Bowl - Var 122 → Andhra Spicy Style Fried Snack Bowl - Var 38
+- North Indian Homestyle Regional Sweet Delight - Var 17 → Karnataka Udipi Style Regional Sweet Delight - Var 38
+- North Indian Homestyle Regional Sweet Delight - Var 59 → Karnataka Udipi Style Regional Sweet Delight - Var 38
+- Karnataka Udipi Style Regional Sweet Delight - Var 80 → Karnataka Udipi Style Regional Sweet Delight - Var 38
+- North Indian Homestyle Regional Sweet Delight - Var 101 → Karnataka Udipi Style Regional Sweet Delight - Var 38
+- Karnataka Udipi Style Regional Sweet Delight - Var 122 → Karnataka Udipi Style Regional Sweet Delight - Var 38
+- Gujarati Jain Style Specialty Curry Gravy - Var 38 → Punjabi Dhaba Style Specialty Curry Gravy - Var 17
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 59 → Punjabi Dhaba Style Specialty Curry Gravy - Var 17
+- Gujarati Jain Style Specialty Curry Gravy - Var 80 → Punjabi Dhaba Style Specialty Curry Gravy - Var 17
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 101 → Punjabi Dhaba Style Specialty Curry Gravy - Var 17
+- Gujarati Jain Style Specialty Curry Gravy - Var 122 → Punjabi Dhaba Style Specialty Curry Gravy - Var 17
+- Maharashtrian Malvani Style Veg Korma - Var 39 → South Indian Brahmin Style Veg Korma - Var 18
+- South Indian Brahmin Style Veg Korma - Var 60 → South Indian Brahmin Style Veg Korma - Var 18
+- Maharashtrian Malvani Style Veg Korma - Var 81 → South Indian Brahmin Style Veg Korma - Var 18
+- South Indian Brahmin Style Veg Korma - Var 102 → South Indian Brahmin Style Veg Korma - Var 18
+- Maharashtrian Malvani Style Veg Korma - Var 123 → South Indian Brahmin Style Veg Korma - Var 18
+- Bengali Traditional Kofta Curry - Var 39 → Chettinad Special Kofta Curry - Var 18
+- Chettinad Special Kofta Curry - Var 60 → Chettinad Special Kofta Curry - Var 18
+- Bengali Traditional Kofta Curry - Var 81 → Chettinad Special Kofta Curry - Var 18
+- Chettinad Special Kofta Curry - Var 102 → Chettinad Special Kofta Curry - Var 18
+- Bengali Traditional Kofta Curry - Var 123 → Chettinad Special Kofta Curry - Var 18
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 18 → Hyderabadi Style Mashed Vegetable Bhaji - Var 39
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 60 → Hyderabadi Style Mashed Vegetable Bhaji - Var 39
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 81 → Hyderabadi Style Mashed Vegetable Bhaji - Var 39
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 102 → Hyderabadi Style Mashed Vegetable Bhaji - Var 39
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 123 → Hyderabadi Style Mashed Vegetable Bhaji - Var 39
+- Rajasthani Royal Style Chickpea Stew - Var 39 → Andhra Spicy Style Chickpea Stew - Var 18
+- Andhra Spicy Style Chickpea Stew - Var 60 → Andhra Spicy Style Chickpea Stew - Var 18
+- Rajasthani Royal Style Chickpea Stew - Var 81 → Andhra Spicy Style Chickpea Stew - Var 18
+- Andhra Spicy Style Chickpea Stew - Var 102 → Andhra Spicy Style Chickpea Stew - Var 18
+- Rajasthani Royal Style Chickpea Stew - Var 123 → Andhra Spicy Style Chickpea Stew - Var 18
+- North Indian Homestyle Stuffed Paratha Roll - Var 39 → Karnataka Udipi Style Stuffed Paratha Roll - Var 18
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 60 → Karnataka Udipi Style Stuffed Paratha Roll - Var 18
+- North Indian Homestyle Stuffed Paratha Roll - Var 81 → Karnataka Udipi Style Stuffed Paratha Roll - Var 18
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 102 → Karnataka Udipi Style Stuffed Paratha Roll - Var 18
+- North Indian Homestyle Stuffed Paratha Roll - Var 123 → Karnataka Udipi Style Stuffed Paratha Roll - Var 18
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 39 → Gujarati Jain Style Flavoured Rice Bowl - Var 18
+- Gujarati Jain Style Flavoured Rice Bowl - Var 60 → Gujarati Jain Style Flavoured Rice Bowl - Var 18
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 81 → Gujarati Jain Style Flavoured Rice Bowl - Var 18
+- Gujarati Jain Style Flavoured Rice Bowl - Var 102 → Gujarati Jain Style Flavoured Rice Bowl - Var 18
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 123 → Gujarati Jain Style Flavoured Rice Bowl - Var 18
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 18 → South Indian Brahmin Style Lentil Soup / Shorba - Var 39
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 60 → South Indian Brahmin Style Lentil Soup / Shorba - Var 39
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 81 → South Indian Brahmin Style Lentil Soup / Shorba - Var 39
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 102 → South Indian Brahmin Style Lentil Soup / Shorba - Var 39
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 123 → South Indian Brahmin Style Lentil Soup / Shorba - Var 39
+- Bengali Traditional Fried Snack Bowl - Var 18 → Chettinad Special Fried Snack Bowl - Var 39
+- Bengali Traditional Fried Snack Bowl - Var 60 → Chettinad Special Fried Snack Bowl - Var 39
+- Chettinad Special Fried Snack Bowl - Var 81 → Chettinad Special Fried Snack Bowl - Var 39
+- Bengali Traditional Fried Snack Bowl - Var 102 → Chettinad Special Fried Snack Bowl - Var 39
+- Chettinad Special Fried Snack Bowl - Var 123 → Chettinad Special Fried Snack Bowl - Var 39
+- Kerala Malabar Style Regional Sweet Delight - Var 39 → Hyderabadi Style Regional Sweet Delight - Var 18
+- Hyderabadi Style Regional Sweet Delight - Var 60 → Hyderabadi Style Regional Sweet Delight - Var 18
+- Kerala Malabar Style Regional Sweet Delight - Var 81 → Hyderabadi Style Regional Sweet Delight - Var 18
+- Hyderabadi Style Regional Sweet Delight - Var 102 → Hyderabadi Style Regional Sweet Delight - Var 18
+- Kerala Malabar Style Regional Sweet Delight - Var 123 → Hyderabadi Style Regional Sweet Delight - Var 18
+- Rajasthani Royal Style Specialty Curry Gravy - Var 18 → Andhra Spicy Style Specialty Curry Gravy - Var 39
+- Rajasthani Royal Style Specialty Curry Gravy - Var 60 → Andhra Spicy Style Specialty Curry Gravy - Var 39
+- Andhra Spicy Style Specialty Curry Gravy - Var 81 → Andhra Spicy Style Specialty Curry Gravy - Var 39
+- Rajasthani Royal Style Specialty Curry Gravy - Var 102 → Andhra Spicy Style Specialty Curry Gravy - Var 39
+- Andhra Spicy Style Specialty Curry Gravy - Var 123 → Andhra Spicy Style Specialty Curry Gravy - Var 39
+- North Indian Homestyle Veg Korma - Var 19 → Karnataka Udipi Style Veg Korma - Var 40
+- North Indian Homestyle Veg Korma - Var 61 → Karnataka Udipi Style Veg Korma - Var 40
+- Karnataka Udipi Style Veg Korma - Var 82 → Karnataka Udipi Style Veg Korma - Var 40
+- North Indian Homestyle Veg Korma - Var 103 → Karnataka Udipi Style Veg Korma - Var 40
+- Karnataka Udipi Style Veg Korma - Var 124 → Karnataka Udipi Style Veg Korma - Var 40
+- Gujarati Jain Style Kofta Curry - Var 40 → Punjabi Dhaba Style Kofta Curry - Var 19
+- Punjabi Dhaba Style Kofta Curry - Var 61 → Punjabi Dhaba Style Kofta Curry - Var 19
+- Gujarati Jain Style Kofta Curry - Var 82 → Punjabi Dhaba Style Kofta Curry - Var 19
+- Punjabi Dhaba Style Kofta Curry - Var 103 → Punjabi Dhaba Style Kofta Curry - Var 19
+- Gujarati Jain Style Kofta Curry - Var 124 → Punjabi Dhaba Style Kofta Curry - Var 19
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 40 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 19
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 61 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 19
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 82 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 19
+- South Indian Brahmin Style Mashed Vegetable Bhaji - Var 103 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 19
+- Maharashtrian Malvani Style Mashed Vegetable Bhaji - Var 124 → South Indian Brahmin Style Mashed Vegetable Bhaji - Var 19
+- Bengali Traditional Chickpea Stew - Var 40 → Chettinad Special Chickpea Stew - Var 19
+- Chettinad Special Chickpea Stew - Var 61 → Chettinad Special Chickpea Stew - Var 19
+- Bengali Traditional Chickpea Stew - Var 82 → Chettinad Special Chickpea Stew - Var 19
+- Chettinad Special Chickpea Stew - Var 103 → Chettinad Special Chickpea Stew - Var 19
+- Bengali Traditional Chickpea Stew - Var 124 → Chettinad Special Chickpea Stew - Var 19
+- Kerala Malabar Style Stuffed Paratha Roll - Var 19 → Hyderabadi Style Stuffed Paratha Roll - Var 40
+- Kerala Malabar Style Stuffed Paratha Roll - Var 61 → Hyderabadi Style Stuffed Paratha Roll - Var 40
+- Hyderabadi Style Stuffed Paratha Roll - Var 82 → Hyderabadi Style Stuffed Paratha Roll - Var 40
+- Kerala Malabar Style Stuffed Paratha Roll - Var 103 → Hyderabadi Style Stuffed Paratha Roll - Var 40
+- Hyderabadi Style Stuffed Paratha Roll - Var 124 → Hyderabadi Style Stuffed Paratha Roll - Var 40
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 40 → Andhra Spicy Style Flavoured Rice Bowl - Var 19
+- Andhra Spicy Style Flavoured Rice Bowl - Var 61 → Andhra Spicy Style Flavoured Rice Bowl - Var 19
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 82 → Andhra Spicy Style Flavoured Rice Bowl - Var 19
+- Andhra Spicy Style Flavoured Rice Bowl - Var 103 → Andhra Spicy Style Flavoured Rice Bowl - Var 19
+- Rajasthani Royal Style Flavoured Rice Bowl - Var 124 → Andhra Spicy Style Flavoured Rice Bowl - Var 19
+- North Indian Homestyle Lentil Soup / Shorba - Var 40 → Karnataka Udipi Style Lentil Soup / Shorba - Var 19
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 61 → Karnataka Udipi Style Lentil Soup / Shorba - Var 19
+- North Indian Homestyle Lentil Soup / Shorba - Var 82 → Karnataka Udipi Style Lentil Soup / Shorba - Var 19
+- Karnataka Udipi Style Lentil Soup / Shorba - Var 103 → Karnataka Udipi Style Lentil Soup / Shorba - Var 19
+- North Indian Homestyle Lentil Soup / Shorba - Var 124 → Karnataka Udipi Style Lentil Soup / Shorba - Var 19
+- Punjabi Dhaba Style Fried Snack Bowl - Var 40 → Gujarati Jain Style Fried Snack Bowl - Var 19
+- Gujarati Jain Style Fried Snack Bowl - Var 61 → Gujarati Jain Style Fried Snack Bowl - Var 19
+- Punjabi Dhaba Style Fried Snack Bowl - Var 82 → Gujarati Jain Style Fried Snack Bowl - Var 19
+- Gujarati Jain Style Fried Snack Bowl - Var 103 → Gujarati Jain Style Fried Snack Bowl - Var 19
+- Punjabi Dhaba Style Fried Snack Bowl - Var 124 → Gujarati Jain Style Fried Snack Bowl - Var 19
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 19 → South Indian Brahmin Style Regional Sweet Delight - Var 40
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 61 → South Indian Brahmin Style Regional Sweet Delight - Var 40
+- South Indian Brahmin Style Regional Sweet Delight - Var 82 → South Indian Brahmin Style Regional Sweet Delight - Var 40
+- Maharashtrian Malvani Style Regional Sweet Delight - Var 103 → South Indian Brahmin Style Regional Sweet Delight - Var 40
+- South Indian Brahmin Style Regional Sweet Delight - Var 124 → South Indian Brahmin Style Regional Sweet Delight - Var 40
+- Bengali Traditional Specialty Curry Gravy - Var 19 → Chettinad Special Specialty Curry Gravy - Var 40
+- Bengali Traditional Specialty Curry Gravy - Var 61 → Chettinad Special Specialty Curry Gravy - Var 40
+- Chettinad Special Specialty Curry Gravy - Var 82 → Chettinad Special Specialty Curry Gravy - Var 40
+- Bengali Traditional Specialty Curry Gravy - Var 103 → Chettinad Special Specialty Curry Gravy - Var 40
+- Chettinad Special Specialty Curry Gravy - Var 124 → Chettinad Special Specialty Curry Gravy - Var 40
+- Kerala Malabar Style Veg Korma - Var 41 → Hyderabadi Style Veg Korma - Var 20
+- Hyderabadi Style Veg Korma - Var 62 → Hyderabadi Style Veg Korma - Var 20
+- Kerala Malabar Style Veg Korma - Var 83 → Hyderabadi Style Veg Korma - Var 20
+- Hyderabadi Style Veg Korma - Var 104 → Hyderabadi Style Veg Korma - Var 20
+- Kerala Malabar Style Veg Korma - Var 125 → Hyderabadi Style Veg Korma - Var 20
+- Rajasthani Royal Style Kofta Curry - Var 20 → Andhra Spicy Style Kofta Curry - Var 41
+- Rajasthani Royal Style Kofta Curry - Var 62 → Andhra Spicy Style Kofta Curry - Var 41
+- Andhra Spicy Style Kofta Curry - Var 83 → Andhra Spicy Style Kofta Curry - Var 41
+- Rajasthani Royal Style Kofta Curry - Var 104 → Andhra Spicy Style Kofta Curry - Var 41
+- Andhra Spicy Style Kofta Curry - Var 125 → Andhra Spicy Style Kofta Curry - Var 41
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 20 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 41
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 62 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 41
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 83 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 41
+- North Indian Homestyle Mashed Vegetable Bhaji - Var 104 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 41
+- Karnataka Udipi Style Mashed Vegetable Bhaji - Var 125 → Karnataka Udipi Style Mashed Vegetable Bhaji - Var 41
+- Gujarati Jain Style Chickpea Stew - Var 41 → Punjabi Dhaba Style Chickpea Stew - Var 20
+- Punjabi Dhaba Style Chickpea Stew - Var 62 → Punjabi Dhaba Style Chickpea Stew - Var 20
+- Gujarati Jain Style Chickpea Stew - Var 83 → Punjabi Dhaba Style Chickpea Stew - Var 20
+- Punjabi Dhaba Style Chickpea Stew - Var 104 → Punjabi Dhaba Style Chickpea Stew - Var 20
+- Gujarati Jain Style Chickpea Stew - Var 125 → Punjabi Dhaba Style Chickpea Stew - Var 20
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 41 → South Indian Brahmin Style Stuffed Paratha Roll - Var 20
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 62 → South Indian Brahmin Style Stuffed Paratha Roll - Var 20
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 83 → South Indian Brahmin Style Stuffed Paratha Roll - Var 20
+- South Indian Brahmin Style Stuffed Paratha Roll - Var 104 → South Indian Brahmin Style Stuffed Paratha Roll - Var 20
+- Maharashtrian Malvani Style Stuffed Paratha Roll - Var 125 → South Indian Brahmin Style Stuffed Paratha Roll - Var 20
+- Bengali Traditional Flavoured Rice Bowl - Var 41 → Chettinad Special Flavoured Rice Bowl - Var 20
+- Chettinad Special Flavoured Rice Bowl - Var 62 → Chettinad Special Flavoured Rice Bowl - Var 20
+- Bengali Traditional Flavoured Rice Bowl - Var 83 → Chettinad Special Flavoured Rice Bowl - Var 20
+- Chettinad Special Flavoured Rice Bowl - Var 104 → Chettinad Special Flavoured Rice Bowl - Var 20
+- Bengali Traditional Flavoured Rice Bowl - Var 125 → Chettinad Special Flavoured Rice Bowl - Var 20
+- Kerala Malabar Style Lentil Soup / Shorba - Var 20 → Hyderabadi Style Lentil Soup / Shorba - Var 41
+- Kerala Malabar Style Lentil Soup / Shorba - Var 62 → Hyderabadi Style Lentil Soup / Shorba - Var 41
+- Hyderabadi Style Lentil Soup / Shorba - Var 83 → Hyderabadi Style Lentil Soup / Shorba - Var 41
+- Kerala Malabar Style Lentil Soup / Shorba - Var 104 → Hyderabadi Style Lentil Soup / Shorba - Var 41
+- Hyderabadi Style Lentil Soup / Shorba - Var 125 → Hyderabadi Style Lentil Soup / Shorba - Var 41
+- Rajasthani Royal Style Fried Snack Bowl - Var 41 → Andhra Spicy Style Fried Snack Bowl - Var 20
+- Andhra Spicy Style Fried Snack Bowl - Var 62 → Andhra Spicy Style Fried Snack Bowl - Var 20
+- Rajasthani Royal Style Fried Snack Bowl - Var 83 → Andhra Spicy Style Fried Snack Bowl - Var 20
+- Andhra Spicy Style Fried Snack Bowl - Var 104 → Andhra Spicy Style Fried Snack Bowl - Var 20
+- Rajasthani Royal Style Fried Snack Bowl - Var 125 → Andhra Spicy Style Fried Snack Bowl - Var 20
+- North Indian Homestyle Regional Sweet Delight - Var 41 → Karnataka Udipi Style Regional Sweet Delight - Var 20
+- Karnataka Udipi Style Regional Sweet Delight - Var 62 → Karnataka Udipi Style Regional Sweet Delight - Var 20
+- North Indian Homestyle Regional Sweet Delight - Var 83 → Karnataka Udipi Style Regional Sweet Delight - Var 20
+- Karnataka Udipi Style Regional Sweet Delight - Var 104 → Karnataka Udipi Style Regional Sweet Delight - Var 20
+- North Indian Homestyle Regional Sweet Delight - Var 125 → Karnataka Udipi Style Regional Sweet Delight - Var 20
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 41 → Gujarati Jain Style Specialty Curry Gravy - Var 20
+- Gujarati Jain Style Specialty Curry Gravy - Var 62 → Gujarati Jain Style Specialty Curry Gravy - Var 20
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 83 → Gujarati Jain Style Specialty Curry Gravy - Var 20
+- Gujarati Jain Style Specialty Curry Gravy - Var 104 → Gujarati Jain Style Specialty Curry Gravy - Var 20
+- Punjabi Dhaba Style Specialty Curry Gravy - Var 125 → Gujarati Jain Style Specialty Curry Gravy - Var 20
+- Maharashtrian Malvani Style Veg Korma - Var 21 → South Indian Brahmin Style Veg Korma - Var 42
+- Maharashtrian Malvani Style Veg Korma - Var 63 → South Indian Brahmin Style Veg Korma - Var 42
+- South Indian Brahmin Style Veg Korma - Var 84 → South Indian Brahmin Style Veg Korma - Var 42
+- Maharashtrian Malvani Style Veg Korma - Var 105 → South Indian Brahmin Style Veg Korma - Var 42
+- South Indian Brahmin Style Veg Korma - Var 126 → South Indian Brahmin Style Veg Korma - Var 42
+- Bengali Traditional Kofta Curry - Var 21 → Chettinad Special Kofta Curry - Var 42
+- Bengali Traditional Kofta Curry - Var 63 → Chettinad Special Kofta Curry - Var 42
+- Chettinad Special Kofta Curry - Var 84 → Chettinad Special Kofta Curry - Var 42
+- Bengali Traditional Kofta Curry - Var 105 → Chettinad Special Kofta Curry - Var 42
+- Chettinad Special Kofta Curry - Var 126 → Chettinad Special Kofta Curry - Var 42
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 42 → Hyderabadi Style Mashed Vegetable Bhaji - Var 21
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 63 → Hyderabadi Style Mashed Vegetable Bhaji - Var 21
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 84 → Hyderabadi Style Mashed Vegetable Bhaji - Var 21
+- Hyderabadi Style Mashed Vegetable Bhaji - Var 105 → Hyderabadi Style Mashed Vegetable Bhaji - Var 21
+- Kerala Malabar Style Mashed Vegetable Bhaji - Var 126 → Hyderabadi Style Mashed Vegetable Bhaji - Var 21
+- Rajasthani Royal Style Chickpea Stew - Var 21 → Andhra Spicy Style Chickpea Stew - Var 42
+- Rajasthani Royal Style Chickpea Stew - Var 63 → Andhra Spicy Style Chickpea Stew - Var 42
+- Andhra Spicy Style Chickpea Stew - Var 84 → Andhra Spicy Style Chickpea Stew - Var 42
+- Rajasthani Royal Style Chickpea Stew - Var 105 → Andhra Spicy Style Chickpea Stew - Var 42
+- Andhra Spicy Style Chickpea Stew - Var 126 → Andhra Spicy Style Chickpea Stew - Var 42
+- North Indian Homestyle Stuffed Paratha Roll - Var 21 → Karnataka Udipi Style Stuffed Paratha Roll - Var 42
+- North Indian Homestyle Stuffed Paratha Roll - Var 63 → Karnataka Udipi Style Stuffed Paratha Roll - Var 42
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 84 → Karnataka Udipi Style Stuffed Paratha Roll - Var 42
+- North Indian Homestyle Stuffed Paratha Roll - Var 105 → Karnataka Udipi Style Stuffed Paratha Roll - Var 42
+- Karnataka Udipi Style Stuffed Paratha Roll - Var 126 → Karnataka Udipi Style Stuffed Paratha Roll - Var 42
+- Gujarati Jain Style Flavoured Rice Bowl - Var 42 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 21
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 63 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 21
+- Gujarati Jain Style Flavoured Rice Bowl - Var 84 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 21
+- Punjabi Dhaba Style Flavoured Rice Bowl - Var 105 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 21
+- Gujarati Jain Style Flavoured Rice Bowl - Var 126 → Punjabi Dhaba Style Flavoured Rice Bowl - Var 21
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 42 → South Indian Brahmin Style Lentil Soup / Shorba - Var 21
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 63 → South Indian Brahmin Style Lentil Soup / Shorba - Var 21
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 84 → South Indian Brahmin Style Lentil Soup / Shorba - Var 21
+- South Indian Brahmin Style Lentil Soup / Shorba - Var 105 → South Indian Brahmin Style Lentil Soup / Shorba - Var 21
+- Maharashtrian Malvani Style Lentil Soup / Shorba - Var 126 → South Indian Brahmin Style Lentil Soup / Shorba - Var 21
+- Bengali Traditional Fried Snack Bowl - Var 42 → Chettinad Special Fried Snack Bowl - Var 21
+- Chettinad Special Fried Snack Bowl - Var 63 → Chettinad Special Fried Snack Bowl - Var 21
+- Bengali Traditional Fried Snack Bowl - Var 84 → Chettinad Special Fried Snack Bowl - Var 21
+- Chettinad Special Fried Snack Bowl - Var 105 → Chettinad Special Fried Snack Bowl - Var 21
+- Bengali Traditional Fried Snack Bowl - Var 126 → Chettinad Special Fried Snack Bowl - Var 21
+- Kerala Malabar Style Regional Sweet Delight - Var 21 → Hyderabadi Style Regional Sweet Delight - Var 42
+- Kerala Malabar Style Regional Sweet Delight - Var 63 → Hyderabadi Style Regional Sweet Delight - Var 42
+- Hyderabadi Style Regional Sweet Delight - Var 84 → Hyderabadi Style Regional Sweet Delight - Var 42
+- Kerala Malabar Style Regional Sweet Delight - Var 105 → Hyderabadi Style Regional Sweet Delight - Var 42
+- Hyderabadi Style Regional Sweet Delight - Var 126 → Hyderabadi Style Regional Sweet Delight - Var 42
+- Rajasthani Royal Style Specialty Curry Gravy - Var 42 → Andhra Spicy Style Specialty Curry Gravy - Var 21
+- Andhra Spicy Style Specialty Curry Gravy - Var 63 → Andhra Spicy Style Specialty Curry Gravy - Var 21
+- Rajasthani Royal Style Specialty Curry Gravy - Var 84 → Andhra Spicy Style Specialty Curry Gravy - Var 21
+- Andhra Spicy Style Specialty Curry Gravy - Var 105 → Andhra Spicy Style Specialty Curry Gravy - Var 21
+- Rajasthani Royal Style Specialty Curry Gravy - Var 126 → Andhra Spicy Style Specialty Curry Gravy - Var 21
+- Sting Energy Drink Energy Boost → Sprite Lemon-Lime Drink
+</details>
+
+## Sample of rows to load (100)
+
+| Food | Unit | kcal | Protein | kcal/100g |
+|:-----|:-----|-----:|--------:|----------:|
+| Alpino Chocolate Peanut Butter (Smooth) | 2 tbsp | 190 | 8 | 593.75 |
+| Bagrry's Crunchy Muesli Almond & Raisin | serving | 215 | 4.5 | 430 |
+| Slurrp Farm Millet Pancake Mix | serving | 180 | 5 | 360 |
+| Optimum Nutrition (ON) Gold Standard 100% Isolate | scoop | 110 | 25 | 366.67 |
+| As-It-Is Whey Protein Isolate 90% (Unflavored) | scoop | 112 | 27 | 373.33 |
+| Kapiva Slim Shake (Chocolate) | scoop | 125 | 12 | 357.14 |
+| RiteBite Max Protein Daily Bar (Choco Almond 10g Protein) | serving | 200 | 10 | 400 |
+| Hyp Lean Protein Bar (Chocolate Brownie 10g) | serving | 140 | 10 | 350 |
+| Nutty Gritties Thai Chili Roasted Cashews | serving | 170 | 5 | 566.67 |
+| Amul Buffalo Milk (6.5% Fat) | serving | 92 | 3.5 | 92 |
+| Mother Dairy Classic Paneer | serving | 289 | 18 | 289 |
+| Sofit Soya Milk (Unsweetened Natural) | serving | 38 | 3.6 | 38 |
+| Eggee Brown Eggs Organic | egg | 74 | 6.5 | 148 |
+| Saffola Mealmaker Soya Chunks | Dry | 342 | 53 | 342 |
+| Imagine Meats Plant Based Chicken Keema | serving | 175 | 16.5 | 175 |
+| The Whole Truth 100% Sourdough Bread (Whole Wheat) | slice | 115 | 4.8 | 230 |
+| India Gate Brown Basmati Rice | Uncooked | 345 | 9 | 345 |
+| Veeba Eggless Mayonnaise Classic | tbsp | 90 | 0.2 | 600 |
+| Ching's Secret Schezwan Chutney | tbsp | 35 | 0.5 | 233.33 |
+| Amul Dark Chocolate 75% Cocoa | 3 squares | 116 | 1.6 | 580 |
+| Amul Regular Butter | serving | 722 | 0.5 | 722 |
+| Pesarattu (Moong Dal Dosa) | dosa | 180 | 8.5 | 180 |
+| Puttu (Steamed Rice & Coconut) | portion | 230 | 4.5 | 191.67 |
+| Poori Masala | 3 puris + curry | 420 | 7.2 | 190.91 |
+| Aloo Paratha (Low Oil Diet) | pc | 290 | 7.5 | 223.08 |
+| Egg Paratha (Butter Loaded) | pc | 340 | 13 | 261.54 |
+| Tok Dal (Bengali Raw Mango Dal) | bowl | 125 | 6 | 83.33 |
+| Rajma Masala (Punjabi Red Kidney Beans) | bowl | 210 | 11 | 116.67 |
+| Aloo Matar | bowl | 150 | 4 | 100 |
+| Mix Veg Dry Sabzi | bowl | 140 | 3.8 | 93.33 |
+| Beans Carrot Poriyal | bowl | 90 | 2.5 | 75 |
+| Soya Chunks Curry | bowl | 210 | 22 | 116.67 |
+| Paneer (Homestyle Onion-Tomato) | bowl | 150 | 14 | 93.75 |
+| Soya Chunks (Punjabi Dhaba Style (Extra Oil/Butter)) | bowl | 210 | 18 | 131.25 |
+| Chicken Curry (Homestyle Indian) | bowl | 260 | 27 | 130 |
+| Chicken Kheema Matar | bowl | 330 | 27 | 183.33 |
+| Mutton Nalli Nihari | bowl | 480 | 28 | 192 |
+| Fish Fry Masala (Pomfret / Katla) | pc | 260 | 25 | 173.33 |
+| Chicken With Bone (Dhaba Spicy Gravy) | bowl / portion | 260 | 19 | 144.44 |
+| Egg (2 whole) (Homestyle Curry) | bowl / portion | 200 | 13 | 111.11 |
+| Crab (Tandoori Tikka Marinated (Dry)) | bowl / portion | 144 | 16 | 80 |
+| Veg Pulao (Matar / Mixed Veg) | bowl | 240 | 4.8 | 133.33 |
+| Khichdi Dal Plain (Moong Dal & Rice) | bowl | 210 | 7 | 105 |
+| Missi Roti (Besan + Wheat) | pc | 150 | 5.8 | 250 |
+| Jowar Flour (Sorghum) | raw | 349 | 10.4 | 349 |
+| Kala Chana Black Chickpeas (Raw) | raw | 360 | 20 | 360 |
+| Curd / Dahi (Low Fat / Toned) | serving | 45 | 4 | 45 |
+| Fortune Ragi Flour | raw | 345 | 12 | 345 |
+| Tata Sampann Ragi Flour | raw | 345 | 12 | 345 |
+| Organic Tattva Ragi Flour | raw | 345 | 12 | 345 |
+| Pav Bhaji (2 Maska Pavs + Bhaji) | plate | 580 | 12 | 165.71 |
+| Roasted Makhana (Fox Nuts Salted) | bowl | 115 | 3 | 383.33 |
+| Aloo Kachori | portion | 260 | 4 | 216.67 |
+| Gobi Tikhi Puri | portion | 260 | 4 | 216.67 |
+| Chicken Vada | portion | 300 | 14 | 250 |
+| Fish Mathri | portion | 300 | 14 | 250 |
+| Nannari Sharbat (Indian Sarsaparilla Syrup Drink) | lass 200ml | 130 | 0.2 | 65 |
+| Jalebi (Crispy Sugar Syrup) | 2 pcs | 300 | 1.8 | 375 |
+| Cham Cham / Chom Chom | 2 pcs | 260 | 5 | 260 |
+| Dates & Nuts (Sugar Free) Peda | portion | 300 | 5 | 375 |
+| Rose Elaichi Ladoo | portion | 260 | 5 | 325 |
+| Pista (Pistachio) Modak | portion | 260 | 5 | 325 |
+| Idli Podi (Gunpowder with Ghee / Oil) | tbsp | 70 | 2.2 | 466.67 |
+| Chettinad Special Chickpea Stew - Var 1 | bowl | 225 | 11.5 | 125 |
+| Maharashtrian Malvani Style Veg Korma - Var 3 | bowl | 245 | 5 | 136.11 |
+| North Indian Homestyle Lentil Soup / Shorba - Var 4 | bowl | 160 | 7.5 | 88.89 |
+| Andhra Spicy Style Chickpea Stew - Var 6 | bowl | 250 | 11.5 | 138.89 |
+| Chettinad Special Specialty Curry Gravy - Var 28 | bowl | 295 | 9 | 163.89 |
+| South Indian Brahmin Style Lentil Soup / Shorba - Var 9 | bowl | 185 | 7.5 | 102.78 |
+| Karnataka Udipi Style Mashed Vegetable Bhaji - Var 11 | bowl | 220 | 4.8 | 122.22 |
+| Hyderabadi Style Regional Sweet Delight - Var 12 | pc | 305 | 5.5 | 508.33 |
+| South Indian Brahmin Style Stuffed Paratha Roll - Var 14 | pc | 410 | 10.5 | 256.25 |
+| Gujarati Jain Style Kofta Curry - Var 16 | bowl | 285 | 7 | 158.33 |
+| Karnataka Udipi Style Regional Sweet Delight - Var 38 | pc | 255 | 5.5 | 425 |
+| Hyderabadi Style Stuffed Paratha Roll - Var 40 | pc | 360 | 10.5 | 225 |
+| South Indian Brahmin Style Veg Korma - Var 42 | bowl | 245 | 5 | 136.11 |
+| McDonald's Filet-O-Fish Burger | pc | 348 | 14 | 252.17 |
+| McDonald's Veg Pizza McPuff (2 pcs) | 2 pcs | 456 | 10.2 | 262.07 |
+| Domino's Pizza Choco Lava Cake | pc | 340 | 4.5 | 400 |
+| Subway Chicken Kofta Sub (6 inch) | sub | 380 | 22 | 172.73 |
+| KFC Fries (Medium) | portion | 290 | 4 | 290 |
+| Starbucks Butter Croissant | pc | 330 | 6 | 412.5 |
+| Chaayos Kulhad Chai | serving | 110 | 3.5 | 73.33 |
+| Faasos Reshmi Chicken Kebab Wrap | wrap | 460 | 24 | 219.05 |
+| Wow! Momo Chicken Moburg (Momo Burger) | pc | 420 | 18 | 233.33 |
+| Generic Indian Restaurant Dal Tadka | serving | 280 | 12 | 93.33 |
+| Generic South Indian Plain Dosa | dosa | 280 | 5 | 186.67 |
+| Generic Street Food Dabeli | pc | 260 | 5 | 236.36 |
+| Kurkure Naughty Tomato Puffcorn | serving | 156 | 1.9 | 520 |
+| Haldiram's Khatta Meetha Mix | serving | 162 | 3.2 | 540 |
+| Britannia Good Day Choco Chips Cookies | 4 biscuits | 150 | 2.1 | 500 |
+| Unibic Chocolate Chip Cookies | 3 cookies | 152 | 2 | 506.67 |
+| Cadbury 5 Star 3D Bar | serving | 102 | 1 | 510 |
+| Hershey's Bar Cookies 'N' Creme | serving | 132 | 1.8 | 528 |
+| Samyang Buldak 2x Spicy Hot Chicken Ramen | pack | 540 | 12 | 385.71 |
+| Godrej Yummiez Chicken Nuggets | serving | 220 | 13 | 220 |
+| Seven Up (7UP) Lemon Lime Soft Drink | serving | 115 | 0 | 46 |
+| Schweppes Tonic Water | serving | 85 | 0 | 34 |
+| Amul Tricone Butterscotch Cone | pc | 195 | 3.5 | 162.5 |
+| Haldiram's Rajma Rice Bowl (Quick Meal Combos) | portion | 362 | 12.5 | 181 |

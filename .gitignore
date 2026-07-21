@@ -13,3 +13,4 @@ evals/db-gaps.jsonl
 
 # Raw AI-generated ingestion inputs — source of truth is Supabase, not the repo
 data/incoming/
+scripts/ingest-foods/to-load.json
