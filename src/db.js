@@ -604,6 +604,18 @@ async function todaySeqs(phone) {
 
 // Delete by explicit item number ("undo 14"). Day-scoped, so a stale number
 // from yesterday can never hit an unrelated row.
+// All of today's logged rows (number + name + kcal), oldest first. Lets a
+// name-based "replace X with…" find X anywhere in the day, not just the last
+// batch, and delete it by its stable number.
+async function todayItems(phone) {
+  const { data, error } = await supabase.from("user_logs")
+    .select("food_name, kcal, matched_db_id, day_seq")
+    .eq("phone_number", phone).eq("date", istToday())
+    .not("day_seq", "is", null).order("day_seq");
+  if (error) return [];
+  return data || [];
+}
+
 // Read-only lookup of today's rows by item number — lets the bot echo
 // "item 2 is X" instead of handing a bare "item 2" to the LLM (which once
 // hallucinated "Paratha x2" from it).
@@ -650,4 +662,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { supabase, acceptableRef, logMeal, deleteBySeq, itemsBySeq, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };
+module.exports = { supabase, acceptableRef, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };

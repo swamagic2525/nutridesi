@@ -10,7 +10,7 @@ const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
-const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todaySeqs, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
+const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
 const { validateSignature, extractMessages, sendMessage, markRead } = require("./src/meta.js");
 const { logCorrectionEvent } = require("./src/correctionLogger.js");
@@ -148,6 +148,24 @@ const RECENT_MAX = 50;
 const recentExchanges = [];
 let msgLogTableMissing = false;
 const maskPhone = (p) => String(p || "").replace(/^(\+\d{2})\d+(\d{4})$/, "$1••••••$2");
+
+// Strict target resolution for a name-based "replace X with…": match X's words
+// against today's item names, alpha tokens only (so "250g" is ignored). Returns
+// the single best row, or null when nothing overlaps OR two rows tie — an
+// ambiguous or absent target must change nothing rather than delete a guess.
+function resolveTargetByName(items, targetName) {
+  const words = (s) => String(s || "").toLowerCase().split(/[^a-z]+/).filter(w => w.length > 2);
+  const tw = words(targetName);
+  if (!tw.length) return null;
+  let best = null, bestScore = 0, tie = false;
+  for (const it of items || []) {
+    const nw = words(it.food_name);
+    const score = tw.filter(w => nw.includes(w)).length;
+    if (score > bestScore) { best = it; bestScore = score; tie = false; }
+    else if (score === bestScore && score > 0) tie = true;
+  }
+  return bestScore > 0 && !tie ? best : null;
+}
 function recordExchange(from, inbound, reply, media = false) {
   // Same rule as metrics isTestPhone, plus +91-prefixed all-zero throwaways.
   if (/^\+000|^\+910{5,}/.test(String(from))) return;
@@ -303,6 +321,54 @@ async function handleMessage(from, body, opts = {}) {
     const total = await todayTotal(from);
     const lines = deleted.map(r => `${r.day_seq}. ${r.food_name} — ${r.kcal} kcal`).join("\n");
     return `\u{21A9}\u{FE0F} Removed:\n${lines}\n\n${dayLine(total, profile)}`;
+  }
+
+  // "replace item 2 with rice and dal" — item NUMBER as the swap target. Like
+  // "undo N", the number is deterministic; the replacement text is parsed
+  // normally. A digit must sit right after the verb, so name-based swaps
+  // ("replace rajma with rice") and gram/quantity edits ("replace 250g rajma
+  // with…", "replace 2 rotis with…") don't match and fall through untouched.
+  const seqReplace = trimmed.match(/^(?:replace|change|swap|update)\s+(?:items?\s*)?#?(\d+)\s+(?:with|to|for|se|ko)\s+(.+)$/i);
+  if (seqReplace) {
+    const seq = Number(seqReplace[1]);
+    const avail = await todaySeqs(from);
+    if (!avail.includes(seq)) {
+      return avail.length
+        ? `No item ${seq} in today's log. Your items are ${avail.join(", ")}.`
+        : "Nothing logged yet today — send me a food and I'll log it \u{1F642}";
+    }
+    const newParsed = await parseMeal(seqReplace[2]);
+    if (!(newParsed.items || []).length) {
+      return `Couldn't read the new food for item ${seq}. Try "replace ${seq} with 200g rice".`;
+    }
+    const deleted = await deleteBySeq(from, [seq]);
+    if (!deleted || !deleted.length) return "Couldn't change that — nothing removed.";
+    logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed: newParsed, batch: [], deleted, outcome: "replaced_by_number" });
+    const { rows, totals } = await logMeal(from, newParsed);
+    const removedLines = deleted.map(r => `\u{274C} ${r.food_name} — ${r.kcal} kcal`).join("\n");
+    const addedLines = fmtItems(rows).map(l => `\u{2705} ${l}`);
+    return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
+      `${dayLine(totals, profile)}\n${cfLine(totals)}`;
+  }
+
+  // "item 2 was wrong" / "2 is incorrect" — natural-language undo by number.
+  // ("remove item N" already routes through seqRef above.)
+  const seqWrong = trimmed.match(/^(?:item|no\.?|number|#)?\s*#?(\d+)\s+(?:was|is|wasn'?t|isn'?t)\s+(?:wrong|incorrect|a mistake|galat|not right|mislogged)\b/i);
+  if (seqWrong) {
+    const seq = Number(seqWrong[1]);
+    const avail = await todaySeqs(from);
+    if (!avail.includes(seq)) {
+      return avail.length
+        ? `No item ${seq} in today's log. Your items are ${avail.join(", ")}.`
+        : "Nothing logged yet today — send me a food and I'll log it \u{1F642}";
+    }
+    const deleted = await deleteBySeq(from, [seq]);
+    if (deleted && deleted.length) {
+      logCorrectionEvent({ intent: "undo", rawMessage: body, parsed: { intent: "undo", items: [] }, batch: [], deleted, outcome: "removed_by_number" });
+      const total = await todayTotal(from);
+      const lines = deleted.map(r => `${r.day_seq}. ${r.food_name} — ${r.kcal} kcal`).join("\n");
+      return `\u{21A9}\u{FE0F} Removed:\n${lines}\n\n${dayLine(total, profile)}`;
+    }
   }
 
   // Bare item reference — "item 2", "item #2", "#2", "no. 2", "number 2" — and
@@ -462,19 +528,21 @@ async function handleMessage(from, body, opts = {}) {
     const latest = recentBatch.length ? recentBatch : await lastLogBatch(from);
 
     // Explicit swap ("replace X with Y and Z"): the target and replacements are
-    // DIFFERENT foods, possibly 1->N. Delete the named target, then log the new
-    // items outright — the name-match-the-replacement path can't handle this.
+    // DIFFERENT foods, possibly 1->N. Resolve the named target STRICTLY against
+    // all of today's items (not the fuzzy last-batch fallback, which once
+    // deleted an unrelated estimated row), then delete it by number and log the
+    // new items. No confident single match -> change nothing.
     if (parsed.replace_target) {
-      const aligned = await deleteMatchingLastLog(from, [{ food_name: parsed.replace_target }], latest, body);
-      const removed = aligned ? aligned.filter(Boolean) : null;
-      if (!removed || removed.length === 0) {
+      const target = resolveTargetByName(await todayItems(from), parsed.replace_target);
+      if (!target) {
         logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed, batch: latest, deleted: [], outcome: "dead_end" });
-        return `Couldn't find "${parsed.replace_target}" in your recent log to replace — nothing changed.`;
+        return `Couldn't pin down "${parsed.replace_target}" in today's log — nothing changed. Try the item number, like "replace 2 with …".`;
       }
-      logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed, batch: latest, deleted: removed, outcome: "corrected" });
+      const removed = await deleteBySeq(from, [target.day_seq]);
+      logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed, batch: latest, deleted: removed, outcome: "replaced_by_name" });
       const { rows, totals } = await logMeal(from, parsed);
-      const removedLines = removed.map(r => `❌ ${r.food_name} — ${r.kcal} kcal`).join("\n");
-      const addedLines = fmtItems(rows).map(l => `✅ ${l}`);
+      const removedLines = (removed || []).map(r => `\u{274C} ${r.food_name} — ${r.kcal} kcal`).join("\n");
+      const addedLines = fmtItems(rows).map(l => `\u{2705} ${l}`);
       return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
         `${dayLine(totals, profile)}\n${cfLine(totals)}`;
     }
