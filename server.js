@@ -439,6 +439,24 @@ async function handleMessage(from, body, opts = {}) {
       return "Couldn't identify the corrected food — previous entry unchanged. Send the food name again.";
     }
     const latest = recentBatch.length ? recentBatch : await lastLogBatch(from);
+
+    // Explicit swap ("replace X with Y and Z"): the target and replacements are
+    // DIFFERENT foods, possibly 1->N. Delete the named target, then log the new
+    // items outright — the name-match-the-replacement path can't handle this.
+    if (parsed.replace_target) {
+      const aligned = await deleteMatchingLastLog(from, [{ food_name: parsed.replace_target }], latest, body);
+      const removed = aligned ? aligned.filter(Boolean) : null;
+      if (!removed || removed.length === 0) {
+        logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed, batch: latest, deleted: [], outcome: "dead_end" });
+        return `Couldn't find "${parsed.replace_target}" in your recent log to replace — nothing changed.`;
+      }
+      logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed, batch: latest, deleted: removed, outcome: "corrected" });
+      const { rows, totals } = await logMeal(from, parsed);
+      const removedLines = removed.map(r => `❌ ${r.food_name} — ${r.kcal} kcal`).join("\n");
+      const addedLines = fmtItems(rows).map(l => `✅ ${l}`);
+      return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
+        `${dayLine(totals, profile)}\n${cfLine(totals)}`;
+    }
     const aligned = await deleteMatchingLastLog(from, parsed.items, latest, body);
     let deleted = aligned ? aligned.filter(Boolean) : null;
     if (!deleted && latest.length === 1) {

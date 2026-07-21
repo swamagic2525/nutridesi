@@ -82,6 +82,11 @@ intent:
                    logged, so this is a count correction even though it starts with "I ate/had".
                    Put the corrected food in items, parsed normally. Only the NEW food goes in items —
                    never the old one.
+                   EXPLICIT SWAP naming both sides — "Replace X with Y", "swap X for Y", "change X to Y",
+                   "X ko hata ke Y": set top-level "replace_target" to X (the OLD food being removed, in the
+                   user's words) and put ONLY the new food(s) Y in items. Y MAY BE MULTIPLE items
+                   ("replace rajma with rice and dal" -> replace_target "rajma", items [Rice, Dal]).
+                   For every other correction, replace_target is null.
   "undo"         = user wants entries REMOVED with no replacement.
                    Last entry: "undo", "remove that", "delete last", "galat log hua, hatao" -> items [].
                    NAMED removal: "remove the bun", "delete chai", "in meal 1, remove bun that was
@@ -219,6 +224,7 @@ was assumed ("palak sabji" -> logged the closest match, Palak Paneer).
   ],
   "meal_time_inferred": "lunch",
   "query_reply": null,
+  "replace_target": null,
   "report_day": null,
   "name": null,
   "goal_kcal": null,

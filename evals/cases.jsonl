@@ -137,3 +137,5 @@
 {"id":"chain-mcnuggets","tags":["chain"],"input":"6 chicken mcnuggets","expected":{"intent":"log","items":[{"db_id":322,"qty":6}]}}
 {"id":"chain-starbucks-latte","tags":["chain"],"input":"grande caffe latte","expected":{"intent":"log","items":[{"db_id":324}]}}
 {"id":"chain-java-chip","tags":["chain"],"input":"java chip frappuccino","expected":{"intent":"log","items":[{"db_id":327}]}}
+{"id":"replace-swap-multi","tags":["correction","incident"],"input":"Replace 250g Rajma with 200g Rice and 100g Rajma curry","expected":{"intent":"replace_last","items":[{"db_id":7,"grams":200},{"db_id":20,"grams":100}]}}
+{"id":"replace-swap-single","tags":["correction"],"input":"change the chai to coffee","expected":{"intent":"replace_last","items":[{"name_like":"coffee"}]}}
