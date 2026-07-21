@@ -139,3 +139,10 @@
 {"id":"chain-java-chip","tags":["chain"],"input":"java chip frappuccino","expected":{"intent":"log","items":[{"db_id":327}]}}
 {"id":"replace-swap-multi","tags":["correction","incident"],"input":"Replace 250g Rajma with 200g Rice and 100g Rajma curry","expected":{"intent":"replace_last","items":[{"db_id":7,"grams":200},{"db_id":20,"grams":100}]}}
 {"id":"replace-swap-single","tags":["correction"],"input":"change the chai to coffee","expected":{"intent":"replace_last","items":[{"name_like":"coffee"}]}}
+{"id":"gap-bhindi","tags":["gap-promo"],"input":"1 bowl bhindi","expected":{"intent":"log","items":[{"db_id":328,"qty":1}]}}
+{"id":"gap-cake","tags":["gap-promo"],"input":"a slice of cake","expected":{"intent":"log","items":[{"db_id":335}]}}
+{"id":"gap-ragi-dosa","tags":["gap-promo"],"input":"ragi dosa","expected":{"intent":"log","items":[{"db_id":329}]}}
+{"id":"gap-soya-milk","tags":["gap-promo"],"input":"1 glass soya milk","expected":{"intent":"log","items":[{"db_id":330}]}}
+{"id":"gap-rusk","tags":["gap-promo"],"input":"2 rusk","expected":{"intent":"log","items":[{"db_id":331,"qty":2}]}}
+{"id":"gap-chutney-modifier","tags":["gap-promo","modifier"],"input":"2 roti with green chutney","expected":{"intent":"log","items":[{"db_id":1,"qty":2},{"db_id":332}]}}
+{"id":"gap-mixed-seeds","tags":["gap-promo"],"input":"1 tbsp mixed seeds","expected":{"intent":"log","items":[{"db_id":334}]}}

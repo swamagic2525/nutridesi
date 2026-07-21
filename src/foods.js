@@ -400,6 +400,17 @@ const FOODS = [
   { id: 325, name: "Starbucks Caffè Mocha (Grande)", aliases: ["mocha","cafe mocha","caffe mocha","starbucks mocha","cafe mocha grande"], unit: "grande", kcal: 360, p: 14, c: 44, f: 15, fb: 2 },
   { id: 326, name: "Caramel Frappuccino (Grande)", aliases: ["caramel frappuccino","caramel frappe","frappuccino","starbucks frappuccino"], unit: "grande", kcal: 380, p: 5, c: 60, f: 16, fb: 0 },
   { id: 327, name: "Java Chip Frappuccino (Grande)", aliases: ["java chip","java chip frappuccino","java chip frappe","javachip"], unit: "grande", kcal: 470, p: 6, c: 68, f: 19, fb: 1 },
+
+  // --- Gap-trail promotions, 2026-07-21 (from db-gaps.jsonl, values verified) ---
+  { id: 328, name: "Bhindi Fry",                 aliases: ["bhindi","bhendi","okra","ladyfinger","bhindi fry","bhindi masala","bhindi sabzi","bhindi ki sabji","bhindi do pyaza","kurkuri bhindi"], unit: "bowl", kcal: 140, p: 3, c: 12, f: 10, fb: 4 },
+  { id: 329, name: "Ragi Dosa",                  aliases: ["ragi dosa","nachni dosa","finger millet dosa","ragi dose","raagi dosa"], unit: "piece", kcal: 130, p: 3, c: 24, f: 2.5, fb: 3 },
+  { id: 330, name: "Soya Milk",                  aliases: ["soya milk","soy milk","soymilk","sofit","soya doodh"], unit: "glass", kcal: 90, p: 7, c: 8, f: 4, fb: 1, g: 250 },
+  { id: 331, name: "Rusk",                       aliases: ["rusk","toast rusk","wheat rusk","suji rusk","cake rusk","rusk toast","rusk toasts","bakery rusk","bakery toast"], unit: "piece", kcal: 40, p: 1, c: 7, f: 1, fb: 0.3, g: 10 },
+  { id: 332, name: "Green Chutney",              aliases: ["chutney","green chutney","coriander chutney","mint chutney","dhania chutney","pudina chutney","hari chutney"], unit: "serving", kcal: 30, p: 1, c: 3, f: 1.5, fb: 1 },
+  { id: 333, name: "Coconut Chutney",            aliases: ["coconut chutney","nariyal chutney","white chutney","nariyal ki chutney"], unit: "serving", kcal: 90, p: 2, c: 4, f: 8, fb: 2 },
+  { id: 334, name: "Mixed Seeds",                aliases: ["mixed seeds","mix seeds","mixed seed","seeds mix","trail seeds","roasted seeds mix"], unit: "tbsp", kcal: 55, p: 2.5, c: 2, f: 4.5, fb: 1.5, g: 12 },
+  { id: 335, name: "Cake (Pastry Slice)",        aliases: ["cake","pastry","cake slice","sponge cake","birthday cake","chocolate cake","plum cake","tea cake","cream cake"], unit: "slice", kcal: 350, p: 4, c: 45, f: 18, fb: 1 },
+  { id: 336, name: "Chicken Pasta",              aliases: ["chicken pasta","chicken alfredo pasta","chicken red sauce pasta","chicken white sauce pasta"], unit: "bowl", kcal: 450, p: 22, c: 50, f: 18, fb: 3 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
