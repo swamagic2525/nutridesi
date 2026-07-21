@@ -10,7 +10,7 @@ const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
-const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, todaySeqs, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
+const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todaySeqs, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
 const { validateSignature, extractMessages, sendMessage, markRead } = require("./src/meta.js");
 const { logCorrectionEvent } = require("./src/correctionLogger.js");
@@ -303,6 +303,27 @@ async function handleMessage(from, body, opts = {}) {
     const total = await todayTotal(from);
     const lines = deleted.map(r => `${r.day_seq}. ${r.food_name} — ${r.kcal} kcal`).join("\n");
     return `\u{21A9}\u{FE0F} Removed:\n${lines}\n\n${dayLine(total, profile)}`;
+  }
+
+  // Bare item reference — "item 2", "item #2", "#2", "no. 2", "number 2" — and
+  // nothing else. The user is pointing at a logged row (usually to change it)
+  // but hasn't said what to do. Never hand this to the LLM: with no food word
+  // it fabricates one (a real "Item 2" once logged "Paratha x2"). Echo the row
+  // and the two things they can do with it.
+  const itemRef = trimmed.match(/^(?:item|no\.?|number|#)\s*#?(\d+)$/i);
+  if (itemRef) {
+    const seq = Number(itemRef[1]);
+    const rows = await itemsBySeq(from, [seq]);
+    if (!rows.length) {
+      const avail = await todaySeqs(from);
+      return avail.length
+        ? `No item ${seq} in today's log. Your items are ${avail.join(", ")}.`
+        : "Nothing logged yet today — just send me a food and I'll log it \u{1F642}";
+    }
+    const it = rows[0];
+    return `Item ${seq} is *${it.food_name}* (${it.kcal} kcal). What would you like to do?\n` +
+      `\u{2022} Remove it: *undo ${seq}*\n` +
+      `\u{2022} Swap it: *replace ${it.food_name} with …*`;
   }
 
   const pending = pendingQuery.get(from);

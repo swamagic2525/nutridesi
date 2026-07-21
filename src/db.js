@@ -604,6 +604,18 @@ async function todaySeqs(phone) {
 
 // Delete by explicit item number ("undo 14"). Day-scoped, so a stale number
 // from yesterday can never hit an unrelated row.
+// Read-only lookup of today's rows by item number — lets the bot echo
+// "item 2 is X" instead of handing a bare "item 2" to the LLM (which once
+// hallucinated "Paratha x2" from it).
+async function itemsBySeq(phone, seqs) {
+  const { data, error } = await supabase.from("user_logs")
+    .select("food_name, kcal, day_seq")
+    .eq("phone_number", phone).eq("date", istToday()).in("day_seq", seqs)
+    .order("day_seq");
+  if (error) return [];
+  return data || [];
+}
+
 async function deleteBySeq(phone, seqs) {
   const { data, error } = await supabase.from("user_logs").delete()
     .eq("phone_number", phone).eq("date", istToday()).in("day_seq", seqs)
@@ -638,4 +650,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { supabase, acceptableRef, logMeal, deleteBySeq, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };
+module.exports = { supabase, acceptableRef, logMeal, deleteBySeq, itemsBySeq, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };
