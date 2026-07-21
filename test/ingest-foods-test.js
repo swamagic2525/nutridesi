@@ -46,3 +46,20 @@ const br = normalizeRow(
 assert.strictEqual(br.name, "Amul Gold Milk");
 assert.strictEqual(br.grams, 100);
 console.log("normalize: passed");
+
+const { gateReason } = require("../scripts/ingest-foods/gate.js");
+
+const good = { name: "Kanda Poha", kcal: 220, p: 4.5, c: 38, f: 6, grams: 150, kcal_100g: 147 };
+assert.strictEqual(gateReason(good), null, "clean row passes");
+
+assert.ok(gateReason({ ...good, p: NaN }), "NaN macro rejected");
+assert.ok(gateReason({ ...good, kcal: -5 }), "negative kcal rejected");
+// macros imply 4.5*4+38*4+6*9=224 vs kcal 220 -> within 30%, still passes
+assert.strictEqual(gateReason(good), null);
+// wildly inconsistent: kcal 220 but macros imply 4*4+4*4+30*9=302 -> >30% off
+assert.ok(gateReason({ ...good, f: 30 }), "macro-cal mismatch rejected");
+// absurd density
+assert.ok(gateReason({ ...good, grams: 5, kcal_100g: 4400 }), "kcal/100g>900 rejected");
+assert.ok(gateReason({ ...good, name: "" }), "empty name rejected");
+assert.ok(gateReason({ ...good, name: "x".repeat(61) }), "over-long name rejected");
+console.log("gate: passed");
