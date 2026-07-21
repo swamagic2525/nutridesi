@@ -364,6 +364,12 @@ const FOODS = [
   // "Chicken sandwich" was landing on Chicken Burger 276 — close, but a burger
   // is not a sandwich and the DB only had the veg one (205).
   { id: 305, name: "Chicken Sandwich",           aliases: ["chicken sandwich","grilled chicken sandwich","chicken mayo sandwich","chicken club sandwich"], unit: "sandwich", kcal: 320, p: 20, c: 30, f: 12, fb: 2 },
+
+  // Boiled sweet-corn KERNELS, logged by weight — distinct from Bhutta 292
+  // (a per-cob street food). "200g boiled corn" was matching bhutta and
+  // scaling its per-cob value to 367 kcal; kernels are ~96 kcal/100g. Protein
+  // was also ~2x high on the flat estimate (real 3.4g/100g). USDA-verified.
+  { id: 306, name: "Sweet Corn (Boiled)",        aliases: ["boiled corn","sweet corn","corn kernels","boiled sweet corn","steamed corn","american corn","corn"], unit: "bowl", kcal: 96, p: 3.4, c: 21, f: 1.5, fb: 2.4, g: 100 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
