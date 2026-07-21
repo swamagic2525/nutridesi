@@ -103,3 +103,24 @@ console.log("collapse: passed");
   assert.strictEqual(dropped.find(d => d.name.startsWith("Hot Tea")).reason, "in_reference");
   console.log("dedup: passed");
 }
+
+{
+  const { codeFor, toReferenceRow } = require("../scripts/ingest-foods/to-row.js");
+
+  assert.strictEqual(codeFor("Indian_Household_Nutrition_Database_2500.md", 0), "AIH0001");
+  assert.strictEqual(codeFor("QuickCommerce_Restaurant_Food_DB_1000.md", 41), "AIQ0042");
+  assert.strictEqual(codeFor("Fitness_Commercial_Products_DB.md", 0), "AIF0001");
+  assert.strictEqual(codeFor("Food_Nutrition_DB.md", 0), "AID0001");
+
+  const rec = { name: "Kanda Poha", unit: "bowl", kcal: 220, p: 4.5, c: 38, f: 6, kcal_100g: 147, p_100g: 3, c_100g: 25.3, f_100g: 4 };
+  const row = toReferenceRow(rec, "AIH0001");
+  assert.strictEqual(row.food_code, "AIH0001");
+  assert.strictEqual(row.food_name, "Kanda Poha");
+  assert.strictEqual(row.serving_unit, "bowl");
+  assert.strictEqual(row.serving_kcal, 220);
+  assert.strictEqual(row.serving_protein, 4.5);
+  assert.strictEqual(row.serving_fibre, 0);
+  assert.strictEqual(row.kcal_100g, 147);
+  assert.strictEqual(row.fibre_100g, 0);
+  console.log("to-row: passed");
+}
