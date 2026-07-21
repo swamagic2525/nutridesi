@@ -672,6 +672,9 @@ const { buildReport } = require("./report.js");
 const { FOODS } = require("../../src/foods.js");
 
 const INCOMING = path.join(__dirname, "..", "..", "data", "incoming");
+// Held back per review: branded-supplement file uses generic copy-pasted values
+// and overlaps brands already hand-verified in the curated tier.
+const SKIP_FILES = new Set(["Fitness_Commercial_Products_DB.md"]);
 const OUT_REPORT = path.join(__dirname, "review-report.md");
 const OUT_ROWS = path.join(__dirname, "to-load.json");
 
@@ -694,7 +697,7 @@ async function main() {
   const refNames = await existingRefNames();
 
   const funnel = [], allRejects = [], allCollapses = [], allRows = [];
-  const files = fs.readdirSync(INCOMING).filter(f => f.endsWith(".md"));
+  const files = fs.readdirSync(INCOMING).filter(f => f.endsWith(".md") && !SKIP_FILES.has(f));
 
   for (const file of files) {
     const text = fs.readFileSync(path.join(INCOMING, file), "utf8");

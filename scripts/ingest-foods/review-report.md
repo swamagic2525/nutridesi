@@ -1,29 +1,24 @@
 # Bulk Food Ingestion — Review Report
 
-Generated: 2026-07-21T16:48:59.573Z
+Generated: 2026-07-21T17:08:08.879Z
 
 ## Funnel (per file)
 
 | File | Parsed | After gate | After collapse | After dedup | To load |
 |:-----|-------:|-----------:|---------------:|------------:|--------:|
-| Fitness_Commercial_Products_DB.md | 380 | 376 | 322 | 322 | 322 |
-| Food_Nutrition_DB.md | 20 | 20 | 20 | 19 | 19 |
-| Indian_Household_Nutrition_Database_2500.md | 2500 | 2316 | 904 | 847 | 846 |
+| Food_Nutrition_DB.md | 20 | 20 | 20 | 20 | 20 |
+| Indian_Household_Nutrition_Database_2500.md | 2500 | 2316 | 904 | 850 | 849 |
 | QuickCommerce_Restaurant_Food_DB_1000.md | 1000 | 893 | 892 | 891 | 408 |
 
-**Total: 3900 parsed → 1595 to load.**
+**Total: 3520 parsed → 1277 to load.**
 
-## Rejected rows (295)
+## Rejected rows (291)
 
-- **macro_cal_mismatch**: 176
+- **macro_cal_mismatch**: 172
 - **spam_name**: 119
 
 <details><summary>All rejected rows</summary>
 
-- Veeba Zero Sugar Tomato Ketchup — macro_cal_mismatch
-- Nutrabay Apple Cider Vinegar with Mother — macro_cal_mismatch
-- Kapiva Apple Cider Vinegar — macro_cal_mismatch
-- Heinz Zero Sugar Tomato Ketchup — macro_cal_mismatch
 - Paneer Dosa (Homestyle Ghee) — macro_cal_mismatch
 - Paneer Dosa (Low Oil Diet) — macro_cal_mismatch
 - Toor Dal (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
@@ -317,64 +312,10 @@ Generated: 2026-07-21T16:48:59.573Z
 - Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
 </details>
 
-## Collapse decisions (1467 dropped)
+## Collapse decisions (1413 dropped)
 
 <details><summary>All collapses (dropped → kept)</summary>
 
-- MyFitness Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
-- MyFitness Chocolate Peanut Butter (Smooth) → Alpino Chocolate Peanut Butter (Smooth)
-- Pintola Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
-- Pintola Chocolate Peanut Butter (Smooth) → Alpino Chocolate Peanut Butter (Smooth)
-- Alpino Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
-- Yoga Bar Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
-- Yoga Bar Chocolate Peanut Butter (Smooth) → Alpino Chocolate Peanut Butter (Smooth)
-- Disano Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
-- Disano Chocolate Peanut Butter (Smooth) → Alpino Chocolate Peanut Butter (Smooth)
-- MyFitness Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- MyFitness Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Pintola Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Pintola Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Alpino Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Yoga Bar Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Yoga Bar Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Disano Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Disano Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- As-It-Is Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- As-It-Is Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Asitis Nut Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Asitis Nut Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Sundrop Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Sundrop Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- The Whole Truth Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- The Whole Truth Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Nutriorg Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- Nutriorg Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
-- MyFitness High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
-- Pintola High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
-- Yoga Bar High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
-- Disano High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
-- As-It-Is High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
-- Asitis Nut High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
-- Sundrop High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
-- The Whole Truth High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
-- Nutriorg High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
-- MyFitness High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
-- Pintola High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
-- Yoga Bar High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
-- Disano High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
-- As-It-Is High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
-- Asitis Nut High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
-- Sundrop High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
-- The Whole Truth High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
-- Nutriorg High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
-- Origins Nutritive Rolled Oats → True Elements Rolled Oats
-- Dymatize ISO100 Hydrolyzed Whey Isolate (Gourmet Chocolate) → Dymatize ISO100 Hydrolyzed Whey Isolate (Fudge Brownie)
-- Wellcore Micronized Creatine Monohydrate → As-It-Is Creatine Monohydrate Powder
-- MuscleBlaze Creatine Monohydrate CreAMP → As-It-Is Creatine Monohydrate Powder
-- Optimum Nutrition (ON) Micronized Creatine Powder → As-It-Is Creatine Monohydrate Powder
-- Nutrela Soya Chunks (Mini / Regular) → Nutrela Soya Granules
-- Veeba Tomato Ketchup No Onion No Garlic → Heinz Tomato Ketchup Classic
-- Zindagi Stevia Powder Natural Sweetener → Sugar Free Green Stevia Powder
 - Sabudana Khichdi (Fasting Meal) → Sabudana Khichdi
 - Sabudana Vada → Sabudana Vada
 - Paneer Paratha (Homestyle Ghee) → Paneer Paratha (Low Oil Diet)
@@ -1794,103 +1735,103 @@ Generated: 2026-07-21T16:48:59.573Z
 
 | Food | Unit | kcal | Protein | kcal/100g |
 |:-----|:-----|-----:|--------:|----------:|
-| Alpino Chocolate Peanut Butter (Smooth) | 2 tbsp | 190 | 8 | 593.75 |
-| Bagrry's Protein Muesli with Whey | serving | 210 | 12 | 420 |
-| Kellogg's Pro Muesli High Protein | serving | 205 | 11.5 | 410 |
-| Nutriorg Certified Organic Steel Cut Oats | serving | 152 | 5.5 | 380 |
-| MyProtein Impact Whey Protein (Unflavored) | scoop | 100 | 21 | 400 |
-| Dymatize Elite 100% Whey (Rich Chocolate) | scoop | 140 | 25 | 388.89 |
-| Nutrabay Gold 100% Whey Protein (Rich Chocolate) | scoop | 128 | 25 | 387.88 |
-| RiteBite Max Protein Active Bar (Choco Slim 20g Protein) | serving | 260 | 20 | 388.06 |
-| Hyp Lean Protein Bar (Chocolate Brownie 10g) | serving | 140 | 10 | 350 |
-| Farmley Peri Peri Makhana | serving | 135 | 3 | 450 |
-| Amul Gold Full Cream Milk (6% Fat) | serving | 87 | 3.3 | 87 |
-| Amul Sugar Free Ice Cream | serving | 110 | 3.5 | 110 |
-| Epigamia Almond Milk (Unsweetened) | serving | 25 | 0.9 | 25 |
-| Verka Skimmed Milk | serving | 35 | 3.2 | 35 |
-| FreshToHome Chicken Breast Cuts | serving | 110 | 22.8 | 110 |
-| Venky's Chicken Breast Fillet | serving | 112 | 22.5 | 112 |
-| Harvest Gold White Bread Classic | 2 slices | 135 | 3.8 | 270 |
-| Patanjali Whole Wheat Atta | serving | 338 | 11.5 | 338 |
-| True Elements Quinoa Grain | serving | 368 | 14 | 368 |
-| The Whole Truth Dark Chocolate Sauce (No Added Sugar) | tbsp | 45 | 1 | 300 |
-| Slurrp Farm Jaggery Powder Organic | tbsp | 38 | 0.1 | 380 |
-| Amul Dark Chocolate 90% Bitter | 3 squares | 122 | 2.2 | 610 |
-| Amul Regular Butter | serving | 722 | 0.5 | 722 |
+| Amul Gold Milk | serving | 87 | 3.3 | 87 |
+| Epigamia Greek Yogurt (Plain) | serving | 90 | 7.5 | 90 |
 | Oats Upma | bowl | 185 | 6.2 | 123.33 |
-| Egg Appam | pc | 175 | 7.5 | 159.09 |
-| Ragi Rotti (Finger Millet Roti) | pc | 195 | 4.2 | 195 |
-| Cheese Cheela (Low Oil Diet) | 2 pcs | 290 | 11 | 207.14 |
+| Uttapam Plain | pc | 210 | 5.2 | 175 |
+| Chana Bhatura (2 Bhaturas) | plate | 720 | 18 | 180 |
+| Boiled Eggs (2 whole) | 2 eggs | 148 | 12.6 | 148 |
+| Aloo Dosa (Low Oil Diet) | pc | 280 | 7 | 186.67 |
 | Sattu Paratha (Butter Loaded) | pc | 340 | 13 | 261.54 |
-| Kali Dal (Urad Whole) | bowl | 180 | 9 | 120 |
-| Garlic Rasam (Poondu Rasam) | bowl | 65 | 1.8 | 43.33 |
-| Rajma (Homestyle Low Oil) | bowl | 112 | 8 | 74.67 |
+| Moong Dal Yellow (Plain / Doctor Diet) | bowl | 120 | 7 | 80 |
+| South Indian Sambhar (Mixed Veg) | bowl | 110 | 4.8 | 73.33 |
+| Sindhi Kadhi (Veg & Tamarind) | bowl | 160 | 4.8 | 88.89 |
+| Rajma (Pahadi / Himalayan Style) | bowl | 140 | 8 | 93.33 |
 | Bengali Alur Dom | bowl | 190 | 3.5 | 126.67 |
-| Lauki Chana Dal Sabzi | bowl | 140 | 6.5 | 93.33 |
-| Sev Tamatar Sabzi | bowl | 230 | 4.2 | 153.33 |
-| Aloo (Andhra Spicy Masala) | bowl | 165 | 3 | 103.13 |
+| Enne Gai (Karnataka Stuffed Brinjal) | bowl | 220 | 4 | 137.5 |
+| Avial (Mixed Veg Coconut Yogurt Curry) | bowl | 180 | 4 | 112.5 |
+| Kadai Mushroom | bowl | 195 | 7.2 | 108.33 |
+| Aloo (Mughlai Shahi White Gravy) | bowl | 240 | 3 | 150 |
 | Soya Chunks (Gujarati Sweet & Sour Style) | bowl | 172.5 | 18 | 107.81 |
-| Andhra Spicy Chicken Curry | bowl | 300 | 29 | 150 |
-| Chicken Reshmi Kebab (6 pcs) | portion | 310 | 30 | 172.22 |
-| Egg Masala (2 eggs - Spicy Red Gravy) | bowl | 260 | 14 | 130 |
+| Chicken Do Pyaza | bowl | 320 | 27 | 160 |
+| Chicken Kheema (Mincemeat Curry) | bowl | 320 | 28 | 177.78 |
+| Mutton Bhuna Gosht | bowl | 390 | 25 | 216.67 |
+| Omelette Plain (2 eggs) | pc | 180 | 12 | 180 |
 | Prawns Koliwada (Crispy Fried) | portion | 290 | 24 | 193.33 |
-| Fish Fillet (Basa / Surmai / Rohu) (Homestyle Curry) | bowl / portion | 180 | 18 | 100 |
-| Egg (2 whole) (Pan Fried Crispy Coating) | bowl / portion | 240 | 13 | 133.33 |
-| Brown Rice Steamed | bowl cooked | 170 | 4.2 | 113.33 |
+| Chicken With Bone (Goan Portuguese Vindaloo) | bowl / portion | 250 | 19 | 138.89 |
+| Prawns / Shrimp (Pan Fried Crispy Coating) | bowl / portion | 168 | 20 | 93.33 |
+| Crab (Pan Fried Crispy Coating) | bowl / portion | 192 | 16 | 106.67 |
+| Veg Pulao (Matar / Mixed Veg) | bowl | 240 | 4.8 | 133.33 |
 | Tomato Rice (Thakkali Sadam) | bowl | 250 | 4.2 | 138.89 |
-| Lachha Paratha (Layered Whole Wheat) | pc | 280 | 5.2 | 311.11 |
-| Maida (Refined Wheat Flour) | raw | 355 | 10 | 355 |
-| Green Moong Whole (Raw) | raw | 334 | 24 | 334 |
+| Garlic Butter Naan | pc | 300 | 6.5 | 315.79 |
+| Luchi (Bengali Fried Fine Flour) | pc | 115 | 1.8 | 383.33 |
+| Jowar Flour (Sorghum) | raw | 349 | 10.4 | 349 |
+| Urad Dal Black Whole (Raw) | raw | 341 | 25.2 | 341 |
 | Coconut Oil (Cold Pressed Cooking) | tbsp | 90 | 0 | 900 |
-| Aashirvaad Sooji | raw | 345 | 12 | 345 |
-| Patanjali Sooji | raw | 345 | 12 | 345 |
-| 24 Mantra Organic Sugar Release Control Atta | raw | 345 | 12 | 345 |
-| Samosa (Aloo Filling) | pc | 210 | 4 | 262.5 |
-| Aloo Pakoda | plate | 260 | 4 | 216.67 |
-| Sundal (Chickpea / White Peas Tempering) | bowl | 160 | 7.5 | 133.33 |
+| Hung Curd / Chakka | serving | 120 | 9 | 120 |
+| Fortune Sooji | raw | 345 | 12 | 345 |
+| Patanjali Bajra Flour | raw | 345 | 12 | 345 |
+| 24 Mantra Organic Sooji | raw | 345 | 12 | 345 |
+| Organic Tattva Bajra Flour | raw | 345 | 12 | 345 |
+| Pani Puri / Golgappa / Puchka | 6 pcs | 180 | 3 | 100 |
+| Dal Vada (Moong Dal) | 4 pcs | 230 | 8.2 | 230 |
+| Corn Pakoda | portion | 260 | 4 | 216.67 |
 | Gobi Kachori | portion | 260 | 4 | 216.67 |
-| Gobi Tikhi Puri | portion | 260 | 4 | 216.67 |
-| Fish Samosa | portion | 300 | 14 | 250 |
-| Chicken Mathri | portion | 300 | 14 | 250 |
+| Moong Dal Cutlet | portion | 260 | 4 | 216.67 |
+| Cheese Vada | portion | 300 | 4 | 250 |
+| Fish Kachori | portion | 300 | 14 | 250 |
+| Masala Chai (with Milk & Sugar) | cup | 105 | 3.2 | 70 |
 | Jaljeera (Cumin Mint Water) | lass 200ml | 45 | 0.5 | 22.5 |
-| Rava Ladoo (Semolina & Coconut) | 2 pcs | 270 | 3.8 | 450 |
-| Atta Halwa (Kada Prasad) | bowl | 360 | 4.8 | 300 |
-| Dates & Nuts (Sugar Free) Kheer / Payasam | portion | 300 | 5 | 375 |
+| Dry Gulab Jamun | 2 pcs | 270 | 4.2 | 337.5 |
+| Rice Kheer / Payasam | bowl | 230 | 5.5 | 153.33 |
+| Puran Poli (Chana Dal & Jaggery Flatbread) | pc | 320 | 7.5 | 266.67 |
+| Dates & Nuts (Sugar Free) Barfi | portion | 300 | 5 | 375 |
 | Mango Halwa | portion | 260 | 5 | 325 |
-| Mango Barfi | portion | 260 | 5 | 325 |
-| Mango Sandesh | portion | 260 | 5 | 325 |
-| Sweet Mango Chutney / Chunda | tbsp | 48 | 0.1 | 320 |
+| Rose Elaichi Kheer / Payasam | portion | 260 | 5 | 325 |
+| Coconut Modak | portion | 260 | 5 | 325 |
+| Sweet Tamarind Date Chutney (Meethi Chutney) | 2 tbsp | 65 | 0.4 | 216.67 |
+| Pineapple Raita (Sweet Curd) | bowl | 95 | 2.8 | 95 |
 | Maharashtrian Malvani Style Regional Sweet Delight - Var 1 | pc | 280 | 5.5 | 466.67 |
-| North Indian Homestyle Stuffed Paratha Roll - Var 3 | pc | 385 | 10.5 | 240.63 |
-| Chettinad Special Specialty Curry Gravy - Var 4 | bowl | 295 | 9 | 163.89 |
-| Gujarati Jain Style Flavoured Rice Bowl - Var 6 | bowl | 330 | 5.5 | 165 |
+| Chettinad Special Kofta Curry - Var 24 | bowl | 310 | 7 | 172.22 |
+| Chettinad Special Chickpea Stew - Var 25 | bowl | 225 | 11.5 | 125 |
+| Chettinad Special Flavoured Rice Bowl - Var 26 | bowl | 280 | 5.5 | 140 |
+| Hyderabadi Style Regional Sweet Delight - Var 6 | pc | 305 | 5.5 | 508.33 |
 | Hyderabadi Style Veg Korma - Var 8 | bowl | 270 | 5 | 150 |
-| South Indian Brahmin Style Lentil Soup / Shorba - Var 9 | bowl | 185 | 7.5 | 102.78 |
-| Andhra Spicy Style Kofta Curry - Var 11 | bowl | 335 | 7 | 186.11 |
-| South Indian Brahmin Style Lentil Soup / Shorba - Var 33 | bowl | 185 | 7.5 | 102.78 |
+| Andhra Spicy Style Chickpea Stew - Var 30 | bowl | 250 | 11.5 | 138.89 |
+| Andhra Spicy Style Flavoured Rice Bowl - Var 31 | bowl | 305 | 5.5 | 152.5 |
+| Andhra Spicy Style Fried Snack Bowl - Var 32 | portion | 300 | 6 | 250 |
+| Andhra Spicy Style Specialty Curry Gravy - Var 33 | bowl | 320 | 9 | 177.78 |
 | Andhra Spicy Style Kofta Curry - Var 35 | bowl | 335 | 7 | 186.11 |
-| Chettinad Special Fried Snack Bowl - Var 15 | portion | 350 | 6 | 291.67 |
-| Karnataka Udipi Style Mashed Vegetable Bhaji - Var 17 | bowl | 220 | 4.8 | 122.22 |
-| Hyderabadi Style Regional Sweet Delight - Var 18 | pc | 305 | 5.5 | 508.33 |
+| Karnataka Udipi Style Stuffed Paratha Roll - Var 36 | pc | 385 | 10.5 | 240.63 |
+| Karnataka Udipi Style Lentil Soup / Shorba - Var 37 | bowl | 160 | 7.5 | 88.89 |
+| Punjabi Dhaba Style Specialty Curry Gravy - Var 17 | bowl | 270 | 9 | 150 |
+| Punjabi Dhaba Style Kofta Curry - Var 19 | bowl | 285 | 7 | 158.33 |
 | Punjabi Dhaba Style Chickpea Stew - Var 20 | bowl | 275 | 11.5 | 152.78 |
-| Hyderabadi Style Regional Sweet Delight - Var 42 | pc | 305 | 5.5 | 508.33 |
-| McDonald's Chicken McNuggets (9 pcs) | portion | 342 | 22.2 | 237.5 |
-| Domino's Pizza Farmhouse Pizza (Personal) | personal pizza | 580 | 21 | 232 |
+| Punjabi Dhaba Style Flavoured Rice Bowl - Var 21 | bowl | 330 | 5.5 | 165 |
+| McDonald's McEgg Burger | pc | 282 | 12.5 | 229.27 |
+| McDonald's McCafe Americano | cup | 12 | 0.5 | 4.8 |
+| Domino's Pizza Chicken Fiesta Pizza (Personal) | personal pizza | 590 | 28 | 245.83 |
 | Domino's Pizza Taco Mexicana Veg | pc | 290 | 7 | 263.64 |
-| Subway Protein Scoop (Chicken Strip Addition) | scoop | 90 | 18 | 150 |
-| KFC Choco Mud Pie | pc | 260 | 3.5 | 325 |
-| Starbucks Butter Croissant | pc | 330 | 6 | 412.5 |
+| Subway Chicken Kofta Sub (6 inch) | sub | 380 | 22 | 172.73 |
+| KFC Popcorn Chicken (Large) | portion | 504 | 28.8 | 280 |
+| Burger King Fiery Chicken Burger | pc | 480 | 22 | 266.67 |
+| Starbucks Double Chocolate Chip Cookie | pc | 360 | 4 | 480 |
 | Chai Point Egg Cheese Puff | pc | 330 | 10 | 300 |
-| Bikanervala Chole Kulche (2 Kulche) | plate | 620 | 16 | 163.16 |
-| Wow! Momo Steamed Veg Momos (5 pcs) | portion | 170 | 5.5 | 113.33 |
-| Taco Bell Cheesy Double Decker Taco Non-Veg | pc | 320 | 16 | 213.33 |
+| Haldiram's Dhokla (2 pcs) | 2 pcs | 160 | 6 | 160 |
+| Behrouz Biryani Dum Gosht Mutton Biryani | portion | 820 | 38 | 182.22 |
+| Box8 Desi Box Chicken Tikka Meal | box | 620 | 32 | 163.16 |
+| Generic Indian Restaurant Paneer Butter Masala | serving | 480 | 18 | 160 |
 | Generic Indian Restaurant Veg Pulao | serving | 340 | 6.5 | 121.43 |
-| Generic Chinese Sweet Corn Chicken Soup | serving | 140 | 8 | 56 |
-| Lay's Wafer Style Sundried Chilli | serving | 155 | 1.9 | 516.67 |
-| Too Yumm! Rings Tomato | serving | 130 | 2 | 433.33 |
+| Generic Chinese Chicken Fried Rice | serving | 560 | 22 | 175 |
+| Lay's India's Magic Masala Chips | serving | 162 | 2.1 | 540 |
+| Kurkure Puffcorn Yummy Cheese | serving | 158 | 2.1 | 526.67 |
+| Haldiram's Bhookhia Sev | serving | 175 | 4.2 | 583.33 |
 | Haldiram's Mini Samosa Snack | serving | 155 | 3.5 | 516.67 |
-| Britannia Milk Bikis Classic | 5 biscuits | 138 | 2.2 | 460 |
-| Cadbury Chocobakes Choco-Filled Cookie | 2 cookies | 158 | 1.9 | 526.67 |
-| Nestle KitKat 4 Finger Wafer Bar | serving | 192 | 2.7 | 505.26 |
+| Britannia NutriChoice 5 Grain Digestive | 3 biscuits | 138 | 2.8 | 460 |
+| Oreo Choco Dip Covered Biscuit | 2 biscuits | 155 | 1.6 | 516.67 |
+| Ferrero Kinder Joy with Toy | serving | 110 | 1.6 | 550 |
+| Nestle Milkybar White Chocolate Bar | serving | 104 | 1.6 | 520 |
 | Nestle Maggi Special Masala Oats Noodles | serving | 305 | 9.2 | 417.81 |
-| Knorr Thick Tomato Soup | powder | 52 | 0.8 | 346.67 |
+| Samyang Buldak Carbonara Hot Chicken Ramen | pack | 550 | 10 | 423.08 |
+| McCain Aloo Tikki Mazedaar | 2 pcs | 175 | 3 | 175 |
+| ITC Master Chef Cheesy Potato Pops | serving | 225 | 4.2 | 225 |
