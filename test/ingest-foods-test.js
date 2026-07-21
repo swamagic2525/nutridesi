@@ -81,3 +81,25 @@ assert.ok(names.includes("Toor Dal") && names.includes("Beetroot Soup"), "coinci
 assert.strictEqual(dropped.length, 1);
 assert.strictEqual(dropped[0].keptAs, "Aashirvaad Chakki Atta");
 console.log("collapse: passed");
+
+// Brace-scoped: this file is one flat script, and later blocks reuse names
+// like `recs`/`kept`/`dropped`. Wrapping each block avoids top-level collisions.
+{
+  const { normName, dedup } = require("../scripts/ingest-foods/dedup.js");
+
+  assert.strictEqual(normName("Dal  Tadka!"), "dal tadka");
+
+  const curated = new Set(["dal tadka"]);
+  const ref = new Set(["hot tea garam chai"]);
+  const recs = [
+    { name: "Dal Tadka" },        // in curated -> drop
+    { name: "Hot Tea (Garam Chai)" }, // in reference -> drop
+    { name: "Kanda Poha" },       // new -> keep
+  ];
+  const { kept, dropped } = dedup(recs, curated, ref);
+  assert.deepStrictEqual(kept.map(r => r.name), ["Kanda Poha"]);
+  assert.strictEqual(dropped.length, 2);
+  assert.strictEqual(dropped.find(d => d.name === "Dal Tadka").reason, "in_curated");
+  assert.strictEqual(dropped.find(d => d.name.startsWith("Hot Tea")).reason, "in_reference");
+  console.log("dedup: passed");
+}
