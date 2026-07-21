@@ -10,3 +10,6 @@ evals/correction-log.jsonl
 evals/db-gaps.jsonl
 .claude/
 .netlify/
+
+# Raw AI-generated ingestion inputs — source of truth is Supabase, not the repo
+data/incoming/
