@@ -146,3 +146,8 @@
 {"id":"gap-rusk","tags":["gap-promo"],"input":"2 rusk","expected":{"intent":"log","items":[{"db_id":331,"qty":2}]}}
 {"id":"gap-chutney-modifier","tags":["gap-promo","modifier"],"input":"2 roti with green chutney","expected":{"intent":"log","items":[{"db_id":1,"qty":2},{"db_id":332}]}}
 {"id":"gap-mixed-seeds","tags":["gap-promo"],"input":"1 tbsp mixed seeds","expected":{"intent":"log","items":[{"db_id":334}]}}
+{"id":"gap-chicken-thigh","tags":["gap-promo"],"input":"1 chicken thigh","expected":{"intent":"log","items":[{"db_id":337}]}}
+{"id":"gap-karela","tags":["gap-promo"],"input":"1 bowl karela sabzi","expected":{"intent":"log","items":[{"db_id":338,"qty":1}]}}
+{"id":"gap-rajma-chawal","tags":["gap-promo"],"input":"250g rajma chawal","expected":{"intent":"log","items":[{"db_id":339}]}}
+{"id":"gap-tapioca","tags":["gap-promo"],"input":"15g tapioca chips","expected":{"intent":"log","items":[{"db_id":340}]}}
+{"id":"gap-choco-syrup","tags":["gap-promo","modifier"],"input":"2 tbsp chocolate syrup","expected":{"intent":"log","items":[{"db_id":341,"qty":2}]}}

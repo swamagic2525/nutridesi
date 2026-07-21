@@ -15,6 +15,12 @@ function logGapEvent({ food, reason, source, served_as, kcal }) {
 }
 
 function maybeAlert(entry) {
+  // Every gap is LOGGED to the file for mining, but only genuine misses are
+  // worth a WhatsApp ping. "curated_kept" means a sensible curated food was
+  // served with no better INDB hit ("tandoori roti" -> Roti) — usually fine,
+  // and it was ~60% of alerts, drowning the real misses. Mine those from the
+  // file during reviews instead.
+  if (entry.source === "curated_kept") return;
   const key = String(entry.food).toLowerCase();
   const today = new Date().toISOString().slice(0, 10);
   if (alerted.get(key) === today) return;

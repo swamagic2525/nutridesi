@@ -411,6 +411,14 @@ const FOODS = [
   { id: 334, name: "Mixed Seeds",                aliases: ["mixed seeds","mix seeds","mixed seed","seeds mix","trail seeds","roasted seeds mix"], unit: "tbsp", kcal: 55, p: 2.5, c: 2, f: 4.5, fb: 1.5, g: 12 },
   { id: 335, name: "Cake (Pastry Slice)",        aliases: ["cake","pastry","cake slice","sponge cake","birthday cake","chocolate cake","plum cake","tea cake","cream cake"], unit: "slice", kcal: 350, p: 4, c: 45, f: 18, fb: 1 },
   { id: 336, name: "Chicken Pasta",              aliases: ["chicken pasta","chicken alfredo pasta","chicken red sauce pasta","chicken white sauce pasta"], unit: "bowl", kcal: 450, p: 22, c: 50, f: 18, fb: 3 },
+
+  // --- Gap-trail promotions, 2026-07-21 batch 2 (values verified) ---
+  { id: 337, name: "Chicken Thigh (Cooked)",     aliases: ["chicken thigh","chicken thighs","thigh","boneless chicken thigh","chicken thigh piece"], unit: "piece", kcal: 180, p: 25, c: 0, f: 8, fb: 0, g: 100 },
+  { id: 338, name: "Karela Sabzi",               aliases: ["karela","karela sabzi","bitter gourd","bitter gourd sabzi","karela fry","karela ki sabji","pavakkai","karela masala"], unit: "bowl", kcal: 110, p: 3, c: 12, f: 6, fb: 4 },
+  { id: 339, name: "Rajma Chawal",               aliases: ["rajma chawal","rajma rice","rajma chaval","rajma chawal plate","rajma with rice"], unit: "plate", kcal: 350, p: 12, c: 55, f: 8, fb: 7, g: 300 },
+  { id: 340, name: "Tapioca Chips",              aliases: ["tapioca chips","kappa chips","cassava chips","tapioca chip"], unit: "handful", kcal: 120, p: 0.5, c: 15, f: 6.5, fb: 0.5, g: 25 },
+  { id: 341, name: "Chocolate Syrup",            aliases: ["chocolate syrup","hershey syrup","hersheys syrup","choco syrup","chocolate sauce"], unit: "tbsp", kcal: 45, p: 0.5, c: 11, f: 0.2, fb: 0.3, g: 21 },
+  { id: 342, name: "Chana Corn Chaat",           aliases: ["chana corn chaat","corn chana chaat","chana aur corn chaat","chickpea corn chaat"], unit: "bowl", kcal: 180, p: 8, c: 28, f: 4, fb: 6 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));
