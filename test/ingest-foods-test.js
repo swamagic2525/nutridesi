@@ -63,3 +63,21 @@ assert.ok(gateReason({ ...good, grams: 5, kcal_100g: 4400 }), "kcal/100g>900 rej
 assert.ok(gateReason({ ...good, name: "" }), "empty name rejected");
 assert.ok(gateReason({ ...good, name: "x".repeat(61) }), "over-long name rejected");
 console.log("gate: passed");
+
+const { collapse } = require("../scripts/ingest-foods/collapse.js");
+
+const recs = [
+  { name: "Aashirvaad Select Sharbati Atta", kcal: 345, p: 12, c: 68, f: 1.8, grams: 100 },
+  { name: "Aashirvaad Chakki Atta", kcal: 345, p: 12, c: 68, f: 1.8, grams: 100 },
+  { name: "Toor Dal", kcal: 140, p: 8, c: 20, f: 4, grams: 150 },
+  // same macros as Toor Dal but no shared token -> must NOT collapse together
+  { name: "Beetroot Soup", kcal: 140, p: 8, c: 20, f: 4, grams: 150 },
+];
+const { kept, dropped } = collapse(recs);
+const names = kept.map(r => r.name).sort();
+assert.ok(names.includes("Aashirvaad Chakki Atta"), "shortest atta kept");
+assert.ok(!names.includes("Aashirvaad Select Sharbati Atta"), "longer atta dropped");
+assert.ok(names.includes("Toor Dal") && names.includes("Beetroot Soup"), "coincidental-macro pair both kept");
+assert.strictEqual(dropped.length, 1);
+assert.strictEqual(dropped[0].keptAs, "Aashirvaad Chakki Atta");
+console.log("collapse: passed");
