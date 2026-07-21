@@ -124,3 +124,19 @@ console.log("collapse: passed");
   assert.strictEqual(row.fibre_100g, 0);
   console.log("to-row: passed");
 }
+
+{
+  const { buildReport } = require("../scripts/ingest-foods/report.js");
+
+  const md = buildReport({
+    funnel: [{ file: "A.md", parsed: 100, gated: 95, collapsed: 80, deduped: 75, loaded: 75 }],
+    rejects: [{ name: "Weird Row", reason: "macro_cal_mismatch" }],
+    collapses: [{ name: "Aashirvaad Select Atta", keptAs: "Aashirvaad Chakki Atta" }],
+    sample: [{ food_name: "Kanda Poha", serving_unit: "bowl", serving_kcal: 220, serving_protein: 4.5, kcal_100g: 147 }],
+  });
+  assert.ok(md.includes("A.md"), "funnel row present");
+  assert.ok(md.includes("macro_cal_mismatch"), "reject reason present");
+  assert.ok(md.includes("Aashirvaad Chakki Atta"), "collapse decision present");
+  assert.ok(md.includes("Kanda Poha"), "sample row present");
+  console.log("report: passed");
+}
