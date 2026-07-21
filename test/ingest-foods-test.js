@@ -58,6 +58,9 @@ assert.ok(gateReason({ ...good, kcal: -5 }), "negative kcal rejected");
 assert.strictEqual(gateReason(good), null);
 // wildly inconsistent: kcal 220 but macros imply 4*4+4*4+30*9=302 -> >30% off
 assert.ok(gateReason({ ...good, f: 30 }), "macro-cal mismatch rejected");
+// alcohol: calories from ethanol -> macro-cal check skipped under opts.alcohol
+assert.strictEqual(gateReason({ name: "Kingfisher Strong", kcal: 195, p: 1.8, c: 14.5, f: 0, grams: 330, kcal_100g: 59 }, { alcohol: true }), null, "alcohol row passes with opts.alcohol");
+assert.ok(gateReason({ name: "Kingfisher Strong", kcal: 195, p: 1.8, c: 14.5, f: 0, grams: 330, kcal_100g: 59 }), "same row rejected without the alcohol flag");
 // absurd density
 assert.ok(gateReason({ ...good, grams: 5, kcal_100g: 4400 }), "kcal/100g>900 rejected");
 // zero-cal items are valid (Coke Zero, creatine): pass, not rejected as density

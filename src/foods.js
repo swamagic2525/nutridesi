@@ -419,6 +419,20 @@ const FOODS = [
   { id: 340, name: "Tapioca Chips",              aliases: ["tapioca chips","kappa chips","cassava chips","tapioca chip"], unit: "handful", kcal: 120, p: 0.5, c: 15, f: 6.5, fb: 0.5, g: 25 },
   { id: 341, name: "Chocolate Syrup",            aliases: ["chocolate syrup","hershey syrup","hersheys syrup","choco syrup","chocolate sauce"], unit: "tbsp", kcal: 45, p: 0.5, c: 11, f: 0.2, fb: 0.3, g: 21 },
   { id: 342, name: "Chana Corn Chaat",           aliases: ["chana corn chaat","corn chana chaat","chana aur corn chaat","chickpea corn chaat"], unit: "bowl", kcal: 180, p: 8, c: 28, f: 4, fb: 6 },
+
+  // --- Generic alcohol categories (2026-07-22). When no brand is named, a bare
+  // "vodka"/"whisky"/"beer" resolves to the category average. Calories are from
+  // ethanol, not macros. Spirits: 1 peg = 30ml (~64 kcal at 40% ABV).
+  { id: 343, name: "Beer",                       aliases: ["beer","lager","draught beer","pint"], unit: "bottle", kcal: 150, p: 1.5, c: 11, f: 0, fb: 0, g: 330 },
+  { id: 344, name: "Strong Beer",                aliases: ["strong beer"], unit: "bottle", kcal: 195, p: 1.8, c: 14.5, f: 0, fb: 0, g: 330 },
+  { id: 345, name: "Whisky",                     aliases: ["whisky","whiskey","scotch","bourbon","daru","peg"], unit: "peg", kcal: 64, p: 0, c: 0, f: 0, fb: 0, g: 30 },
+  { id: 346, name: "Vodka",                      aliases: ["vodka"], unit: "peg", kcal: 64, p: 0, c: 0.1, f: 0, fb: 0, g: 30 },
+  { id: 347, name: "Rum",                        aliases: ["rum","dark rum"], unit: "peg", kcal: 65, p: 0, c: 0.5, f: 0, fb: 0, g: 30 },
+  { id: 348, name: "Gin",                        aliases: ["gin"], unit: "peg", kcal: 63, p: 0, c: 0, f: 0, fb: 0, g: 30 },
+  { id: 349, name: "Brandy",                     aliases: ["brandy","cognac"], unit: "peg", kcal: 65, p: 0, c: 0.5, f: 0, fb: 0, g: 30 },
+  { id: 350, name: "Tequila",                    aliases: ["tequila"], unit: "peg", kcal: 64, p: 0, c: 0, f: 0, fb: 0, g: 30 },
+  { id: 351, name: "Red Wine",                   aliases: ["red wine","wine","merlot","cabernet","shiraz"], unit: "glass", kcal: 125, p: 0.1, c: 4, f: 0, fb: 0, g: 150 },
+  { id: 352, name: "White Wine",                 aliases: ["white wine","chardonnay","sauvignon","champagne","prosecco"], unit: "glass", kcal: 120, p: 0.1, c: 4, f: 0, fb: 0, g: 150 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));

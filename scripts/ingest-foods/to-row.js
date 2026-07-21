@@ -3,6 +3,7 @@ const PREFIX = {
   "QuickCommerce_Restaurant_Food_DB_1000.md": "AIQ",
   "Fitness_Commercial_Products_DB.md": "AIF",
   "Food_Nutrition_DB.md": "AID",
+  "Indian_Liquor_Nutrition_DB.md": "AIL",
 };
 
 function codeFor(sourceFile, index) {

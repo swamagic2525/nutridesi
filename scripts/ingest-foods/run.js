@@ -47,9 +47,10 @@ async function main() {
     const text = fs.readFileSync(path.join(INCOMING, file), "utf8");
     const parsed = parseMdTable(text).map(r => normalizeRow(r, file));
 
+    const alcohol = file === "Indian_Liquor_Nutrition_DB.md"; // calories from ethanol, not macros
     const gated = [];
     for (const rec of parsed) {
-      const reason = gateReason(rec);
+      const reason = gateReason(rec, { alcohol });
       if (reason) allRejects.push({ name: rec.name, reason });
       else gated.push(rec);
     }

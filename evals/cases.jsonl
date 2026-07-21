@@ -151,3 +151,7 @@
 {"id":"gap-rajma-chawal","tags":["gap-promo"],"input":"250g rajma chawal","expected":{"intent":"log","items":[{"db_id":339}]}}
 {"id":"gap-tapioca","tags":["gap-promo"],"input":"15g tapioca chips","expected":{"intent":"log","items":[{"db_id":340}]}}
 {"id":"gap-choco-syrup","tags":["gap-promo","modifier"],"input":"2 tbsp chocolate syrup","expected":{"intent":"log","items":[{"db_id":341,"qty":2}]}}
+{"id":"alcohol-vodka","tags":["alcohol"],"input":"vodka","expected":{"intent":"log","items":[{"db_id":346}]}}
+{"id":"alcohol-pegs-whisky","tags":["alcohol"],"input":"2 pegs whisky","expected":{"intent":"log","items":[{"db_id":345,"qty":2}]}}
+{"id":"alcohol-beer","tags":["alcohol"],"input":"1 beer","expected":{"intent":"log","items":[{"db_id":343,"qty":1}]}}
+{"id":"alcohol-red-wine","tags":["alcohol"],"input":"glass of red wine","expected":{"intent":"log","items":[{"db_id":351}]}}

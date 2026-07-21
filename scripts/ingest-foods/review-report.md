@@ -1,16 +1,17 @@
 # Bulk Food Ingestion — Review Report
 
-Generated: 2026-07-21T17:08:08.879Z
+Generated: 2026-07-21T19:03:34.133Z
 
 ## Funnel (per file)
 
 | File | Parsed | After gate | After collapse | After dedup | To load |
 |:-----|-------:|-----------:|---------------:|------------:|--------:|
-| Food_Nutrition_DB.md | 20 | 20 | 20 | 20 | 20 |
-| Indian_Household_Nutrition_Database_2500.md | 2500 | 2316 | 904 | 850 | 849 |
-| QuickCommerce_Restaurant_Food_DB_1000.md | 1000 | 893 | 892 | 891 | 408 |
+| Food_Nutrition_DB.md | 20 | 20 | 20 | 0 | 0 |
+| Indian_Household_Nutrition_Database_2500.md | 2500 | 2316 | 904 | 0 | 0 |
+| Indian_Liquor_Nutrition_DB.md | 152 | 152 | 151 | 149 | 149 |
+| QuickCommerce_Restaurant_Food_DB_1000.md | 1000 | 893 | 892 | 0 | 0 |
 
-**Total: 3520 parsed → 1277 to load.**
+**Total: 3672 parsed → 149 to load.**
 
 ## Rejected rows (291)
 
@@ -312,7 +313,7 @@ Generated: 2026-07-21T17:08:08.879Z
 - Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
 </details>
 
-## Collapse decisions (1413 dropped)
+## Collapse decisions (1414 dropped)
 
 <details><summary>All collapses (dropped → kept)</summary>
 
@@ -1728,6 +1729,7 @@ Generated: 2026-07-21T17:08:08.879Z
 - Rajasthani Royal Style Specialty Curry Gravy - Var 84 → Andhra Spicy Style Specialty Curry Gravy - Var 21
 - Andhra Spicy Style Specialty Curry Gravy - Var 105 → Andhra Spicy Style Specialty Curry Gravy - Var 21
 - Rajasthani Royal Style Specialty Curry Gravy - Var 126 → Andhra Spicy Style Specialty Curry Gravy - Var 21
+- Bacardi Breezer Cranberry → Bacardi Breezer Orange
 - Sting Energy Drink Energy Boost → Sprite Lemon-Lime Drink
 </details>
 
@@ -1735,103 +1737,103 @@ Generated: 2026-07-21T17:08:08.879Z
 
 | Food | Unit | kcal | Protein | kcal/100g |
 |:-----|:-----|-----:|--------:|----------:|
-| Amul Gold Milk | serving | 87 | 3.3 | 87 |
-| Epigamia Greek Yogurt (Plain) | serving | 90 | 7.5 | 90 |
-| Oats Upma | bowl | 185 | 6.2 | 123.33 |
-| Uttapam Plain | pc | 210 | 5.2 | 175 |
-| Chana Bhatura (2 Bhaturas) | plate | 720 | 18 | 180 |
-| Boiled Eggs (2 whole) | 2 eggs | 148 | 12.6 | 148 |
-| Aloo Dosa (Low Oil Diet) | pc | 280 | 7 | 186.67 |
-| Sattu Paratha (Butter Loaded) | pc | 340 | 13 | 261.54 |
-| Moong Dal Yellow (Plain / Doctor Diet) | bowl | 120 | 7 | 80 |
-| South Indian Sambhar (Mixed Veg) | bowl | 110 | 4.8 | 73.33 |
-| Sindhi Kadhi (Veg & Tamarind) | bowl | 160 | 4.8 | 88.89 |
-| Rajma (Pahadi / Himalayan Style) | bowl | 140 | 8 | 93.33 |
-| Bengali Alur Dom | bowl | 190 | 3.5 | 126.67 |
-| Enne Gai (Karnataka Stuffed Brinjal) | bowl | 220 | 4 | 137.5 |
-| Avial (Mixed Veg Coconut Yogurt Curry) | bowl | 180 | 4 | 112.5 |
-| Kadai Mushroom | bowl | 195 | 7.2 | 108.33 |
-| Aloo (Mughlai Shahi White Gravy) | bowl | 240 | 3 | 150 |
-| Soya Chunks (Gujarati Sweet & Sour Style) | bowl | 172.5 | 18 | 107.81 |
-| Chicken Do Pyaza | bowl | 320 | 27 | 160 |
-| Chicken Kheema (Mincemeat Curry) | bowl | 320 | 28 | 177.78 |
-| Mutton Bhuna Gosht | bowl | 390 | 25 | 216.67 |
-| Omelette Plain (2 eggs) | pc | 180 | 12 | 180 |
-| Prawns Koliwada (Crispy Fried) | portion | 290 | 24 | 193.33 |
-| Chicken With Bone (Goan Portuguese Vindaloo) | bowl / portion | 250 | 19 | 138.89 |
-| Prawns / Shrimp (Pan Fried Crispy Coating) | bowl / portion | 168 | 20 | 93.33 |
-| Crab (Pan Fried Crispy Coating) | bowl / portion | 192 | 16 | 106.67 |
-| Veg Pulao (Matar / Mixed Veg) | bowl | 240 | 4.8 | 133.33 |
-| Tomato Rice (Thakkali Sadam) | bowl | 250 | 4.2 | 138.89 |
-| Garlic Butter Naan | pc | 300 | 6.5 | 315.79 |
-| Luchi (Bengali Fried Fine Flour) | pc | 115 | 1.8 | 383.33 |
-| Jowar Flour (Sorghum) | raw | 349 | 10.4 | 349 |
-| Urad Dal Black Whole (Raw) | raw | 341 | 25.2 | 341 |
-| Coconut Oil (Cold Pressed Cooking) | tbsp | 90 | 0 | 900 |
-| Hung Curd / Chakka | serving | 120 | 9 | 120 |
-| Fortune Sooji | raw | 345 | 12 | 345 |
-| Patanjali Bajra Flour | raw | 345 | 12 | 345 |
-| 24 Mantra Organic Sooji | raw | 345 | 12 | 345 |
-| Organic Tattva Bajra Flour | raw | 345 | 12 | 345 |
-| Pani Puri / Golgappa / Puchka | 6 pcs | 180 | 3 | 100 |
-| Dal Vada (Moong Dal) | 4 pcs | 230 | 8.2 | 230 |
-| Corn Pakoda | portion | 260 | 4 | 216.67 |
-| Gobi Kachori | portion | 260 | 4 | 216.67 |
-| Moong Dal Cutlet | portion | 260 | 4 | 216.67 |
-| Cheese Vada | portion | 300 | 4 | 250 |
-| Fish Kachori | portion | 300 | 14 | 250 |
-| Masala Chai (with Milk & Sugar) | cup | 105 | 3.2 | 70 |
-| Jaljeera (Cumin Mint Water) | lass 200ml | 45 | 0.5 | 22.5 |
-| Dry Gulab Jamun | 2 pcs | 270 | 4.2 | 337.5 |
-| Rice Kheer / Payasam | bowl | 230 | 5.5 | 153.33 |
-| Puran Poli (Chana Dal & Jaggery Flatbread) | pc | 320 | 7.5 | 266.67 |
-| Dates & Nuts (Sugar Free) Barfi | portion | 300 | 5 | 375 |
-| Mango Halwa | portion | 260 | 5 | 325 |
-| Rose Elaichi Kheer / Payasam | portion | 260 | 5 | 325 |
-| Coconut Modak | portion | 260 | 5 | 325 |
-| Sweet Tamarind Date Chutney (Meethi Chutney) | 2 tbsp | 65 | 0.4 | 216.67 |
-| Pineapple Raita (Sweet Curd) | bowl | 95 | 2.8 | 95 |
-| Maharashtrian Malvani Style Regional Sweet Delight - Var 1 | pc | 280 | 5.5 | 466.67 |
-| Chettinad Special Kofta Curry - Var 24 | bowl | 310 | 7 | 172.22 |
-| Chettinad Special Chickpea Stew - Var 25 | bowl | 225 | 11.5 | 125 |
-| Chettinad Special Flavoured Rice Bowl - Var 26 | bowl | 280 | 5.5 | 140 |
-| Hyderabadi Style Regional Sweet Delight - Var 6 | pc | 305 | 5.5 | 508.33 |
-| Hyderabadi Style Veg Korma - Var 8 | bowl | 270 | 5 | 150 |
-| Andhra Spicy Style Chickpea Stew - Var 30 | bowl | 250 | 11.5 | 138.89 |
-| Andhra Spicy Style Flavoured Rice Bowl - Var 31 | bowl | 305 | 5.5 | 152.5 |
-| Andhra Spicy Style Fried Snack Bowl - Var 32 | portion | 300 | 6 | 250 |
-| Andhra Spicy Style Specialty Curry Gravy - Var 33 | bowl | 320 | 9 | 177.78 |
-| Andhra Spicy Style Kofta Curry - Var 35 | bowl | 335 | 7 | 186.11 |
-| Karnataka Udipi Style Stuffed Paratha Roll - Var 36 | pc | 385 | 10.5 | 240.63 |
-| Karnataka Udipi Style Lentil Soup / Shorba - Var 37 | bowl | 160 | 7.5 | 88.89 |
-| Punjabi Dhaba Style Specialty Curry Gravy - Var 17 | bowl | 270 | 9 | 150 |
-| Punjabi Dhaba Style Kofta Curry - Var 19 | bowl | 285 | 7 | 158.33 |
-| Punjabi Dhaba Style Chickpea Stew - Var 20 | bowl | 275 | 11.5 | 152.78 |
-| Punjabi Dhaba Style Flavoured Rice Bowl - Var 21 | bowl | 330 | 5.5 | 165 |
-| McDonald's McEgg Burger | pc | 282 | 12.5 | 229.27 |
-| McDonald's McCafe Americano | cup | 12 | 0.5 | 4.8 |
-| Domino's Pizza Chicken Fiesta Pizza (Personal) | personal pizza | 590 | 28 | 245.83 |
-| Domino's Pizza Taco Mexicana Veg | pc | 290 | 7 | 263.64 |
-| Subway Chicken Kofta Sub (6 inch) | sub | 380 | 22 | 172.73 |
-| KFC Popcorn Chicken (Large) | portion | 504 | 28.8 | 280 |
-| Burger King Fiery Chicken Burger | pc | 480 | 22 | 266.67 |
-| Starbucks Double Chocolate Chip Cookie | pc | 360 | 4 | 480 |
-| Chai Point Egg Cheese Puff | pc | 330 | 10 | 300 |
-| Haldiram's Dhokla (2 pcs) | 2 pcs | 160 | 6 | 160 |
-| Behrouz Biryani Dum Gosht Mutton Biryani | portion | 820 | 38 | 182.22 |
-| Box8 Desi Box Chicken Tikka Meal | box | 620 | 32 | 163.16 |
-| Generic Indian Restaurant Paneer Butter Masala | serving | 480 | 18 | 160 |
-| Generic Indian Restaurant Veg Pulao | serving | 340 | 6.5 | 121.43 |
-| Generic Chinese Chicken Fried Rice | serving | 560 | 22 | 175 |
-| Lay's India's Magic Masala Chips | serving | 162 | 2.1 | 540 |
-| Kurkure Puffcorn Yummy Cheese | serving | 158 | 2.1 | 526.67 |
-| Haldiram's Bhookhia Sev | serving | 175 | 4.2 | 583.33 |
-| Haldiram's Mini Samosa Snack | serving | 155 | 3.5 | 516.67 |
-| Britannia NutriChoice 5 Grain Digestive | 3 biscuits | 138 | 2.8 | 460 |
-| Oreo Choco Dip Covered Biscuit | 2 biscuits | 155 | 1.6 | 516.67 |
-| Ferrero Kinder Joy with Toy | serving | 110 | 1.6 | 550 |
-| Nestle Milkybar White Chocolate Bar | serving | 104 | 1.6 | 520 |
-| Nestle Maggi Special Masala Oats Noodles | serving | 305 | 9.2 | 417.81 |
-| Samyang Buldak Carbonara Hot Chicken Ramen | pack | 550 | 10 | 423.08 |
-| McCain Aloo Tikki Mazedaar | 2 pcs | 175 | 3 | 175 |
-| ITC Master Chef Cheesy Potato Pops | serving | 225 | 4.2 | 225 |
+| Kingfisher Premium Lager | serving | 142 | 1.6 | 43.03 |
+| Kingfisher Ultra | serving | 138 | 1.5 | 41.82 |
+| Kingfisher Ultra Max | serving | 188 | 1.8 | 56.97 |
+| Bira 91 White Ale | serving | 155 | 1.8 | 46.97 |
+| Bira 91 Blonde Lager | serving | 145 | 1.5 | 43.94 |
+| Bira 91 Strong | serving | 205 | 2 | 62.12 |
+| Bira 91 Light | serving | 90 | 1 | 27.27 |
+| Carlsberg Elephant Strong | serving | 210 | 2.1 | 63.64 |
+| Carlsberg Smooth | serving | 140 | 1.5 | 42.42 |
+| Tuborg Green | serving | 135 | 1.4 | 40.91 |
+| Budweiser Premium | serving | 145 | 1.6 | 43.94 |
+| Budweiser Magnum Strong | serving | 200 | 2 | 60.61 |
+| Heineken Lager | serving | 139 | 1.5 | 42.12 |
+| Heineken Silver | serving | 115 | 1.2 | 34.85 |
+| Corona Extra | serving | 148 | 1.1 | 41.69 |
+| Hoegaarden Witbier | serving | 149 | 1.6 | 45.15 |
+| Haywards 5000 Strong | serving | 215 | 2 | 65.15 |
+| Knock Out Strong Beer | serving | 220 | 2.1 | 66.67 |
+| Godfather Legend Strong | serving | 210 | 2 | 63.64 |
+| Kalyani Black Label Strong | serving | 205 | 1.9 | 62.12 |
+| Kingfisher Premium Lager (Can) | serving | 215 | 2.4 | 43 |
+| Kingfisher Strong (Can) | serving | 295 | 2.7 | 59 |
+| Bira 91 White Ale (Can) | serving | 235 | 2.7 | 47 |
+| Royal Stag | serving | 71 | 0 | 236.67 |
+| Blenders Pride | serving | 71 | 0 | 236.67 |
+| Imperial Blue | serving | 71 | 0 | 236.67 |
+| Officer's Choice | serving | 71 | 0 | 236.67 |
+| McDowell's No. 1 | serving | 71 | 0 | 236.67 |
+| Signature | serving | 71 | 0 | 236.67 |
+| Antiquity Blue | serving | 71 | 0 | 236.67 |
+| Black Dog | serving | 71 | 0 | 236.67 |
+| 100 Pipers | serving | 71 | 0 | 236.67 |
+| Vat 69 | serving | 71 | 0 | 236.67 |
+| Teachers Highland Cream | serving | 71 | 0 | 236.67 |
+| Teachers 50 | serving | 71 | 0 | 236.67 |
+| Amrut Indian Single Malt | serving | 71 | 0 | 236.67 |
+| Paul John Brilliance | serving | 71 | 0 | 236.67 |
+| Indri Trini | serving | 71 | 0 | 236.67 |
+| Royal Challenge | serving | 71 | 0 | 236.67 |
+| Rockford Reserve | serving | 71 | 0 | 236.67 |
+| Chivas Regal 12 YO | serving | 71 | 0 | 236.67 |
+| Johnnie Walker Red Label | serving | 71 | 0 | 236.67 |
+| Johnnie Walker Black Label | serving | 71 | 0 | 236.67 |
+| Johnnie Walker Double Black | serving | 71 | 0 | 236.67 |
+| Jack Daniel's Old No. 7 | serving | 71 | 0 | 236.67 |
+| Jim Beam White Label | serving | 71 | 0 | 236.67 |
+| Jameson Irish Whiskey | serving | 71 | 0 | 236.67 |
+| Glenfiddich 12 YO | serving | 71 | 0 | 236.67 |
+| The Glenlivet 12 YO | serving | 71 | 0 | 236.67 |
+| Macallan 12 YO | serving | 71 | 0 | 236.67 |
+| Monkey Shoulder | serving | 71 | 0 | 236.67 |
+| Woodford Reserve | serving | 71 | 0 | 236.67 |
+| Maker's Mark | serving | 71 | 0 | 236.67 |
+| Talisker 10 YO | serving | 71 | 0 | 236.67 |
+| Laphroaig 10 YO | serving | 71 | 0 | 236.67 |
+| Eighty Eight | serving | 71 | 0 | 236.67 |
+| Oaksmith Gold | serving | 71 | 0 | 236.67 |
+| Blenders Pride Reserve Collection | serving | 71 | 0 | 236.67 |
+| Old Monk Classic | serving | 71 | 0 | 236.67 |
+| Old Monk Supreme | serving | 71 | 0 | 236.67 |
+| Old Monk Legend | serving | 71 | 0 | 236.67 |
+| Old Monk White | serving | 71 | 0 | 236.67 |
+| McDowell's No. 1 Celebration | serving | 71 | 0 | 236.67 |
+| Bacardi Carta Blanca (White) | serving | 71 | 0 | 236.67 |
+| Bacardi Carta Negra (Dark) | serving | 71 | 0 | 236.67 |
+| Bacardi Oro (Gold) | serving | 71 | 0 | 236.67 |
+| Captain Morgan Dark | serving | 71 | 0 | 236.67 |
+| Hercules XXX | serving | 71 | 0 | 236.67 |
+| Contessa XXX | serving | 71 | 0 | 236.67 |
+| Old Port Deluxe | serving | 71 | 0 | 236.67 |
+| Amrut Two Indies | serving | 71 | 0 | 236.67 |
+| Maka Zai White | serving | 71 | 0 | 236.67 |
+| Maka Zai Gold | serving | 71 | 0 | 236.67 |
+| Camikara | serving | 71 | 0 | 236.67 |
+| Blue Riband | serving | 71 | 0 | 236.67 |
+| Greater Than | serving | 71 | 0 | 236.67 |
+| Stranger & Sons | serving | 71 | 0 | 236.67 |
+| Bombay Sapphire | serving | 71 | 0 | 236.67 |
+| Gordon's London Dry | serving | 71 | 0 | 236.67 |
+| Tanqueray | serving | 71 | 0 | 236.67 |
+| Hapusa | serving | 71 | 0 | 236.67 |
+| Jaisalmer | serving | 71 | 0 | 236.67 |
+| Beefeater | serving | 71 | 0 | 236.67 |
+| Hendrick's | serving | 71 | 0 | 236.67 |
+| Roku | serving | 71 | 0 | 236.67 |
+| Terai | serving | 71 | 0 | 236.67 |
+| Pumori | serving | 71 | 0 | 236.67 |
+| Samsara | serving | 71 | 0 | 236.67 |
+| Sipsmith | serving | 71 | 0 | 236.67 |
+| Bacardi Limon | serving | 76 | 0 | 253.33 |
+| Captain Morgan Spiced Gold | serving | 76 | 0 | 253.33 |
+| Magic Moments Plain | serving | 69 | 0 | 230 |
+| Magic Moments Lemon | serving | 69 | 0 | 230 |
+| Smirnoff Red (No. 21) | serving | 69 | 0 | 230 |
+| Smirnoff Espresso | serving | 69 | 0 | 230 |
+| Absolut Plain | serving | 69 | 0 | 230 |
+| Absolut Mandrin | serving | 69 | 0 | 230 |
+| White Mischief Plain | serving | 69 | 0 | 230 |
+| Romanov Plain | serving | 69 | 0 | 230 |
+| Grey Goose | serving | 69 | 0 | 230 |
