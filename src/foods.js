@@ -96,7 +96,7 @@ const FOODS = [
   { id: 92, name: "Roasted Chana",         aliases: ["roasted chana","bhuna chana","roasted chickpeas","chana snack","phutana"], unit: "handful", kcal: 120, p: 7, c: 20, f: 2, fb: 5 },
   { id: 93, name: "Uttapam",               aliases: ["uttapam","uthappam","rava uttapam","onion uttapam"], unit: "piece", kcal: 175, p: 4, c: 25, f: 6, fb: 2 },
   { id: 94, name: "Maggi",                 aliases: ["maggi","maggie","masala noodles","instant noodles","2 minute noodles"], unit: "pack", kcal: 350, p: 8, c: 50, f: 13, fb: 2 },
-  { id: 95, name: "Pizza (slice)",         aliases: ["pizza","pizza slice","cheese pizza","veg pizza","margherita"], unit: "slice", kcal: 285, p: 12, c: 36, f: 10, fb: 2 },
+  { id: 95, name: "Pizza (slice)",         aliases: ["pizza slice","slice of pizza","1 slice pizza"], unit: "slice", kcal: 230, p: 10, c: 30, f: 9, fb: 2 },
   { id: 96, name: "Ice Cream",             aliases: ["ice cream","icecream","vanilla ice cream","scoop of ice cream"], unit: "scoop", kcal: 140, p: 2.5, c: 16, f: 7, fb: 0.5 },
   { id: 97, name: "Matar Paneer",          aliases: ["matar paneer","mutter paneer","peas paneer","paneer matar"], unit: "bowl", kcal: 280, p: 14, c: 18, f: 16, fb: 4 },
   { id: 98, name: "Oats (Plain)",          aliases: ["oats","oatmeal","oats bowl","masala oats","overnight oats","quaker oats","quaker","rolled oats","plain oats"], unit: "bowl", kcal: 150, p: 5, c: 27, f: 3, fb: 4, g: 40 },
@@ -308,7 +308,7 @@ const FOODS = [
   { id: 271, name: "Chicken Shawarma",           aliases: ["shawarma","chicken shawarma","shawarma roll","shwarma"], unit: "piece", kcal: 450, p: 26, c: 40, f: 21, fb: 3 },
   { id: 272, name: "Amritsari Kulcha",           aliases: ["kulcha","amritsari kulcha","aloo kulcha","paneer kulcha"], unit: "piece", kcal: 330, p: 7, c: 45, f: 13, fb: 3 },
   { id: 273, name: "Chole Kulche",               aliases: ["chole kulche","chana kulcha","kulche chole","chole kulcha"], unit: "plate", kcal: 500, p: 15, c: 70, f: 18, fb: 10 },
-  { id: 275, name: "Veg Burger",                 aliases: ["burger","veg burger","aloo tikki burger","veggie burger"], unit: "piece", kcal: 350, p: 9, c: 48, f: 13, fb: 3 },
+  { id: 275, name: "Veg Burger",                 aliases: ["burger","veg burger","veggie burger"], unit: "piece", kcal: 350, p: 9, c: 48, f: 13, fb: 3 },
   { id: 276, name: "Chicken Burger",             aliases: ["chicken burger","chicken patty burger","zinger burger"], unit: "piece", kcal: 450, p: 22, c: 44, f: 21, fb: 2.5 },
   { id: 277, name: "French Fries",               aliases: ["french fries","fries","finger chips","peri peri fries","salted fries"], unit: "serving", kcal: 320, p: 4, c: 42, f: 15, fb: 4, g: 100 },
   { id: 278, name: "Pasta (Red Sauce)",          aliases: ["pasta","red sauce pasta","arrabbiata pasta","tomato pasta","penne pasta"], unit: "bowl", kcal: 350, p: 11, c: 55, f: 9, fb: 4 },
@@ -370,6 +370,36 @@ const FOODS = [
   // scaling its per-cob value to 367 kcal; kernels are ~96 kcal/100g. Protein
   // was also ~2x high on the flat estimate (real 3.4g/100g). USDA-verified.
   { id: 306, name: "Sweet Corn (Boiled)",        aliases: ["boiled corn","sweet corn","corn kernels","boiled sweet corn","steamed corn","american corn","corn"], unit: "bowl", kcal: 96, p: 3.4, c: 21, f: 1.5, fb: 2.4, g: 100 },
+
+  // --- Chain SKUs, 2026-07-21, values from published India nutrition ---
+  // DOMINO'S. unit "pizza" = one WHOLE regular (4 slices, personal size) —
+  // bare "pizza" now lands here, not on a single slice (95). Medium = 6 slices.
+  { id: 307, name: "Domino's Margherita (Regular)", aliases: ["pizza","margherita","margarita","cheese pizza","veg pizza","plain pizza","regular pizza","dominos margherita","dominos pizza"], unit: "pizza", kcal: 500, p: 16, c: 66, f: 18, fb: 4 },
+  { id: 308, name: "Domino's Farmhouse (Regular)", aliases: ["farmhouse","farmhouse pizza","veg farmhouse","dominos farmhouse"], unit: "pizza", kcal: 560, p: 20, c: 68, f: 22, fb: 5 },
+  { id: 309, name: "Domino's Peppy Paneer (Regular)", aliases: ["peppy paneer","peppy paneer pizza","paneer pizza","dominos peppy paneer"], unit: "pizza", kcal: 676, p: 29, c: 76, f: 28, fb: 5 },
+  // The volcano/cheese-burst case: a loaded regular runs far above a plain one.
+  { id: 310, name: "Cheese Burst Pizza (Regular)", aliases: ["cheese burst","cheese burst pizza","volcano pizza","cheese volcano","paneer cheese volcano","loaded cheese pizza","cheese burst margherita"], unit: "pizza", kcal: 780, p: 26, c: 80, f: 38, fb: 4 },
+  { id: 311, name: "Chicken Pizza (Regular)",    aliases: ["chicken pizza","non veg pizza","chicken dominator","pepperoni pizza","chicken sausage pizza","chicken supreme pizza"], unit: "pizza", kcal: 700, p: 32, c: 68, f: 30, fb: 4 },
+  { id: 312, name: "Pizza (Medium, whole)",      aliases: ["medium pizza","medium margherita","large pizza"], unit: "pizza", kcal: 900, p: 30, c: 120, f: 34, fb: 8 },
+  { id: 313, name: "Garlic Breadsticks (Domino's)", aliases: ["garlic bread","garlic breadsticks","garlic sticks","cheesy garlic bread","stuffed garlic bread","dominos garlic bread"], unit: "serving", kcal: 140, p: 4, c: 19, f: 5, fb: 1 },
+  { id: 314, name: "Choco Lava Cake",            aliases: ["choco lava cake","chocolava","lava cake","molten cake","dominos lava cake"], unit: "piece", kcal: 180, p: 3, c: 27, f: 7, fb: 1 },
+
+  // MCDONALD'S INDIA (100% beef-free). "aloo tikki burger" moved here from 275.
+  { id: 315, name: "McAloo Tikki",               aliases: ["mcaloo tikki","mc aloo tikki","mcaloo","aloo tikki burger","mcaloo burger"], unit: "piece", kcal: 353, p: 8, c: 50, f: 14, fb: 3 },
+  { id: 316, name: "McVeggie",                   aliases: ["mcveggie","mc veggie","veg mcburger","mcveggie burger"], unit: "piece", kcal: 402, p: 11, c: 56, f: 15, fb: 4 },
+  { id: 317, name: "McSpicy Paneer",             aliases: ["mcspicy paneer","mc spicy paneer","spicy paneer burger","mcspicy paneer burger"], unit: "piece", kcal: 634, p: 20, c: 54, f: 37, fb: 4 },
+  { id: 318, name: "McSpicy Chicken",            aliases: ["mcspicy chicken","mc spicy chicken","mcspicy","spicy chicken burger","mcspicy chicken burger"], unit: "piece", kcal: 448, p: 22, c: 40, f: 22, fb: 3 },
+  { id: 319, name: "McChicken",                  aliases: ["mcchicken","mc chicken","mcchicken burger"], unit: "piece", kcal: 398, p: 15, c: 42, f: 18, fb: 2 },
+  { id: 320, name: "Chicken Maharaja Mac",       aliases: ["chicken maharaja mac","maharaja mac","chicken maharaja","maharaja"], unit: "piece", kcal: 689, p: 35, c: 56, f: 36, fb: 4 },
+  { id: 321, name: "Veg Maharaja Mac",           aliases: ["veg maharaja mac","veg maharaja"], unit: "piece", kcal: 833, p: 24, c: 88, f: 42, fb: 6 },
+  { id: 322, name: "Chicken McNuggets",          aliases: ["mcnuggets","chicken mcnuggets","mc nuggets","nuggets","chicken nuggets"], unit: "piece", kcal: 47, p: 2.4, c: 3, f: 2.8, fb: 0 },
+
+  // STARBUCKS. unit "grande" (16oz) — the common default size.
+  { id: 323, name: "Starbucks Cappuccino (Grande)", aliases: ["cappuccino","starbucks cappuccino","grande cappuccino","capuccino"], unit: "grande", kcal: 140, p: 9, c: 14, f: 5, fb: 0 },
+  { id: 324, name: "Starbucks Caffè Latte (Grande)", aliases: ["latte","cafe latte","caffe latte","starbucks latte","cafe au lait"], unit: "grande", kcal: 190, p: 13, c: 19, f: 7, fb: 0 },
+  { id: 325, name: "Starbucks Caffè Mocha (Grande)", aliases: ["mocha","cafe mocha","caffe mocha","starbucks mocha","cafe mocha grande"], unit: "grande", kcal: 360, p: 14, c: 44, f: 15, fb: 2 },
+  { id: 326, name: "Caramel Frappuccino (Grande)", aliases: ["caramel frappuccino","caramel frappe","frappuccino","starbucks frappuccino"], unit: "grande", kcal: 380, p: 5, c: 60, f: 16, fb: 0 },
+  { id: 327, name: "Java Chip Frappuccino (Grande)", aliases: ["java chip","java chip frappuccino","java chip frappe","javachip"], unit: "grande", kcal: 470, p: 6, c: 68, f: 19, fb: 1 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));

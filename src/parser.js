@@ -103,6 +103,35 @@ async function callClaude(userText) {
 
 const CALLERS = { groq: callGroq, gemini: callGemini, claude: callClaude };
 
+// Deterministic pizza normalization. Two ambiguities the LLM resolves
+// inconsistently, both introduced by adding whole-pizza + slice SKUs:
+//   1. "2 slices pizza" could log 2 WHOLE pizzas (307-312) — a 2x overcount.
+//      When "slice" sits next to "pizza" we force the per-slice entry (95).
+//   2. Bare "pizza" swings between regular (307) and medium (312) — ~1.8x.
+//      With no size word we pin the generic medium (312) down to regular (307).
+// The slice adjacency check keeps "1 pizza and 2 slices of cake" from misfiring.
+const WHOLE_PIZZA_IDS = new Set([307, 308, 309, 310, 311, 312]);
+const PIZZA_SLICE_RE = /\b(?:pizza\s+slices?|slices?\s+(?:of\s+)?pizza)\b/i;
+const PIZZA_SIZE_RE = /\b(medium|large)\b/i;
+function pinPizzaSlices(rawMessage, parsed) {
+  const raw = String(rawMessage || "");
+  const sliceContext = PIZZA_SLICE_RE.test(raw);
+  const sizeGiven = PIZZA_SIZE_RE.test(raw);
+  for (const it of parsed.items || []) {
+    const id = Number(it.matched_db_id);
+    const isPizza = WHOLE_PIZZA_IDS.has(id) || /pizza/i.test(String(it.food_name || ""));
+    if (sliceContext && isPizza) {
+      it.matched_db_id = 95;
+      // Force the slice alias as the name too, or db.js contextGuard re-matches
+      // "pizza" back to a whole pizza and undoes this.
+      it.food_name = "pizza slice";
+    } else if (id === 312 && !sizeGiven) {
+      it.matched_db_id = 307; // "1 pizza" defaults to a regular, not a medium
+    }
+  }
+  return parsed;
+}
+
 async function parseMeal(rawMessage, recentLogContext = "") {
   const cleaned = preprocess(rawMessage);
   if (!cleaned) return { items: [], meal_time_inferred: "snack", parse_notes: "empty" };
@@ -115,7 +144,7 @@ async function parseMeal(rawMessage, recentLogContext = "") {
       const raw = await CALLERS[name](contextualMessage);
       const parsed = extractJson(raw);
       if (name !== CHAIN[0]) console.warn(`parser: ${CHAIN[0]} down, served by ${name}`);
-      return parsed;
+      return pinPizzaSlices(rawMessage, parsed);
     } catch (e) {
       console.error(`LLM ${name} failed:`, String(e.message).slice(0, 300));
     }
@@ -123,4 +152,4 @@ async function parseMeal(rawMessage, recentLogContext = "") {
   return { items: [], meal_time_inferred: "snack", parse_notes: "llm_error" };
 }
 
-module.exports = { parseMeal, preprocess, PROVIDER, CHAIN };
+module.exports = { parseMeal, preprocess, pinPizzaSlices, PROVIDER, CHAIN };

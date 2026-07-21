@@ -127,3 +127,13 @@
 {"id":"brand-mb-biozyme-still","tags":["brand"],"input":"1 scoop biozyme performance whey","expected":{"intent":"log","items":[{"db_id":221,"qty":1}]}}
 {"id":"gap-boiled-corn","tags":["gap-promo","real"],"input":"200gm boiled corn","expected":{"intent":"log","items":[{"db_id":306,"grams":200}]}}
 {"id":"reg-bhutta-cob","tags":["regression"],"input":"1 bhutta","expected":{"intent":"log","items":[{"db_id":292,"qty":1}]}}
+{"id":"chain-pizza-slices","tags":["chain"],"input":"2 slices pizza","expected":{"intent":"log","items":[{"db_id":95,"qty":2}]}}
+{"id":"chain-pizza-whole","tags":["chain"],"input":"1 pizza","expected":{"intent":"log","items":[{"db_id":[307,null],"name_like":"pizza","qty":1}]}}
+{"id":"chain-pizza-medium","tags":["chain"],"input":"1 medium pizza","expected":{"intent":"log","items":[{"db_id":312,"qty":1}]}}
+{"id":"chain-volcano","tags":["chain","incident"],"input":"1 dominos paneer cheese volcano pizza regular","expected":{"intent":"log","items":[{"db_id":310}]}}
+{"id":"chain-peppy-paneer","tags":["chain"],"input":"peppy paneer pizza","expected":{"intent":"log","items":[{"db_id":309}]}}
+{"id":"chain-mcaloo","tags":["chain"],"input":"mcaloo tikki burger","expected":{"intent":"log","items":[{"db_id":315}]}}
+{"id":"chain-mcspicy-paneer","tags":["chain"],"input":"1 mcspicy paneer","expected":{"intent":"log","items":[{"db_id":317,"qty":1}]}}
+{"id":"chain-mcnuggets","tags":["chain"],"input":"6 chicken mcnuggets","expected":{"intent":"log","items":[{"db_id":322,"qty":6}]}}
+{"id":"chain-starbucks-latte","tags":["chain"],"input":"grande caffe latte","expected":{"intent":"log","items":[{"db_id":324}]}}
+{"id":"chain-java-chip","tags":["chain"],"input":"java chip frappuccino","expected":{"intent":"log","items":[{"db_id":327}]}}
