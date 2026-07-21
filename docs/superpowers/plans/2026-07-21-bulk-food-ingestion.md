@@ -245,8 +245,11 @@ assert.strictEqual(gateReason(good), null);
 assert.ok(gateReason({ ...good, f: 30 }), "macro-cal mismatch rejected");
 // absurd density
 assert.ok(gateReason({ ...good, grams: 5, kcal_100g: 4400 }), "kcal/100g>900 rejected");
+assert.strictEqual(gateReason({ name: "Coke Zero", kcal: 0, p: 0, c: 0, f: 0, grams: 330, kcal_100g: 0 }), null, "zero-cal item passes");
 assert.ok(gateReason({ ...good, name: "" }), "empty name rejected");
-assert.ok(gateReason({ ...good, name: "x".repeat(61) }), "over-long name rejected");
+assert.strictEqual(gateReason({ ...good, name: "ON Gold Standard 100% Whey Isolate (Double Rich Chocolate Flavour)" }), null, "long brand name (<=80) passes");
+assert.ok(gateReason({ ...good, name: "x".repeat(81) }), "over-long name (>80) rejected");
+assert.strictEqual(gateReason({ ...good, name: "Green Moong (South Indian Tempering (Mustard & Curry Leaves))" }), "spam_name", "nested-paren spam rejected");
 console.log("gate: passed");
 ```
 
@@ -266,9 +269,15 @@ function gateReason(rec) {
   if (!Number.isFinite(grams) || grams <= 0) return "no_grams";
   const derived = p * 4 + c * 4 + f * 9;
   if (kcal > 0 && Math.abs(derived - kcal) / kcal > 0.30) return "macro_cal_mismatch";
-  if (!Number.isFinite(kcal_100g) || kcal_100g > 900 || kcal_100g < 5) return "absurd_density";
+  // Only a ceiling: nothing edible exceeds pure fat (~900/100g). No low floor —
+  // 0-cal items (Coke Zero, creatine, green tea) are valid, not parse errors.
+  if (!Number.isFinite(kcal_100g) || kcal_100g > 900) return "absurd_density";
   const n = String(name || "").trim();
-  if (!n || n.length > 60 || !/[a-z]/i.test(n)) return "bad_name";
+  if (!n || n.length > 80 || !/[a-z]/i.test(n)) return "bad_name";
+  // Nested parens are the combinatorial-permutation spam signature
+  // ("... (South Indian Tempering (Mustard & Curry Leaves)))"). Two separate
+  // parens like "ON Whey (Gold) (Chocolate)" are fine and don't match.
+  if (/\([^()]*\(/.test(n)) return "spam_name";
   return null;
 }
 
@@ -385,23 +394,27 @@ git commit -m "Ingest pipeline: collapse identical-macro clusters"
 - [ ] **Step 1: Write the failing test** — append to `test/ingest-foods-test.js`:
 
 ```javascript
-const { normName, dedup } = require("../scripts/ingest-foods/dedup.js");
+// Brace-scoped: this file is one flat script, and later blocks reuse names
+// like `recs`/`kept`/`dropped`. Wrapping each block avoids top-level collisions.
+{
+  const { normName, dedup } = require("../scripts/ingest-foods/dedup.js");
 
-assert.strictEqual(normName("Dal  Tadka!"), "dal tadka");
+  assert.strictEqual(normName("Dal  Tadka!"), "dal tadka");
 
-const curated = new Set(["dal tadka"]);
-const ref = new Set(["hot tea garam chai"]);
-const recs = [
-  { name: "Dal Tadka" },        // in curated -> drop
-  { name: "Hot Tea (Garam Chai)" }, // in reference -> drop
-  { name: "Kanda Poha" },       // new -> keep
-];
-const { kept, dropped } = dedup(recs, curated, ref);
-assert.deepStrictEqual(kept.map(r => r.name), ["Kanda Poha"]);
-assert.strictEqual(dropped.length, 2);
-assert.strictEqual(dropped.find(d => d.name === "Dal Tadka").reason, "in_curated");
-assert.strictEqual(dropped.find(d => d.name.startsWith("Hot Tea")).reason, "in_reference");
-console.log("dedup: passed");
+  const curated = new Set(["dal tadka"]);
+  const ref = new Set(["hot tea garam chai"]);
+  const recs = [
+    { name: "Dal Tadka" },        // in curated -> drop
+    { name: "Hot Tea (Garam Chai)" }, // in reference -> drop
+    { name: "Kanda Poha" },       // new -> keep
+  ];
+  const { kept, dropped } = dedup(recs, curated, ref);
+  assert.deepStrictEqual(kept.map(r => r.name), ["Kanda Poha"]);
+  assert.strictEqual(dropped.length, 2);
+  assert.strictEqual(dropped.find(d => d.name === "Dal Tadka").reason, "in_curated");
+  assert.strictEqual(dropped.find(d => d.name.startsWith("Hot Tea")).reason, "in_reference");
+  console.log("dedup: passed");
+}
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -459,24 +472,26 @@ git commit -m "Ingest pipeline: dedup vs curated and reference"
 - [ ] **Step 1: Write the failing test** — append to `test/ingest-foods-test.js`:
 
 ```javascript
-const { codeFor, toReferenceRow } = require("../scripts/ingest-foods/to-row.js");
+{
+  const { codeFor, toReferenceRow } = require("../scripts/ingest-foods/to-row.js");
 
-assert.strictEqual(codeFor("Indian_Household_Nutrition_Database_2500.md", 0), "AIH0001");
-assert.strictEqual(codeFor("QuickCommerce_Restaurant_Food_DB_1000.md", 41), "AIQ0042");
-assert.strictEqual(codeFor("Fitness_Commercial_Products_DB.md", 0), "AIF0001");
-assert.strictEqual(codeFor("Food_Nutrition_DB.md", 0), "AID0001");
+  assert.strictEqual(codeFor("Indian_Household_Nutrition_Database_2500.md", 0), "AIH0001");
+  assert.strictEqual(codeFor("QuickCommerce_Restaurant_Food_DB_1000.md", 41), "AIQ0042");
+  assert.strictEqual(codeFor("Fitness_Commercial_Products_DB.md", 0), "AIF0001");
+  assert.strictEqual(codeFor("Food_Nutrition_DB.md", 0), "AID0001");
 
-const rec = { name: "Kanda Poha", unit: "bowl", kcal: 220, p: 4.5, c: 38, f: 6, kcal_100g: 147, p_100g: 3, c_100g: 25.3, f_100g: 4 };
-const row = toReferenceRow(rec, "AIH0001");
-assert.strictEqual(row.food_code, "AIH0001");
-assert.strictEqual(row.food_name, "Kanda Poha");
-assert.strictEqual(row.serving_unit, "bowl");
-assert.strictEqual(row.serving_kcal, 220);
-assert.strictEqual(row.serving_protein, 4.5);
-assert.strictEqual(row.serving_fibre, 0);
-assert.strictEqual(row.kcal_100g, 147);
-assert.strictEqual(row.fibre_100g, 0);
-console.log("to-row: passed");
+  const rec = { name: "Kanda Poha", unit: "bowl", kcal: 220, p: 4.5, c: 38, f: 6, kcal_100g: 147, p_100g: 3, c_100g: 25.3, f_100g: 4 };
+  const row = toReferenceRow(rec, "AIH0001");
+  assert.strictEqual(row.food_code, "AIH0001");
+  assert.strictEqual(row.food_name, "Kanda Poha");
+  assert.strictEqual(row.serving_unit, "bowl");
+  assert.strictEqual(row.serving_kcal, 220);
+  assert.strictEqual(row.serving_protein, 4.5);
+  assert.strictEqual(row.serving_fibre, 0);
+  assert.strictEqual(row.kcal_100g, 147);
+  assert.strictEqual(row.fibre_100g, 0);
+  console.log("to-row: passed");
+}
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -551,19 +566,21 @@ git commit -m "Ingest pipeline: map to foods_reference row + food_code"
 - [ ] **Step 1: Write the failing test** — append to `test/ingest-foods-test.js`:
 
 ```javascript
-const { buildReport } = require("../scripts/ingest-foods/report.js");
+{
+  const { buildReport } = require("../scripts/ingest-foods/report.js");
 
-const md = buildReport({
-  funnel: [{ file: "A.md", parsed: 100, gated: 95, collapsed: 80, deduped: 75, loaded: 75 }],
-  rejects: [{ name: "Weird Row", reason: "macro_cal_mismatch" }],
-  collapses: [{ name: "Aashirvaad Select Atta", keptAs: "Aashirvaad Chakki Atta" }],
-  sample: [{ food_name: "Kanda Poha", serving_unit: "bowl", serving_kcal: 220, serving_protein: 4.5, kcal_100g: 147 }],
-});
-assert.ok(md.includes("A.md"), "funnel row present");
-assert.ok(md.includes("macro_cal_mismatch"), "reject reason present");
-assert.ok(md.includes("Aashirvaad Chakki Atta"), "collapse decision present");
-assert.ok(md.includes("Kanda Poha"), "sample row present");
-console.log("report: passed");
+  const md = buildReport({
+    funnel: [{ file: "A.md", parsed: 100, gated: 95, collapsed: 80, deduped: 75, loaded: 75 }],
+    rejects: [{ name: "Weird Row", reason: "macro_cal_mismatch" }],
+    collapses: [{ name: "Aashirvaad Select Atta", keptAs: "Aashirvaad Chakki Atta" }],
+    sample: [{ food_name: "Kanda Poha", serving_unit: "bowl", serving_kcal: 220, serving_protein: 4.5, kcal_100g: 147 }],
+  });
+  assert.ok(md.includes("A.md"), "funnel row present");
+  assert.ok(md.includes("macro_cal_mismatch"), "reject reason present");
+  assert.ok(md.includes("Aashirvaad Chakki Atta"), "collapse decision present");
+  assert.ok(md.includes("Kanda Poha"), "sample row present");
+  console.log("report: passed");
+}
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -655,6 +672,9 @@ const { buildReport } = require("./report.js");
 const { FOODS } = require("../../src/foods.js");
 
 const INCOMING = path.join(__dirname, "..", "..", "data", "incoming");
+// Held back per review: branded-supplement file uses generic copy-pasted values
+// and overlaps brands already hand-verified in the curated tier.
+const SKIP_FILES = new Set(["Fitness_Commercial_Products_DB.md"]);
 const OUT_REPORT = path.join(__dirname, "review-report.md");
 const OUT_ROWS = path.join(__dirname, "to-load.json");
 
@@ -677,7 +697,7 @@ async function main() {
   const refNames = await existingRefNames();
 
   const funnel = [], allRejects = [], allCollapses = [], allRows = [];
-  const files = fs.readdirSync(INCOMING).filter(f => f.endsWith(".md"));
+  const files = fs.readdirSync(INCOMING).filter(f => f.endsWith(".md") && !SKIP_FILES.has(f));
 
   for (const file of files) {
     const text = fs.readFileSync(path.join(INCOMING, file), "utf8");
