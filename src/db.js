@@ -292,46 +292,106 @@ async function refLookup(name) {
   return data && data[0] ? data[0] : null;
 }
 
+// Edit-distance similarity for typo tolerance. ILIKE substring can't match
+// "provalic"->"provilac" (internal vowel swap) or "yoghurt"->"yogurt"; trigrams
+// score that swap poorly (~0.23). Levenshtein handles it (~0.75).
+function editSim(a, b) {
+  a = String(a || ""); b = String(b || "");
+  const m = a.length, n = b.length;
+  if (!m || !n) return 0;
+  const dp = Array.from({ length: m + 1 }, (_, i) => i);
+  for (let j = 1; j <= n; j++) {
+    let prev = dp[0]; dp[0] = j;
+    for (let i = 1; i <= m; i++) {
+      const tmp = dp[i];
+      dp[i] = Math.min(dp[i] + 1, dp[i - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = tmp;
+    }
+  }
+  return 1 - dp[m] / Math.max(m, n);
+}
+// One query token vs a name's tokens: substring counts full; else best edit-sim.
+// Sub-3-char tokens ("o", "s") are skipped — "coffee".includes("o") would
+// otherwise score a full match against every name with an "o" token.
+function tokenSim(qTok, nameToks) {
+  let best = 0;
+  for (const n of nameToks) {
+    if (n.length < 3) continue;
+    if (n.includes(qTok) || qTok.includes(n)) return 1;
+    const s = editSim(qTok, n);
+    if (s > best) best = s;
+  }
+  return best;
+}
+// Average per-token best similarity — rewards matching more of the query well,
+// so a close brand token isn't drowned out by generic "high protein" words.
+function matchScore(qTokens, name) {
+  const nameToks = contentTokens(name).filter(t => t.length >= 3);
+  const qToks = (qTokens || []).filter(t => t.length >= 3);
+  if (!nameToks.length || !qToks.length) return 0;
+  let sum = 0;
+  for (const q of qToks) sum += tokenSim(q, nameToks);
+  return sum / qToks.length;
+}
+const FUZZY_FLOOR = 0.55; // tuned against real typos ("provalic", "epigamaiya")
+
+// The full reference table cached in memory (~2.6k rows) for the fuzzy pass, so
+// a miss doesn't re-page the table every time. Refreshed lazily every 10m.
+let _refAll = { at: 0, rows: [] };
+async function allRefRows() {
+  if (_refAll.rows.length && Date.now() - _refAll.at < 10 * 60 * 1000) return _refAll.rows;
+  const rows = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase.from("foods_reference").select("*").range(from, from + 999);
+    if (error) { console.error("allRefRows:", error.message); break; }
+    if (!data || !data.length) break;
+    rows.push(...data);
+    if (data.length < 1000) break;
+  }
+  if (rows.length) _refAll = { at: Date.now(), rows };
+  return _refAll.rows;
+}
+
 // High-recall retrieval for the LLM reranker. The strict match_food RPC gates on
 // word_similarity > 0.75, which structurally rejects terse-query-vs-verbose-brand
 // ("epigamia yogurt" never clears the bar against "Epigamia High Protein Greek
-// Yogurt (Mixed Berries)"). Here we cast a wide net instead and let the LLM judge
-// fit. Tier 1: rows containing ALL query tokens (precise). Tier 2 (if empty): rows
-// containing ANY token, ranked by how many match. Table is ~2.6k rows — cheap.
+// Yogurt"). Tier 1: rows containing ALL query tokens (exact substring, fast).
+// Tier 2: fuzzy edit-distance rank over the whole table — handles both terse
+// misses and misspelled brands ("provalic"->"Provilac"), floating the closest
+// brand token above generic "high protein" noise.
 async function refCandidates(name, limit = 15) {
   const tokens = contentTokens(name).slice(0, 6);
   if (!tokens.length) return [];
 
   let andQ = supabase.from("foods_reference").select("*");
   for (const t of tokens) andQ = andQ.ilike("food_name", `%${t}%`);
-  let { data, error } = await andQ.limit(limit);
+  const { data, error } = await andQ.limit(limit);
   if (error) { console.error("refCandidates(and):", error.message); return []; }
+  if (data && data.length) return data;
 
-  if (!data || !data.length) {
-    const orFilter = tokens.map(t => `food_name.ilike.%${t}%`).join(",");
-    ({ data, error } = await supabase.from("foods_reference").select("*").or(orFilter).limit(200));
-    if (error) { console.error("refCandidates(or):", error.message); return []; }
-    data = (data || [])
-      .map(r => ({ r, score: tokens.filter(t => String(r.food_name).toLowerCase().includes(t)).length }))
-      .sort((a, b) => b.score - a.score || String(a.r.food_name).length - String(b.r.food_name).length)
-      .slice(0, limit)
-      .map(x => x.r);
-  }
-  return data || [];
+  const all = await allRefRows();
+  return all
+    .map(r => ({ r, s: matchScore(tokens, r.food_name) }))
+    .filter(x => x.s >= FUZZY_FLOOR)
+    .sort((a, b) => b.s - a.s)
+    .slice(0, limit)
+    .map(x => x.r);
 }
 
 // Tier 2.6: when the strict INDB match fails, retrieve loosely + let the LLM pick
 // the genuine match (or reject all). Returns the chosen reference row or null.
-// Cost guard: only spend the rerank LLM call when at least one candidate contains
-// ALL query tokens (a real brand/product overlap) — a weak coincidental token
-// match isn't worth a call; the estimate fallback handles it.
+// Cost guard: only spend the rerank LLM call when a candidate is a real overlap —
+// either it contains ALL query tokens (exact substring) OR a token is a close
+// trigram match to one of its tokens (typo tolerance: "provalic"~"provilac"). A
+// weak coincidental match isn't worth a call; the estimate fallback handles it.
 async function refRerank(query) {
   const candidates = await refCandidates(query);
   if (!candidates.length) return null;
   const toks = contentTokens(query);
+  if (!toks.length) return null;
   const strong = candidates.some(c => {
     const n = String(c.food_name).toLowerCase();
-    return toks.length && toks.every(t => n.includes(t));
+    return toks.every(t => n.includes(t)) || matchScore(toks, c.food_name) >= FUZZY_FLOOR;
   });
   if (!strong) return null;
   return rerankReference(query, candidates);
