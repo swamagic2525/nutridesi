@@ -47,7 +47,7 @@ async function fetchWithRetry(url, opts) {
 }
 
 // ---- Groq (OpenAI-compatible, free tier) ----
-async function callGroq(userText) {
+async function callGroq(userText, system = SYSTEM_PROMPT) {
   const key = process.env.GROQ_API_KEY;
   const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
   const res = await fetchWithRetry("https://api.groq.com/openai/v1/chat/completions", {
@@ -59,7 +59,7 @@ async function callGroq(userText) {
       max_tokens: 4096, // big meal lists (9+ items) truncate at the default -> invalid JSON
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: system },
         { role: "user", content: userText },
       ],
     }),
@@ -69,7 +69,7 @@ async function callGroq(userText) {
 }
 
 // ---- Gemini (Google AI Studio) ----
-async function callGemini(userText) {
+async function callGemini(userText, system = SYSTEM_PROMPT) {
   const key = process.env.GEMINI_API_KEY;
   const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
@@ -77,7 +77,7 @@ async function callGemini(userText) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      systemInstruction: { parts: [{ text: system }] },
       contents: [{ role: "user", parts: [{ text: userText }] }],
       generationConfig: { temperature: 0, responseMimeType: "application/json", maxOutputTokens: 4096 },
     }),
@@ -87,7 +87,7 @@ async function callGemini(userText) {
 }
 
 // ---- Claude (Anthropic) ----
-async function callClaude(userText) {
+async function callClaude(userText, system = SYSTEM_PROMPT) {
   const Anthropic = require("@anthropic-ai/sdk");
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const model = process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001";
@@ -95,13 +95,27 @@ async function callClaude(userText) {
     model, max_tokens: 4096,
     // Cache the static system prompt (~3-4k tokens). Reused across calls within
     // ~5 min -> cheaper + faster, especially under bursty reel traffic.
-    system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+    system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: userText }],
   });
   return resp.content?.[0]?.text || "{}";
 }
 
 const CALLERS = { groq: callGroq, gemini: callGemini, claude: callClaude };
+
+// Generic single-shot LLM call over the same provider fallback chain, with a
+// caller-supplied system prompt. Returns raw text ("{}" on total failure).
+// Used by the reference reranker (src/rerank.js) — a different, tiny prompt.
+async function askLLM(userText, system) {
+  for (const name of CHAIN) {
+    try {
+      return await CALLERS[name](userText, system);
+    } catch (e) {
+      console.error(`askLLM ${name} failed:`, String(e.message).slice(0, 200));
+    }
+  }
+  return "{}";
+}
 
 // Deterministic pizza normalization. Two ambiguities the LLM resolves
 // inconsistently, both introduced by adding whole-pizza + slice SKUs:
@@ -152,4 +166,4 @@ async function parseMeal(rawMessage, recentLogContext = "") {
   return { items: [], meal_time_inferred: "snack", parse_notes: "llm_error" };
 }
 
-module.exports = { parseMeal, preprocess, pinPizzaSlices, PROVIDER, CHAIN };
+module.exports = { parseMeal, preprocess, pinPizzaSlices, askLLM, PROVIDER, CHAIN };

@@ -4,6 +4,8 @@ const PREFIX = {
   "Fitness_Commercial_Products_DB.md": "AIF",
   "Food_Nutrition_DB.md": "AID",
   "Indian_Liquor_Nutrition_DB.md": "AIL",
+  "Top10_Supplements_And_HighProtein_Foods_Complete_DB.md": "AIS",
+  "Supplement_List_v2.md": "AIP",
 };
 
 function codeFor(sourceFile, index) {

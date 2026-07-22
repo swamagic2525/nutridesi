@@ -433,6 +433,10 @@ const FOODS = [
   { id: 350, name: "Tequila",                    aliases: ["tequila"], unit: "peg", kcal: 64, p: 0, c: 0, f: 0, fb: 0, g: 30 },
   { id: 351, name: "Red Wine",                   aliases: ["red wine","wine","merlot","cabernet","shiraz"], unit: "glass", kcal: 125, p: 0.1, c: 4, f: 0, fb: 0, g: 150 },
   { id: 352, name: "White Wine",                 aliases: ["white wine","chardonnay","sauvignon","champagne","prosecco"], unit: "glass", kcal: 120, p: 0.1, c: 4, f: 0, fb: 0, g: 150 },
+
+  // Generic plant protein powder — pea/soy/rice blends. Without this entry,
+  // bare "plant protein" fell to SuperYou PRO (yeast protein) via fuzzy match.
+  { id: 353, name: "Plant Protein Powder",       aliases: ["plant protein","plant protein powder","vegan protein","vegan protein powder","pea protein","soy protein","plant based protein","plant whey","vegan whey","hemp protein","rice protein"], unit: "scoop", kcal: 120, p: 20, c: 5, f: 2, fb: 2, g: 30 },
 ];
 
 const FOOD_BY_ID = Object.fromEntries(FOODS.map(f => [f.id, f]));

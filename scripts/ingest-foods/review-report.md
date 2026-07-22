@@ -1,6 +1,6 @@
 # Bulk Food Ingestion — Review Report
 
-Generated: 2026-07-21T19:03:34.133Z
+Generated: 2026-07-22T15:34:36.633Z
 
 ## Funnel (per file)
 
@@ -8,14 +8,16 @@ Generated: 2026-07-21T19:03:34.133Z
 |:-----|-------:|-----------:|---------------:|------------:|--------:|
 | Food_Nutrition_DB.md | 20 | 20 | 20 | 0 | 0 |
 | Indian_Household_Nutrition_Database_2500.md | 2500 | 2316 | 904 | 0 | 0 |
-| Indian_Liquor_Nutrition_DB.md | 152 | 152 | 151 | 149 | 149 |
+| Indian_Liquor_Nutrition_DB.md | 152 | 152 | 151 | 2 | 2 |
 | QuickCommerce_Restaurant_Food_DB_1000.md | 1000 | 893 | 892 | 0 | 0 |
+| Supplement_List_v2.md | 157 | 156 | 137 | 1 | 1 |
+| Top10_Supplements_And_HighProtein_Foods_Complete_DB.md | 155 | 154 | 136 | 0 | 0 |
 
-**Total: 3672 parsed → 149 to load.**
+**Total: 3984 parsed → 3 to load.**
 
-## Rejected rows (291)
+## Rejected rows (293)
 
-- **macro_cal_mismatch**: 172
+- **macro_cal_mismatch**: 174
 - **spam_name**: 119
 
 <details><summary>All rejected rows</summary>
@@ -311,9 +313,11 @@ Generated: 2026-07-21T19:03:34.133Z
 - McDonald's McCafe Iced Mocha (Beverages & Desserts) — macro_cal_mismatch
 - Haldiram's Rajma Rice Bowl (Quick Meal Combos) — macro_cal_mismatch
 - Raw Pressery Green Juice Cleanse (Cold Pressed Juices) — macro_cal_mismatch
+- Optimum Nutrition (ON) Gold Standard BCAA Train & Sustain — macro_cal_mismatch
+- Optimum Nutrition (ON) Gold Standard BCAA Train & Sustain — macro_cal_mismatch
 </details>
 
-## Collapse decisions (1414 dropped)
+## Collapse decisions (1451 dropped)
 
 <details><summary>All collapses (dropped → kept)</summary>
 
@@ -1731,109 +1735,49 @@ Generated: 2026-07-21T19:03:34.133Z
 - Rajasthani Royal Style Specialty Curry Gravy - Var 126 → Andhra Spicy Style Specialty Curry Gravy - Var 21
 - Bacardi Breezer Cranberry → Bacardi Breezer Orange
 - Sting Energy Drink Energy Boost → Sprite Lemon-Lime Drink
+- Optimum Nutrition (ON) Gold Standard 100% Isolate - Chocolate Bliss → Dymatize ISO100 Hydrolyzed Whey Isolate - Vanilla
+- Optimum Nutrition (ON) Optimum Nutrition Micronized Creatine Monohydrate → MuscleBlaze Creatine Monohydrate CreAMP
+- As-It-Is Nutrition Creatine Monohydrate Powder → MuscleBlaze Creatine Monohydrate CreAMP
+- Dymatize ISO100 Hydrolyzed Whey Isolate - Gourmet Chocolate → Dymatize ISO100 Hydrolyzed Whey Isolate - Fudge Brownie
+- Amul High Protein Rose Lassi → Amul High Protein Lassi
+- Amul High Protein Buttermilk (Tetra Pack) → Amul High Protein Buttermilk (Chaas)
+- Epigamia Preservative-Free Milkshake (Vanilla 10g Protein) → Amul Kool Protein Milkshake (Vanilla)
+- Epigamia Preservative-Free Milkshake (Chocolate 10g Protein) → Amul Kool Protein Milkshake (Chocolate)
+- MyFitness High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Pintola High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Yoga Bar High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- MuscleBlaze High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- MyFitness High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Pintola High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Disano High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- MuscleBlaze High Protein Peanut Butter (Whey Added) → Alpino High Protein Peanut Butter (Whey Enriched)
+- MyFitness Natural Peanut Butter (Crunchy Unsweetened) → Pintola All Natural Peanut Butter (Smooth)
+- The Whole Truth Natural Peanut Butter Unsweetened → Pintola All Natural Peanut Butter (Smooth)
+- Provilac High Protein Milk - Chocolate → Provilac High Protein Milk - Vanilla
+- Optimum Nutrition (ON) Gold Standard 100% Isolate - Chocolate Bliss → Dymatize ISO100 Hydrolyzed Whey Isolate - Vanilla
+- Optimum Nutrition (ON) Optimum Nutrition Micronized Creatine Monohydrate → MuscleBlaze Creatine Monohydrate CreAMP
+- As-It-Is Nutrition Creatine Monohydrate Powder → MuscleBlaze Creatine Monohydrate CreAMP
+- Dymatize ISO100 Hydrolyzed Whey Isolate - Gourmet Chocolate → Dymatize ISO100 Hydrolyzed Whey Isolate - Fudge Brownie
+- Amul High Protein Rose Lassi → Amul High Protein Lassi
+- Amul High Protein Buttermilk (Tetra Pack) → Amul High Protein Buttermilk (Chaas)
+- Epigamia Preservative-Free Milkshake (Vanilla 10g Protein) → Amul Kool Protein Milkshake (Vanilla)
+- Epigamia Preservative-Free Milkshake (Chocolate 10g Protein) → Amul Kool Protein Milkshake (Chocolate)
+- MyFitness High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Pintola High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Yoga Bar High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- MuscleBlaze High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- MyFitness High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Pintola High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Disano High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- MuscleBlaze High Protein Peanut Butter (Whey Added) → Alpino High Protein Peanut Butter (Whey Enriched)
+- MyFitness Natural Peanut Butter (Crunchy Unsweetened) → Pintola All Natural Peanut Butter (Smooth)
+- The Whole Truth Natural Peanut Butter Unsweetened → Pintola All Natural Peanut Butter (Smooth)
 </details>
 
-## Sample of rows to load (100)
+## Sample of rows to load (3)
 
 | Food | Unit | kcal | Protein | kcal/100g |
 |:-----|:-----|-----:|--------:|----------:|
 | Kingfisher Premium Lager | serving | 142 | 1.6 | 43.03 |
 | Kingfisher Ultra | serving | 138 | 1.5 | 41.82 |
-| Kingfisher Ultra Max | serving | 188 | 1.8 | 56.97 |
-| Bira 91 White Ale | serving | 155 | 1.8 | 46.97 |
-| Bira 91 Blonde Lager | serving | 145 | 1.5 | 43.94 |
-| Bira 91 Strong | serving | 205 | 2 | 62.12 |
-| Bira 91 Light | serving | 90 | 1 | 27.27 |
-| Carlsberg Elephant Strong | serving | 210 | 2.1 | 63.64 |
-| Carlsberg Smooth | serving | 140 | 1.5 | 42.42 |
-| Tuborg Green | serving | 135 | 1.4 | 40.91 |
-| Budweiser Premium | serving | 145 | 1.6 | 43.94 |
-| Budweiser Magnum Strong | serving | 200 | 2 | 60.61 |
-| Heineken Lager | serving | 139 | 1.5 | 42.12 |
-| Heineken Silver | serving | 115 | 1.2 | 34.85 |
-| Corona Extra | serving | 148 | 1.1 | 41.69 |
-| Hoegaarden Witbier | serving | 149 | 1.6 | 45.15 |
-| Haywards 5000 Strong | serving | 215 | 2 | 65.15 |
-| Knock Out Strong Beer | serving | 220 | 2.1 | 66.67 |
-| Godfather Legend Strong | serving | 210 | 2 | 63.64 |
-| Kalyani Black Label Strong | serving | 205 | 1.9 | 62.12 |
-| Kingfisher Premium Lager (Can) | serving | 215 | 2.4 | 43 |
-| Kingfisher Strong (Can) | serving | 295 | 2.7 | 59 |
-| Bira 91 White Ale (Can) | serving | 235 | 2.7 | 47 |
-| Royal Stag | serving | 71 | 0 | 236.67 |
-| Blenders Pride | serving | 71 | 0 | 236.67 |
-| Imperial Blue | serving | 71 | 0 | 236.67 |
-| Officer's Choice | serving | 71 | 0 | 236.67 |
-| McDowell's No. 1 | serving | 71 | 0 | 236.67 |
-| Signature | serving | 71 | 0 | 236.67 |
-| Antiquity Blue | serving | 71 | 0 | 236.67 |
-| Black Dog | serving | 71 | 0 | 236.67 |
-| 100 Pipers | serving | 71 | 0 | 236.67 |
-| Vat 69 | serving | 71 | 0 | 236.67 |
-| Teachers Highland Cream | serving | 71 | 0 | 236.67 |
-| Teachers 50 | serving | 71 | 0 | 236.67 |
-| Amrut Indian Single Malt | serving | 71 | 0 | 236.67 |
-| Paul John Brilliance | serving | 71 | 0 | 236.67 |
-| Indri Trini | serving | 71 | 0 | 236.67 |
-| Royal Challenge | serving | 71 | 0 | 236.67 |
-| Rockford Reserve | serving | 71 | 0 | 236.67 |
-| Chivas Regal 12 YO | serving | 71 | 0 | 236.67 |
-| Johnnie Walker Red Label | serving | 71 | 0 | 236.67 |
-| Johnnie Walker Black Label | serving | 71 | 0 | 236.67 |
-| Johnnie Walker Double Black | serving | 71 | 0 | 236.67 |
-| Jack Daniel's Old No. 7 | serving | 71 | 0 | 236.67 |
-| Jim Beam White Label | serving | 71 | 0 | 236.67 |
-| Jameson Irish Whiskey | serving | 71 | 0 | 236.67 |
-| Glenfiddich 12 YO | serving | 71 | 0 | 236.67 |
-| The Glenlivet 12 YO | serving | 71 | 0 | 236.67 |
-| Macallan 12 YO | serving | 71 | 0 | 236.67 |
-| Monkey Shoulder | serving | 71 | 0 | 236.67 |
-| Woodford Reserve | serving | 71 | 0 | 236.67 |
-| Maker's Mark | serving | 71 | 0 | 236.67 |
-| Talisker 10 YO | serving | 71 | 0 | 236.67 |
-| Laphroaig 10 YO | serving | 71 | 0 | 236.67 |
-| Eighty Eight | serving | 71 | 0 | 236.67 |
-| Oaksmith Gold | serving | 71 | 0 | 236.67 |
-| Blenders Pride Reserve Collection | serving | 71 | 0 | 236.67 |
-| Old Monk Classic | serving | 71 | 0 | 236.67 |
-| Old Monk Supreme | serving | 71 | 0 | 236.67 |
-| Old Monk Legend | serving | 71 | 0 | 236.67 |
-| Old Monk White | serving | 71 | 0 | 236.67 |
-| McDowell's No. 1 Celebration | serving | 71 | 0 | 236.67 |
-| Bacardi Carta Blanca (White) | serving | 71 | 0 | 236.67 |
-| Bacardi Carta Negra (Dark) | serving | 71 | 0 | 236.67 |
-| Bacardi Oro (Gold) | serving | 71 | 0 | 236.67 |
-| Captain Morgan Dark | serving | 71 | 0 | 236.67 |
-| Hercules XXX | serving | 71 | 0 | 236.67 |
-| Contessa XXX | serving | 71 | 0 | 236.67 |
-| Old Port Deluxe | serving | 71 | 0 | 236.67 |
-| Amrut Two Indies | serving | 71 | 0 | 236.67 |
-| Maka Zai White | serving | 71 | 0 | 236.67 |
-| Maka Zai Gold | serving | 71 | 0 | 236.67 |
-| Camikara | serving | 71 | 0 | 236.67 |
-| Blue Riband | serving | 71 | 0 | 236.67 |
-| Greater Than | serving | 71 | 0 | 236.67 |
-| Stranger & Sons | serving | 71 | 0 | 236.67 |
-| Bombay Sapphire | serving | 71 | 0 | 236.67 |
-| Gordon's London Dry | serving | 71 | 0 | 236.67 |
-| Tanqueray | serving | 71 | 0 | 236.67 |
-| Hapusa | serving | 71 | 0 | 236.67 |
-| Jaisalmer | serving | 71 | 0 | 236.67 |
-| Beefeater | serving | 71 | 0 | 236.67 |
-| Hendrick's | serving | 71 | 0 | 236.67 |
-| Roku | serving | 71 | 0 | 236.67 |
-| Terai | serving | 71 | 0 | 236.67 |
-| Pumori | serving | 71 | 0 | 236.67 |
-| Samsara | serving | 71 | 0 | 236.67 |
-| Sipsmith | serving | 71 | 0 | 236.67 |
-| Bacardi Limon | serving | 76 | 0 | 253.33 |
-| Captain Morgan Spiced Gold | serving | 76 | 0 | 253.33 |
-| Magic Moments Plain | serving | 69 | 0 | 230 |
-| Magic Moments Lemon | serving | 69 | 0 | 230 |
-| Smirnoff Red (No. 21) | serving | 69 | 0 | 230 |
-| Smirnoff Espresso | serving | 69 | 0 | 230 |
-| Absolut Plain | serving | 69 | 0 | 230 |
-| Absolut Mandrin | serving | 69 | 0 | 230 |
-| White Mischief Plain | serving | 69 | 0 | 230 |
-| Romanov Plain | serving | 69 | 0 | 230 |
-| Grey Goose | serving | 69 | 0 | 230 |
+| Provilac High Protein Milk - Vanilla | serving | 140 | 18 | 70 |

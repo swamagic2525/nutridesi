@@ -5,6 +5,7 @@ const { matchRows } = require("./correctionContext.js");
 const { guardItems } = require("./proteinGuard.js");
 const { contextGuard, contentTokens } = require("./contextGuard.js");
 const { logGapEvent } = require("./gapLogger.js");
+const { rerankReference, rerankTarget } = require("./rerank.js");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -291,6 +292,51 @@ async function refLookup(name) {
   return data && data[0] ? data[0] : null;
 }
 
+// High-recall retrieval for the LLM reranker. The strict match_food RPC gates on
+// word_similarity > 0.75, which structurally rejects terse-query-vs-verbose-brand
+// ("epigamia yogurt" never clears the bar against "Epigamia High Protein Greek
+// Yogurt (Mixed Berries)"). Here we cast a wide net instead and let the LLM judge
+// fit. Tier 1: rows containing ALL query tokens (precise). Tier 2 (if empty): rows
+// containing ANY token, ranked by how many match. Table is ~2.6k rows — cheap.
+async function refCandidates(name, limit = 15) {
+  const tokens = contentTokens(name).slice(0, 6);
+  if (!tokens.length) return [];
+
+  let andQ = supabase.from("foods_reference").select("*");
+  for (const t of tokens) andQ = andQ.ilike("food_name", `%${t}%`);
+  let { data, error } = await andQ.limit(limit);
+  if (error) { console.error("refCandidates(and):", error.message); return []; }
+
+  if (!data || !data.length) {
+    const orFilter = tokens.map(t => `food_name.ilike.%${t}%`).join(",");
+    ({ data, error } = await supabase.from("foods_reference").select("*").or(orFilter).limit(200));
+    if (error) { console.error("refCandidates(or):", error.message); return []; }
+    data = (data || [])
+      .map(r => ({ r, score: tokens.filter(t => String(r.food_name).toLowerCase().includes(t)).length }))
+      .sort((a, b) => b.score - a.score || String(a.r.food_name).length - String(b.r.food_name).length)
+      .slice(0, limit)
+      .map(x => x.r);
+  }
+  return data || [];
+}
+
+// Tier 2.6: when the strict INDB match fails, retrieve loosely + let the LLM pick
+// the genuine match (or reject all). Returns the chosen reference row or null.
+// Cost guard: only spend the rerank LLM call when at least one candidate contains
+// ALL query tokens (a real brand/product overlap) — a weak coincidental token
+// match isn't worth a call; the estimate fallback handles it.
+async function refRerank(query) {
+  const candidates = await refCandidates(query);
+  if (!candidates.length) return null;
+  const toks = contentTokens(query);
+  const strong = candidates.some(c => {
+    const n = String(c.food_name).toLowerCase();
+    return toks.length && toks.every(t => n.includes(t));
+  });
+  if (!strong) return null;
+  return rerankReference(query, candidates);
+}
+
 // Some INDB serving values are whole-recipe yields, not one portion — trust the
 // serving numbers only in a plausible range, else derive from per-100g (~150g serving).
 function applyReference(row, ref, opts = {}) {
@@ -359,8 +405,21 @@ async function resolveRows(parsed, opts = {}) {
   await Promise.all(rows
     .filter(r => !r.matched_db_id && !r.stated && r.food_name && r.food_name !== "meal")
     .map(async r => {
+      const query = r.userSaid || r.food_name;
       const ref = await refLookup(r.food_name);
-      if (ref && acceptableRef(r.userSaid || r.food_name, ref.food_name)) applyReference(r, ref);
+      // applyReference can silently reject (its own >2x estimate-disagreement
+      // guard). Only stop here if it ACTUALLY applied (refVerified) — otherwise
+      // fall through to the rerank, which is LLM-verified and bypasses that guard.
+      if (ref && acceptableRef(query, ref.food_name)) {
+        applyReference(r, ref);
+        if (r.refVerified) return;
+      }
+      // Strict INDB missed (or was rejected). Retrieve loosely and let the LLM
+      // pick the genuine match — this resolves terse-query-vs-verbose-brand
+      // ("epigamia yogurt" -> "Epigamia Greek Yogurt (Plain)"). The rerank IS the
+      // verification, so apply as trusted (skips the estimate-disagreement guard).
+      const picked = await refRerank(query);
+      if (picked) { applyReference(r, picked, { trusted: true }); r.rerankMatched = true; }
     }));
   // Suspect arbitration: a still-matched compound/coverage suspect asks INDB for
   // the full phrase. Only positive evidence - every content word present in the
@@ -536,6 +595,21 @@ async function deleteMatchingLastLog(phone, foodHints, batch = null, rawMessage 
   // correction that was not pre-classified still looks up the latest batch.
   const latest = batch && batch.length ? batch : await lastLogBatch(phone);
   const matched = matchRows(latest, foodHints, rawMessage);
+  // Deterministic word-overlap can't place a hint whose logged name shares no
+  // words ("the whey" vs a row named "SuperYou PRO"). Before giving up, let the
+  // LLM pick the target by meaning — over rows not already claimed. Preserves
+  // atomicity: a still-unresolved hint below still aborts the whole correction.
+  const hints = (foodHints || []);
+  for (let i = 0; i < matched.length; i++) {
+    if (matched[i]) continue;
+    const claimed = new Set(matched.filter(Boolean).map(r => r.id));
+    const pool = latest.filter(r => !claimed.has(r.id));
+    if (!pool.length) break;
+    const h = hints[i];
+    const query = (h && typeof h === "object" ? h.food_name : h) || rawMessage;
+    const picked = await rerankTarget(query, pool);
+    if (picked) matched[i] = picked;
+  }
   // Multi-item corrections are atomic: if one stated item cannot be found in
   // the most recent batch, leave everything untouched rather than half-editing
   // a meal and creating a worse trust failure.
@@ -662,4 +736,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { supabase, acceptableRef, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };
+module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };

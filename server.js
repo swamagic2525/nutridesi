@@ -243,11 +243,13 @@ function assumptionLines(rows) {
     // A DB match whose name already covers what the user said needs no confession.
     && !(r.matched_db_id && r.food_name.toLowerCase().includes(String(r.userSaid).toLowerCase())));
   const lines = guesses.slice(0, 2).map(r =>
-    r.matched_db_id
-      ? `\u{1F914} _"${r.userSaid}" — logged the closest match, *${r.food_name}*. Something else? Just reply "it was …"_`
-      : r.refVerified
-        ? `\u{1F52C} _"${r.userSaid}" isn't in my quick list — logged *${r.food_name}* from a lab-verified recipe database. Something else? Just reply "it was …"_`
-        : `\u{1F914} _"${r.userSaid}" isn't in my book yet — logged my best estimate. Know the calories? Reply "it was 200 calories"_`);
+    r.rerankMatched
+      ? `\u{1F50E} _"${r.userSaid}" — matched *${r.food_name}*. Not it? Just reply "it was …"_`
+      : r.matched_db_id
+        ? `\u{1F914} _"${r.userSaid}" — logged the closest match, *${r.food_name}*. Something else? Just reply "it was …"_`
+        : r.refVerified
+          ? `\u{1F52C} _"${r.userSaid}" isn't in my quick list — logged *${r.food_name}* from a lab-verified recipe database. Something else? Just reply "it was …"_`
+          : `\u{1F914} _"${r.userSaid}" isn't in my book yet — logged my best estimate. Know the calories? Reply "it was 200 calories"_`);
   if (guesses.length > 2) lines.push(`_…and ${guesses.length - 2} more guesses in the list below_`);
   return lines;
 }
@@ -396,10 +398,8 @@ async function handleMessage(from, body, opts = {}) {
   if (/^(log it|log|ate it|had it|yes log it)$/i.test(trimmed) &&
       pending && Date.now() - pending.at < PENDING_TTL_MS) {
     pendingQuery.delete(from);
-    const { rows, meals, totals, isNewUser } = await logMeal(from, pending.parsed);
-    const cur = meals[meals.length - 1];
+    const { rows, totals, isNewUser } = await logMeal(from, pending.parsed);
     return `✅ Logged\n${fmtItems(rows).join("\n")}\n\n` +
-      `Meal ${meals.length} — ${cur.kcal} kcal · ${cur.protein}g protein\n` +
       `${dayLine(totals, profile)}\n${cfLine(totals)}` +
       (isNewUser ? FIRST_LOG_FOOTER : "");
   }
@@ -443,9 +443,8 @@ async function handleMessage(from, body, opts = {}) {
           ? "No logs from yesterday. Today's a fresh page \u{1F642}"
           : "Nothing logged yet today. Send me what you ate and I'll start the report \u{1F642}";
       }
-      const mealBlocks = rep.meals.map((m, i) =>
-        `*Meal ${i + 1}* — ${Math.round(m.kcal)} kcal · ${Math.round(m.protein)}g protein\n${m.items.join(", ")}`);
-      return `\u{1F9FE} *Your day — ${rep.label}*\n\n${mealBlocks.join("\n\n")}\n\n` +
+      const items = rep.meals.flatMap(m => m.items);
+      return `\u{1F9FE} *Your day — ${rep.label}*\n\n${items.join("\n")}\n\n` +
         `\u{1F525} *${Math.round(rep.totals.kcal)} kcal · ${Math.round(rep.totals.protein)}g protein*\n${cfLine(rep.totals)}`;
     }
     if ((parsed.items || []).length > 0) {
@@ -478,9 +477,7 @@ async function handleMessage(from, body, opts = {}) {
     if (total.meals.length === 0) {
       return "Nothing logged yet today. Send me what you ate and I'll start counting \u{1F642}";
     }
-    const mealLine = total.meals.map((m, i) => `Meal ${i + 1}: ${Math.round(m.kcal)}`).join(" · ");
-    return `\u{1F4CA} Today so far:\n${mealLine} kcal\n` +
-      `${dayLine(total, profile)}\n${cfLine(total)}`;
+    return `\u{1F4CA} Today so far:\n${dayLine(total, profile)}\n${cfLine(total)}`;
   }
 
   // --- undo ---
@@ -513,11 +510,7 @@ async function handleMessage(from, body, opts = {}) {
     logCorrectionEvent({ intent: "undo", rawMessage: body, parsed, batch: recentBatch, deleted, outcome: "removed" });
     const total = await todayTotal(from);
     const removedLines = deleted.map(r => `${r.food_name} — ${r.kcal} kcal`).join("\n");
-    const mealLine = total.meals.length
-      ? total.meals.map((m, i) => `Meal ${i + 1}: ${Math.round(m.kcal)}`).join(" · ") + " kcal\n"
-      : "";
-    return `↩️ Removed:\n${removedLines}\n\n${mealLine}` +
-      `${dayLine(total, profile)}`;
+    return `↩️ Removed:\n${removedLines}\n\n${dayLine(total, profile)}`;
   }
 
   // --- replace_last ---
@@ -590,7 +583,7 @@ async function handleMessage(from, body, opts = {}) {
       parsed.items[0].quantity = Number(deleted[0].quantity);
     }
     logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed, batch: latest, deleted, outcome: "corrected" });
-    const { rows, meals, totals } = await logMeal(from, parsed);
+    const { rows, totals } = await logMeal(from, parsed);
     const removedLines = (deleted || []).map(r => `❌ ${r.food_name} — ${r.kcal} kcal`).join("\n");
     const addedLines = fmtItems(rows).map(l => `✅ ${l}`);
     return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
@@ -606,8 +599,7 @@ async function handleMessage(from, body, opts = {}) {
   }
 
   const result = await logMeal(from, parsed);
-  const { rows, meals, totals } = result;
-  const cur = meals[meals.length - 1];
+  const { rows, totals } = result;
   const ass = assumptionLines(rows);
   let goalAsk = "";
   if (!profile.hasGoal) {
@@ -620,7 +612,6 @@ async function handleMessage(from, body, opts = {}) {
   }
   return `✅ Logged\n${fmtItems(rows).join("\n")}\n\n` +
     (ass.length ? `${ass.join("\n")}\n\n` : "") +
-    `Meal ${meals.length} — ${cur.kcal} kcal · ${cur.protein}g protein\n` +
     `${dayLine(totals, profile)}\n${cfLine(totals)}` +
     (result.isNewUser ? FIRST_LOG_FOOTER : "") + goalAsk;
 }
