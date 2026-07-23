@@ -146,12 +146,15 @@ function pinPizzaSlices(rawMessage, parsed) {
   return parsed;
 }
 
+function buildContextualMessage(cleaned, trustedContext) {
+  const context = String(trustedContext || "").trim();
+  return context ? `${context}\n\nCURRENT USER MESSAGE:\n${cleaned}` : cleaned;
+}
+
 async function parseMeal(rawMessage, recentLogContext = "") {
   const cleaned = preprocess(rawMessage);
   if (!cleaned) return { items: [], meal_time_inferred: "snack", parse_notes: "empty" };
-  const contextualMessage = recentLogContext
-    ? `${recentLogContext}\n\nCURRENT USER MESSAGE:\n${cleaned}`
-    : cleaned;
+  const contextualMessage = buildContextualMessage(cleaned, recentLogContext);
 
   for (const name of CHAIN) {
     try {
@@ -166,4 +169,4 @@ async function parseMeal(rawMessage, recentLogContext = "") {
   return { items: [], meal_time_inferred: "snack", parse_notes: "llm_error" };
 }
 
-module.exports = { parseMeal, preprocess, pinPizzaSlices, askLLM, PROVIDER, CHAIN };
+module.exports = { parseMeal, preprocess, pinPizzaSlices, buildContextualMessage, askLLM, PROVIDER, CHAIN };
