@@ -254,17 +254,17 @@ function exactLogClient(seedRows) {
 
 const queryNow = new Date("2023-11-14T22:13:20.000Z");
 const recentFixture = recentClient({ data: [
-  { id: 2, phone_number: "+919999999999", body: "new", reply: "new reply", media: false, at: "2023-11-14T22:13:19.000Z" },
-  { id: 1, phone_number: "+919999999999", body: "old", reply: "old reply", media: true, at: "2023-11-14T22:13:18.000Z" },
+  { id: 2, phone_number: "+0000000097", body: "new", reply: "new reply", media: false, at: "2023-11-14T22:13:19.000Z" },
+  { id: 1, phone_number: "+0000000097", body: "old", reply: "old reply", media: true, at: "2023-11-14T22:13:18.000Z" },
 ], error: null });
 const dbHelperTests = (async () => {
-  const result = await recentConversation("+919999999999", queryNow, recentFixture.client);
+  const result = await recentConversation("+0000000097", queryNow, recentFixture.client);
   assert.deepStrictEqual(result, [
     { body: "old", reply: "old reply", media: true, at: "2023-11-14T22:13:18.000Z" },
     { body: "new", reply: "new reply", media: false, at: "2023-11-14T22:13:19.000Z" },
   ]);
   assert.deepStrictEqual(recentFixture.calls, [
-    ["from", "message_log"], ["select", "body, reply, media, at"], ["eq", "phone_number", "+919999999999"],
+    ["from", "message_log"], ["select", "body, reply, media, at"], ["eq", "phone_number", "+0000000097"],
     ["gte", "at", "2023-11-14T16:13:20.000Z"], ["lte", "at", "2023-11-14T22:13:20.000Z"],
     ["order", "at", { ascending: false }], ["order", "id", { ascending: false }], ["limit", 10],
   ]);
@@ -277,9 +277,9 @@ const dbHelperTests = (async () => {
       return Promise.resolve({ error: null });
     } };
   } };
-  assert.strictEqual(await saveConversationState("+919999999999", { awaiting: "corrected_meal" }, saveClient), true);
+  assert.strictEqual(await saveConversationState("+0000000097", { awaiting: "corrected_meal" }, saveClient), true);
   assert.deepStrictEqual(writes, [[
-    { phone_number: "+919999999999", conversation_state: { awaiting: "corrected_meal" } },
+    { phone_number: "+0000000097", conversation_state: { awaiting: "corrected_meal" } },
     { onConflict: "phone_number" },
   ]]);
 
@@ -291,15 +291,15 @@ const dbHelperTests = (async () => {
       return Promise.resolve({ data: claimResults.shift(), error: null });
     },
   };
-  assert.strictEqual(await claimConversationState("+919999999999", validNonce, claimClient), true);
-  assert.strictEqual(await claimConversationState("+919999999999", validNonce, claimClient), false);
+  assert.strictEqual(await claimConversationState("+0000000097", validNonce, claimClient), true);
+  assert.strictEqual(await claimConversationState("+0000000097", validNonce, claimClient), false);
   assert.deepStrictEqual(claimCalls, [
-    ["claim_conversation_state", { p_phone: "+919999999999", p_nonce: validNonce }],
-    ["claim_conversation_state", { p_phone: "+919999999999", p_nonce: validNonce }],
+    ["claim_conversation_state", { p_phone: "+0000000097", p_nonce: validNonce }],
+    ["claim_conversation_state", { p_phone: "+0000000097", p_nonce: validNonce }],
   ]);
   let mutationCalls = 0;
   assert.deepStrictEqual(await executeClaimedAction({
-    phone: "+919999999999",
+    phone: "+0000000097",
     nonce: validNonce,
     claim: async () => false,
     action: async () => { mutationCalls++; },
@@ -307,7 +307,7 @@ const dbHelperTests = (async () => {
   assert.strictEqual(mutationCalls, 0);
   const supersedingOrder = [];
   assert.deepStrictEqual(await executeClaimedAction({
-    phone: "+919999999999",
+    phone: "+0000000097",
     nonce: validNonce,
     claim: async () => { supersedingOrder.push("claim"); return true; },
     action: async () => { supersedingOrder.push("log"); return "saved"; },
@@ -317,20 +317,20 @@ const dbHelperTests = (async () => {
     rpc(name, args) {
       assert.strictEqual(name, "clear_conversation_state_if_match");
       assert.deepStrictEqual(args, {
-        p_phone: "+919999999999",
+        p_phone: "+0000000097",
         p_state: { awaiting: "malformed" },
       });
       return Promise.resolve({ data: true, error: null });
     },
   };
   assert.strictEqual(await clearConversationStateIfUnchanged(
-    "+919999999999", { awaiting: "malformed" }, clearClient
+    "+0000000097", { awaiting: "malformed" }, clearClient
   ), true);
 
   const oldRows = [
-    { id: 11, phone_number: "+919999999999", food_name: "Idli", quantity: 1, kcal: 89, date: "2023-11-15" },
-    { id: 12, phone_number: "+919999999999", food_name: "Sambhar", quantity: 1, kcal: 120, date: "2023-11-15" },
-    { id: 99, phone_number: "+919999999999", food_name: "Newer meal", date: "2023-11-15" },
+    { id: 11, phone_number: "+0000000097", food_name: "Idli", quantity: 1, kcal: 89, date: "2023-11-15" },
+    { id: 12, phone_number: "+0000000097", food_name: "Sambhar", quantity: 1, kcal: 120, date: "2023-11-15" },
+    { id: 99, phone_number: "+0000000097", food_name: "Newer meal", date: "2023-11-15" },
   ];
   const oldRowsExchange = {
     reply: "✅ Logged\n1. *Idli* — 89 kcal\n2. *Sambhar* — 120 kcal\n\n*You're at 209 kcal · 7g protein today*",
@@ -349,27 +349,27 @@ const dbHelperTests = (async () => {
   assert.strictEqual(mismatchMutations, 0);
   const exactFixture = exactLogClient(oldRows);
   assert.deepStrictEqual(
-    (await logRowsByExactIds("+919999999999", directTarget.targetLogIds, exactFixture.client)).map(row => row.id),
+    (await logRowsByExactIds("+0000000097", directTarget.targetLogIds, exactFixture.client)).map(row => row.id),
     [11, 12]
   );
   assert.deepStrictEqual(
-    (await deleteLogRowsByExactIds("+919999999999", directTarget.targetLogIds, exactFixture.client)).map(row => row.id),
+    (await deleteLogRowsByExactIds("+0000000097", directTarget.targetLogIds, exactFixture.client)).map(row => row.id),
     [11, 12]
   );
   assert.deepStrictEqual(exactFixture.rows.map(row => row.id), [99]);
 
   const partialFixture = exactLogClient([
-    { id: 11, phone_number: "+919999999999", food_name: "Idli", date: "2023-11-15" },
+    { id: 11, phone_number: "+0000000097", food_name: "Idli", date: "2023-11-15" },
   ]);
   assert.strictEqual(await deleteLogRowsByExactIds(
-    "+919999999999", [11, 12], partialFixture.client
+    "+0000000097", [11, 12], partialFixture.client
   ), null);
   assert.strictEqual(partialFixture.calls.some(call => call[0] === "delete"), false);
   assert.deepStrictEqual(partialFixture.rows.map(row => row.id), [11]);
 
   const savedStates = [];
   const createdState = await persistConversationState({
-    phone: "+919999999999",
+    phone: "+0000000097",
     awaiting: "repeat_meal_choice",
     targetRows: oldRows.slice(0, 2),
     loggedExchange: oldRowsExchange,
@@ -389,7 +389,7 @@ const dbHelperTests = (async () => {
   assert.deepStrictEqual(savedStates, [createdState]);
   let failedPromptWrites = 0;
   assert.strictEqual(await persistConversationState({
-    phone: "+919999999999",
+    phone: "+0000000097",
     awaiting: "corrected_meal",
     targetRows: oldRows.slice(0, 2),
     loggedExchange: oldRowsExchange,
@@ -400,7 +400,7 @@ const dbHelperTests = (async () => {
   assert.strictEqual(failedPromptWrites, 1);
   let mismatchWrites = 0;
   assert.strictEqual(await persistConversationState({
-    phone: "+919999999999",
+    phone: "+0000000097",
     awaiting: "corrected_meal",
     targetRows: oldRows.slice(0, 2),
     loggedExchange: { reply: "✅ Logged\n*Biryani* — 500 kcal\n\n*You're at 500 kcal · 20g protein today*" },
@@ -411,7 +411,7 @@ const dbHelperTests = (async () => {
   assert.strictEqual(mismatchWrites, 0);
   let oversizedWrites = 0;
   assert.strictEqual(await persistConversationState({
-    phone: "+919999999999",
+    phone: "+0000000097",
     awaiting: "corrected_meal",
     targetRows: Array.from({ length: 21 }, (_, index) => ({
       id: index + 1,
@@ -428,11 +428,11 @@ const dbHelperTests = (async () => {
   console.error = () => {};
   try {
     const failedRecent = recentClient({ data: null, error: { message: "query failed" } });
-    assert.deepStrictEqual(await recentConversation("+919999999999", queryNow, failedRecent.client), []);
-    assert.deepStrictEqual(await recentConversation("+919999999999", new Date("invalid"), {
+    assert.deepStrictEqual(await recentConversation("+0000000097", queryNow, failedRecent.client), []);
+    assert.deepStrictEqual(await recentConversation("+0000000097", new Date("invalid"), {
       from() { throw new Error("must not query"); },
     }), []);
-    assert.strictEqual(await saveConversationState("+919999999999", null, { from() {
+    assert.strictEqual(await saveConversationState("+0000000097", null, { from() {
       return { upsert() { return Promise.resolve({ error: { message: "write failed" } }); } };
     } }), false);
   } finally {
@@ -549,7 +549,7 @@ assert.strictEqual(needsRepeatedMealCheck("anything", {
 const exchanges = Array.from({ length: 12 }, (_, index) => ({
   body: `meal ${index} ${"x".repeat(350)}`,
   reply: `reply ${index} ${"y".repeat(550)}`,
-  phone_number: "+919999999999",
+  phone_number: "+0000000097",
   media: index === 11,
   at: futureIso,
 }));
@@ -557,7 +557,7 @@ exchanges[11].body = "";
 const context = formatConversationContext(exchanges);
 assert.match(context, /^BEGIN APP-PROVIDED RECENT CONVERSATION\n/m);
 assert.match(context, /\nEND APP-PROVIDED RECENT CONVERSATION$/);
-assert.doesNotMatch(context, /meal [01] x|9999999999/);
+assert.doesNotMatch(context, /meal [01] x|0000000097/);
 assert.match(context, /"role":"user","text":"\[media without text\]"/);
 assert.match(context, /"role":"assistant","text":"reply 11/);
 assert.ok(context.split("\n").filter(line => line.startsWith("{")).every(line => line.length <= 540));
