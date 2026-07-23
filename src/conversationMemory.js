@@ -128,6 +128,11 @@ function exchangeReply(exchange) {
   return normaliseText(safeGet(exchange, "reply"));
 }
 
+function hasRecentLoggedExchange(exchanges) {
+  return Array.isArray(exchanges)
+    && exchanges.some(exchange => /^✅\s*Logged\b/.test(exchangeReply(exchange)));
+}
+
 function hasMedia(exchange) {
   return safeGet(exchange, "media") === true;
 }
@@ -294,6 +299,7 @@ module.exports = {
   refersToRecentMedia,
   isCorrectionCue,
   correctionCuePayload,
+  hasRecentLoggedExchange,
   isExplicitIndependentMutation,
   repeatedMealCandidate,
   repeatMealCandidateBody,

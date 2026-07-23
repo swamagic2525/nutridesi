@@ -22,6 +22,7 @@ const {
   refersToRecentMedia,
   isCorrectionCue,
   correctionCuePayload,
+  hasRecentLoggedExchange,
   isExplicitIndependentMutation,
   repeatedMealCandidate,
   repeatMealCandidateBody,
@@ -501,14 +502,15 @@ async function handleMessage(from, body, opts = {}) {
 
   const expectedCorrectedMeal = conversationState.awaiting === "corrected_meal";
   const directCorrectionPayload = correctionCuePayload(trimmed);
+  const recentLoggedExchange = hasRecentLoggedExchange(history);
   if (!forcedIntent && !expectedCorrectedMeal && directCorrectionPayload) {
+    if (!recentLoggedExchange) {
+      return "I couldn't find a recent logged meal, so nothing changed. Send the meal again if you'd like to log it.";
+    }
     effectiveBody = directCorrectionPayload;
     forcedIntent = "replace_last";
   }
   if (!forcedIntent && !expectedCorrectedMeal && isCorrectionCue(trimmed)) {
-    const recentLoggedExchange = [...history].reverse().find(exchange =>
-      /^✅\s*Logged\b/.test(String(exchange && exchange.reply || "").trim())
-    );
     if (!recentLoggedExchange) {
       return "I couldn't find a recent logged meal, so nothing changed. Send the meal again if you'd like to log it.";
     }

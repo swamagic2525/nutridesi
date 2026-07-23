@@ -10,6 +10,7 @@ const {
   refersToRecentMedia,
   isCorrectionCue,
   correctionCuePayload,
+  hasRecentLoggedExchange,
   isExplicitIndependentMutation,
   repeatedMealCandidate,
   repeatMealCandidateBody,
@@ -94,6 +95,7 @@ assert.match(serverSource, /formatConversationContext/);
 assert.match(serverSource, /refersToRecentMedia/);
 assert.match(serverSource, /isCorrectionCue/);
 assert.match(serverSource, /correctionCuePayload/);
+assert.match(serverSource, /hasRecentLoggedExchange/);
 assert.match(serverSource, /repeatedMealCandidate/);
 assert.match(serverSource, /repeatMealCandidateBody/);
 assert.match(serverSource, /resolvePendingChoice/);
@@ -140,7 +142,8 @@ assert.match(serverSource, /candidateBody:\s*effectiveBody\.trim\(\)\.slice\(0, 
 assert.match(serverSource, /repeatMealCandidateBody\(conversationState, history\)/);
 assert.match(serverSource, /if \(forcedIntent === "replace_last"\) parsed\.replace_target = null/);
 assert.match(serverSource, /const directCorrectionPayload = correctionCuePayload\(trimmed\);/);
-assert.match(serverSource, /if \(!forcedIntent && !expectedCorrectedMeal && directCorrectionPayload\) \{\s*effectiveBody = directCorrectionPayload;\s*forcedIntent = "replace_last";\s*\}/);
+assert.match(serverSource, /const recentLoggedExchange = hasRecentLoggedExchange\(history\);/);
+assert.match(serverSource, /if \(!recentLoggedExchange\) \{\s*return "I couldn't find a recent logged meal, so nothing changed\. Send the meal again if you'd like to log it\.";\s*\}\s*effectiveBody = directCorrectionPayload;\s*forcedIntent = "replace_last";/);
 assert.match(serverSource, /if \(!forcedIntent && !expectedCorrectedMeal && isCorrectionCue\(trimmed\)\)/);
 assert.match(serverSource, /claimConversationState\(from, conversationState\.nonce\)/);
 assert.match(serverSource, /logRowsByExactIds\(from, conversationState\.targetLogIds\)/);
@@ -538,6 +541,9 @@ assert.strictEqual(correctionCuePayload("from first, poha"), "poha");
 assert.strictEqual(correctionCuePayload("from the first one: 2 idli"), "2 idli");
 assert.strictEqual(correctionCuePayload("I m telling from first"), null);
 assert.strictEqual(correctionCuePayload("actually, it was poha"), null);
+assert.strictEqual(hasRecentLoggedExchange([]), false);
+assert.strictEqual(hasRecentLoggedExchange([{ body: "poha", reply: "Not logged" }]), false);
+assert.strictEqual(hasRecentLoggedExchange([{ body: "poha", reply: "  ✅ Logged\npoha" }]), true);
 assert.strictEqual(isCorrectionCue("i'm telling you from the first one"), true);
 assert.strictEqual(isCorrectionCue("I am saying it was earlier meal"), false);
 assert.strictEqual(isCorrectionCue("actually meant poha"), false);
@@ -636,6 +642,7 @@ assert.doesNotThrow(() => {
   refersToRecentMedia(throwing, [throwing]);
   isCorrectionCue(throwing);
   correctionCuePayload(throwing);
+  hasRecentLoggedExchange([throwing]);
   repeatedMealCandidate(throwing, [throwing]);
   resolvePendingChoice(throwing, throwing, now);
   contextualProteinGoalReply(throwing, throwing);
