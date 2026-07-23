@@ -18,6 +18,7 @@ function emptyState() {
     formula: null,
     heightCm: null,
     weightKg: null,
+    pendingWeightValue: null,
     activity: null,
     invalidAttempts: 0,
     confirmedSignature: null,
@@ -65,7 +66,9 @@ function calculateTdee(input) {
 
 function parseFields(text, state = emptyState()) {
   const s = String(text || "").toLowerCase().replace(/,/g, " ").replace(/\s+/g, " ").trim();
-  const out = { patch: {}, relevant: false, error: null, restricted: null };
+  const out = {
+    patch: {}, relevant: false, error: null, restricted: null, pendingWeightValue: null,
+  };
 
   if (/\b(pregnan(?:t|cy)|breast ?feeding|nursing)\b/.test(s)) {
     out.relevant = true;
@@ -135,11 +138,13 @@ function parseFields(text, state = emptyState()) {
       return out;
     }
     out.patch.weightKg = n;
+    out.pendingWeightValue = null;
   } else if (
     !state.weightKg
     && /\bweight\s*[:=]?\s*-?\d+(?:\.\d+)?\s*$/.test(s)
   ) {
     out.relevant = true;
+    out.pendingWeightValue = Number(s.match(/-?\d+(?:\.\d+)?\s*$/)[0]);
     out.error = "ambiguous_weight";
     return out;
   }
@@ -212,6 +217,11 @@ function normaliseState(raw) {
       && Number(s.weightKg) >= 30 && Number(s.weightKg) <= 350
       ? Number(s.weightKg)
       : null,
+    pendingWeightValue: s.pendingWeightValue == null
+      ? null
+      : Number.isFinite(Number(s.pendingWeightValue))
+        ? Number(s.pendingWeightValue)
+        : null,
     activity: Number.isInteger(s.activity) && s.activity >= 1 && s.activity <= 5
       ? s.activity
       : null,
@@ -390,13 +400,32 @@ function advanceTdee(text, stored = {}, now = new Date()) {
     return completedResult(state, now);
   }
 
-  const parsed = parseFields(text, state);
+  const unitOnly = /^\s*(kg|kgs|kilograms?|lb|lbs|pounds?)\s*$/i.test(text);
+  const parsed = parseFields(
+    unitOnly && state.pendingWeightValue != null
+      ? `${state.pendingWeightValue} ${String(text).trim()}`
+      : text,
+    state
+  );
   if (parsed.restricted) {
     return {
       handled: true,
       clear: false,
       state: emptyState(),
       reply: restrictedReply(parsed.restricted),
+    };
+  }
+  if (parsed.error === "ambiguous_weight") {
+    return {
+      handled: true,
+      clear: false,
+      state: {
+        ...state,
+        ...parsed.patch,
+        pendingWeightValue: parsed.pendingWeightValue,
+        phase: "collecting",
+      },
+      reply: INVALID_REPLIES.ambiguous_weight,
     };
   }
   if (parsed.error) return invalidResult(state, parsed.error);
@@ -413,6 +442,9 @@ function advanceTdee(text, stored = {}, now = new Date()) {
   state = {
     ...state,
     ...parsed.patch,
+    pendingWeightValue: Object.prototype.hasOwnProperty.call(parsed.patch, "weightKg")
+      ? parsed.pendingWeightValue
+      : state.pendingWeightValue,
     phase: "collecting",
     invalidAttempts: 0,
   };

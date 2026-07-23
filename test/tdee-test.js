@@ -89,6 +89,24 @@ assert.match(step.reply, /Fat loss:\* 2,400–2,500 kcal/);
 assert.match(step.reply, /@swapnilgore2525/);
 assert.match(step.reply, /31.*male formula.*175 cm.*80 kg.*activity 3/s);
 
+let unitFollowUp = advanceTdee("calculate my calories for fat loss", {});
+unitFollowUp = advanceTdee("Age 39 female height 155 cm weight 61", unitFollowUp.state);
+assert.strictEqual(unitFollowUp.handled, true);
+assert.strictEqual(unitFollowUp.state.age, 39);
+assert.strictEqual(unitFollowUp.state.formula, "female");
+assert.strictEqual(unitFollowUp.state.heightCm, 155);
+assert.strictEqual(unitFollowUp.state.weightKg, null);
+assert.strictEqual(unitFollowUp.state.pendingWeightValue, 61);
+assert.match(unitFollowUp.reply, /include the unit/i);
+unitFollowUp = advanceTdee("kg", unitFollowUp.state);
+assert.strictEqual(unitFollowUp.handled, true);
+assert.strictEqual(unitFollowUp.state.weightKg, 61);
+assert.strictEqual(unitFollowUp.state.pendingWeightValue, null);
+assert.match(unitFollowUp.reply, /How active/);
+unitFollowUp = advanceTdee("1", unitFollowUp.state);
+assert.strictEqual(unitFollowUp.state.phase, "complete");
+assert.match(unitFollowUp.reply, /Maintenance/);
+
 const oneShot = advanceTdee(
   "calculate my calories, age 31 male 175 cm 80 kg activity 3",
   {}
