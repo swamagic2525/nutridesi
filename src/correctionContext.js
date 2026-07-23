@@ -63,7 +63,7 @@ function formatLastLogContext(batch) {
     }
     return encoded;
   };
-  return [begin, ...batch.map(record), end].join("\n");
+  return [begin, ...batch.slice(0, 20).map(record), end].join("\n");
 }
 
 // Match correction targets inside one already-selected log batch. Curated IDs

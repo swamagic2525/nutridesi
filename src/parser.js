@@ -152,22 +152,34 @@ const LATEST_BEGIN = "BEGIN APP-PROVIDED LATEST LOG";
 const LATEST_END = "END APP-PROVIDED LATEST LOG";
 const CURRENT_BEGIN = "BEGIN CURRENT USER MESSAGE";
 const CURRENT_END = "END CURRENT USER MESSAGE";
+const MAX_CONTEXT_RECORDS = 20;
+const RESERVED_MARKER = /BEGIN CURRENT USER MESSAGE|END CURRENT USER MESSAGE|CURRENT USER MESSAGE:|BEGIN APP-PROVIDED (?:RECENT CONVERSATION|LATEST LOG)|END APP-PROVIDED (?:RECENT CONVERSATION|LATEST LOG)/i;
 
 function recognisedContextBlock(value) {
   if (typeof value !== "string") return "";
   const lines = value.trim().split("\n");
   const isRecent = lines[0] === RECENT_BEGIN && lines.at(-1) === RECENT_END;
   const isLatest = lines[0] === LATEST_BEGIN && lines.at(-1) === LATEST_END;
-  if (!isRecent && !isLatest || lines.length < 3) return "";
+  if ((!isRecent && !isLatest) || lines.length < 3 || lines.length - 2 > MAX_CONTEXT_RECORDS) return "";
   try {
     const records = lines.slice(1, -1).map(line => JSON.parse(line));
     const valid = isRecent
       ? records.every(record => Object.keys(record).sort().join(",") === "role,text"
-          && ["user", "assistant"].includes(record.role) && typeof record.text === "string")
+          && ["user", "assistant"].includes(record.role) && typeof record.text === "string"
+          && !RESERVED_MARKER.test(record.role) && !RESERVED_MARKER.test(record.text))
       : records.every(record => Object.keys(record).sort().join(",") === "food_name,is_estimate,kcal,protein,quantity,role"
           && record.role === "latest_log_item" && typeof record.food_name === "string"
-          && [record.quantity, record.kcal, record.protein].every(Number.isFinite) && typeof record.is_estimate === "boolean");
-    return valid ? value.trim() : "";
+          && [record.quantity, record.kcal, record.protein].every(Number.isFinite) && typeof record.is_estimate === "boolean"
+          && !RESERVED_MARKER.test(record.role) && !RESERVED_MARKER.test(record.food_name));
+    if (!valid) return "";
+    const canonicalRecords = isRecent
+      ? records.map(record => JSON.stringify({ role: record.role, text: record.text }))
+      : records.map(record => JSON.stringify({
+        role: record.role, food_name: record.food_name, quantity: record.quantity,
+        kcal: record.kcal, protein: record.protein, is_estimate: record.is_estimate,
+      }));
+    if (canonicalRecords.some(record => record.length > 540)) return "";
+    return { type: isRecent ? "recent" : "latest", text: [isRecent ? RECENT_BEGIN : LATEST_BEGIN, ...canonicalRecords, isRecent ? RECENT_END : LATEST_END].join("\n") };
   } catch (_) { return ""; }
 }
 
@@ -189,7 +201,9 @@ function currentRecord(value) {
 
 function buildContextualMessage(cleaned, trustedContext) {
   const candidates = Array.isArray(trustedContext) ? trustedContext : [trustedContext];
-  const blocks = candidates.map(recognisedContextBlock).filter(Boolean);
+  const parsedBlocks = candidates.map(recognisedContextBlock).filter(Boolean);
+  const counts = parsedBlocks.reduce((all, block) => ({ ...all, [block.type]: (all[block.type] || 0) + 1 }), {});
+  const blocks = parsedBlocks.filter(block => counts[block.type] === 1).map(block => block.text);
   return [...blocks, CURRENT_BEGIN, currentRecord(cleaned), CURRENT_END].join("\n");
 }
 
