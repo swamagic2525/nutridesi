@@ -72,6 +72,7 @@ function needsConversationContext(text, state, now = Date.now()) {
   if (/^(?:g|grams?|kg|kgs|kilograms?|lb|lbs|pounds?)$/i.test(value)
     || /^(?:\d+(?:\.\d+)?|half|quarter|one|two|three)\s*(?:g|kg|ml|cup|bowl|katori|plate|piece|pieces|serving)s?$/i.test(value)) return true;
   if (/\b(?:rate|review|analyse|analyze|check)\s+(?:this|it|food)\b/.test(value)) return true;
+  if (mealTokens(value).length >= 3) return true;
   return words(value).length >= 2
     && /\b(?:morning|breakfast|brkfst|lunch|dinner|snack)\b/.test(value);
 }
@@ -154,6 +155,14 @@ function repeatedMealCandidate(text, exchanges) {
     && longer / shorter <= 1.5;
 }
 
+function repeatMealCandidateBody(exchanges) {
+  const entries = Array.isArray(exchanges) ? exchanges : [];
+  const candidate = [...entries].reverse().find(entry =>
+    /\breply\s+\*?["']?correction["']?\*?\s+or\s+\*?["']?new meal["']?\*?[.!]?$/i.test(exchangeReply(entry))
+  );
+  return candidate ? exchangeText(candidate) || null : null;
+}
+
 function resolvePendingChoice(text, state, now = Date.now()) {
   const active = normaliseConversationState(state, now);
   if (active.awaiting !== "repeat_meal_choice") return null;
@@ -187,6 +196,7 @@ module.exports = {
   refersToRecentMedia,
   isCorrectionCue,
   repeatedMealCandidate,
+  repeatMealCandidateBody,
   resolvePendingChoice,
   contextualProteinGoalReply,
 };

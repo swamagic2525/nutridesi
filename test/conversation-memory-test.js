@@ -9,6 +9,7 @@ const {
   refersToRecentMedia,
   isCorrectionCue,
   repeatedMealCandidate,
+  repeatMealCandidateBody,
   resolvePendingChoice,
   contextualProteinGoalReply,
 } = require("../src/conversationMemory.js");
@@ -37,6 +38,7 @@ const dbSource = fs.readFileSync(require.resolve("../src/db.js"), "utf8");
 const schemaSource = fs.readFileSync(require.resolve("../supabase-schema.sql"), "utf8");
 const migrationSource = fs.readFileSync(require.resolve("../conversation-state.sql"), "utf8");
 const messageLogSource = fs.readFileSync(require.resolve("../message-log.sql"), "utf8");
+const serverSource = fs.readFileSync(require.resolve("../server.js"), "utf8");
 assert.match(dbSource, /async function recentConversation\(phone/);
 assert.match(dbSource, /\.eq\("phone_number", phone\)/);
 assert.match(dbSource, /\.limit\(MAX_EXCHANGES\)/);
@@ -55,6 +57,53 @@ assert.match(dbSource, /\.select\(profileFields\)/);
 assert.match(dbSource, /isMissingConversationStateColumn\(error\)/);
 assert.match(dbSource, /\/conversation_state\/i\.test\(message\)/);
 assert.match(dbSource, /error\.code === "42703"/);
+
+assert.match(serverSource, /normaliseConversationState/);
+assert.match(serverSource, /needsConversationContext/);
+assert.match(serverSource, /formatConversationContext/);
+assert.match(serverSource, /refersToRecentMedia/);
+assert.match(serverSource, /isCorrectionCue/);
+assert.match(serverSource, /repeatedMealCandidate/);
+assert.match(serverSource, /repeatMealCandidateBody/);
+assert.match(serverSource, /resolvePendingChoice/);
+assert.match(serverSource, /contextualProteinGoalReply/);
+assert.match(serverSource, /WINDOW_MS/);
+assert.match(serverSource, /recentConversation/);
+assert.match(serverSource, /saveConversationState/);
+assert.match(serverSource, /require\("\.\/src\/conversationMemory\.js"\)/);
+assert.match(serverSource, /const \{[^;]*saveConversationState[^;]*recentConversation[^;]*\} = require\("\.\/src\/db\.js"\);/);
+assert.match(serverSource, /const modifierFollowUp = [^;]+;\s*const correctionCandidate[\s\S]*const recentBatch = correctionCandidate \|\| modifierFollowUp \? await lastLogBatch\(from\) : \[\];/);
+assert.match(serverSource, /recordExchange\(from, body, reply, hasMedia\)/);
+
+const indexOfSource = (fragment, message) => {
+  const index = serverSource.indexOf(fragment);
+  assert.notStrictEqual(index, -1, message || `Missing server source fragment: ${fragment}`);
+  return index;
+};
+const tdeeClearIndex = indexOfSource("if (tdee.clear)");
+const stateIndex = indexOfSource("normaliseConversationState(profile.conversation_state, now)");
+const proteinIndex = indexOfSource("contextualProteinGoalReply(trimmed, profile)");
+const needsHistoryIndex = indexOfSource("needsConversationContext(trimmed, conversationState, now)");
+const historyIndex = indexOfSource("recentConversation(from, new Date(now))");
+const mediaIndex = indexOfSource("refersToRecentMedia(trimmed, history)");
+const pendingIndex = indexOfSource("resolvePendingChoice(trimmed, conversationState, now)");
+const cueIndex = indexOfSource("isCorrectionCue(trimmed)");
+const repeatIndex = indexOfSource("repeatedMealCandidate(effectiveBody, history)");
+const contextIndex = indexOfSource("formatConversationContext(history)");
+const parseIndex = indexOfSource("parseMeal(effectiveBody, contextBlocks)");
+assert.ok(tdeeClearIndex < stateIndex, "conversation state must normalize after the TDEE block");
+assert.ok(stateIndex < proteinIndex && proteinIndex < parseIndex, "contextual protein reply must route before generic parsing");
+assert.ok(needsHistoryIndex < historyIndex && historyIndex < parseIndex, "history must be gated and loaded before generic parsing");
+assert.ok(historyIndex < mediaIndex && mediaIndex < parseIndex, "recent-media routing must happen before generic parsing");
+assert.ok(pendingIndex < cueIndex, "pending repeat choice must resolve before generic correction cues");
+assert.ok(cueIndex < repeatIndex && repeatIndex < parseIndex, "correction and repeat routing must happen before generic parsing");
+assert.ok(contextIndex < parseIndex, "recognized conversation context must be built before parsing");
+assert.match(serverSource, /const contextBlocks = \[\s*formatConversationContext\(history\),\s*formatLastLogContext\(recentBatch\),?\s*\]/);
+assert.match(serverSource, /const needsHistory = needsConversationContext\(trimmed, conversationState, now\);\s*const history = needsHistory\s*\?\s*await recentConversation\(from, new Date\(now\)\)\s*:\s*\[\];/);
+assert.match(serverSource, /forcedIntent === "replace_last"\s*\|\|\s*expectedCorrectedMeal\s*\|\|\s*looksLikeCorrection\(effectiveBody\)/);
+assert.match(serverSource, /parsed\.intent === "log"\s*&&\s*\(parsed\.items \|\| \[\]\)\.length/);
+assert.match(serverSource, /parsed\.intent = forcedIntent/);
+assert.match(serverSource, /expiresAt:\s*new Date\(now \+ WINDOW_MS\)\.toISOString\(\)/);
 
 process.env.SUPABASE_URL ||= "https://example.supabase.co";
 process.env.SUPABASE_SERVICE_KEY ||= "test-key";
@@ -159,6 +208,7 @@ assert.strictEqual(needsConversationContext("breakfast was poha", {}, now), true
 assert.strictEqual(needsConversationContext("breakfast", {}, now), false);
 assert.strictEqual(needsConversationContext("2 eggs", {}, now), false);
 assert.strictEqual(needsConversationContext("one banana", {}, now), false);
+assert.strictEqual(needsConversationContext("idli sambhar coconut chutney", {}, now), true);
 assert.strictEqual(needsConversationContext("hello there", {}, now), false);
 assert.strictEqual(needsConversationContext("half bowl", {}, now), true);
 assert.strictEqual(needsConversationContext("kg", {}, now), true);
@@ -264,6 +314,23 @@ const anonymizedBreakfast = [{
 assert.strictEqual(repeatedMealCandidate("rolled oats low fat milk yogabar protein powder mango", anonymizedBreakfast), true);
 
 const pending = { awaiting: "repeat_meal_choice", expiresAt: futureIso };
+const pendingHistory = [
+  { body: "one banana", reply: "✅ Logged" },
+  {
+    body: "rolled oats low fat milk protein powder mango",
+    reply: "That looks like your recent meal. Reply correction or new meal.",
+  },
+];
+assert.strictEqual(repeatMealCandidateBody(pendingHistory), "rolled oats low fat milk protein powder mango");
+assert.strictEqual(repeatMealCandidateBody([
+  ...pendingHistory,
+  {
+    body: "idli sambhar coconut chutney",
+    reply: "This may repeat your last log. Reply *correction* or *new meal*.",
+  },
+]), "idli sambhar coconut chutney");
+assert.strictEqual(repeatMealCandidateBody([{ body: "one banana", reply: "✅ Logged" }]), null);
+assert.strictEqual(repeatMealCandidateBody(null), null);
 assert.strictEqual(resolvePendingChoice("correct the first one", pending, now), "correction");
 assert.strictEqual(resolvePendingChoice("log another meal", pending, now), "new");
 assert.strictEqual(resolvePendingChoice("correction", pending, now), "correction");

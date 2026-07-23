@@ -11,8 +11,20 @@ const { parseMeal } = require("./src/parser.js");
 const { advanceTdee } = require("./src/tdee.js");
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
-const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
+const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, recentConversation, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
+const {
+  WINDOW_MS,
+  normaliseConversationState,
+  needsConversationContext,
+  formatConversationContext,
+  refersToRecentMedia,
+  isCorrectionCue,
+  repeatedMealCandidate,
+  repeatMealCandidateBody,
+  resolvePendingChoice,
+  contextualProteinGoalReply,
+} = require("./src/conversationMemory.js");
 const { validateSignature, extractMessages, sendMessage, markRead } = require("./src/meta.js");
 const { logCorrectionEvent } = require("./src/correctionLogger.js");
 
@@ -200,6 +212,10 @@ async function recentConversations() {
 const MEDIA_REPLY =
   "\u{1F4F8} I can't read photos, screenshots or voice notes yet — I'm text-first, that's what keeps me fast.\n\n" +
   "Just type what you ate — *\"2 roti, dal, chicken curry\"* — and I'll log it with calories + protein in seconds.";
+const RECENT_MEDIA_REPLY =
+  "\u{1F4F8} I can't inspect the photo yet. Type the food name, or send the calories and protein from its nutrition label.";
+const REPEAT_CHOICE_PROMPT =
+  "That looks like your recent meal. Reply correction or new meal.";
 
 const FIRST_LOG_FOOTER =
   "\n\n\u{1F64F} _First log — thanks for testing NutriDesi early! Reply \"undo\" to remove a mistake, " +
@@ -311,6 +327,19 @@ async function handleMessage(from, body, opts = {}) {
     await saveTdeeProfile(from, tdee.state);
   }
 
+  const now = Date.now();
+  const conversationState = normaliseConversationState(profile.conversation_state, now);
+  const proteinGoalReply = contextualProteinGoalReply(trimmed, profile);
+  if (proteinGoalReply) return proteinGoalReply;
+
+  const needsHistory = needsConversationContext(trimmed, conversationState, now);
+  const history = needsHistory
+    ? await recentConversation(from, new Date(now))
+    : [];
+  if (refersToRecentMedia(trimmed, history)) {
+    return RECENT_MEDIA_REPLY;
+  }
+
   // Item-number targeting: "undo 14", "delete 14, 15", "remove #3". A bare
   // number counts as a row reference ONLY here, where a delete verb makes any
   // other reading impossible — everywhere else numbers stay quantities. No LLM
@@ -414,15 +443,75 @@ async function handleMessage(from, body, opts = {}) {
       (isNewUser ? FIRST_LOG_FOOTER : "");
   }
 
-  const correctionCandidate = looksLikeCorrection(body);
-  const recentBatch = correctionCandidate ? await lastLogBatch(from) : [];
-  const parsed = /^undo$/i.test(trimmed)
-    ? { intent: "undo", items: [], parse_notes: "literal undo" }
-    : await parseMeal(body, formatLastLogContext(recentBatch));
+  let effectiveBody = body;
+  let forcedIntent = null;
+  const pendingChoice = resolvePendingChoice(trimmed, conversationState, now);
+  if (conversationState.awaiting === "repeat_meal_choice") {
+    if (!pendingChoice) return REPEAT_CHOICE_PROMPT;
+    const candidateBody = repeatMealCandidateBody(history);
+    await saveConversationState(from, {});
+    if (!candidateBody) {
+      return "I couldn't find that recent meal, so nothing changed. Send the meal again if you'd like to log it.";
+    }
+    effectiveBody = candidateBody;
+    forcedIntent = pendingChoice === "correction" ? "replace_last" : "log";
+  }
 
-  if (shouldPromoteToReplace(parsed, body, recentBatch)) {
+  const expectedCorrectedMeal = conversationState.awaiting === "corrected_meal";
+  if (!forcedIntent && !expectedCorrectedMeal && isCorrectionCue(trimmed)) {
+    const recentLoggedExchange = [...history].reverse().find(exchange =>
+      /^✅\s*Logged\b/.test(String(exchange && exchange.reply || "").trim())
+    );
+    if (!recentLoggedExchange) {
+      return "I couldn't find a recent logged meal, so nothing changed. Send the meal again if you'd like to log it.";
+    }
+    await saveConversationState(from, {
+      awaiting: "corrected_meal",
+      expiresAt: new Date(now + WINDOW_MS).toISOString(),
+    });
+    return "NutriDesi understands this is a correction. Send the corrected meal once and I'll update the recent log.";
+  }
+
+  if (
+    !forcedIntent
+    && !expectedCorrectedMeal
+    && needsHistory
+    && repeatedMealCandidate(effectiveBody, history)
+  ) {
+    await saveConversationState(from, {
+      awaiting: "repeat_meal_choice",
+      expiresAt: new Date(now + WINDOW_MS).toISOString(),
+    });
+    return REPEAT_CHOICE_PROMPT;
+  }
+
+  const modifierFollowUp = /^(?:with|without|add)\b/i.test(effectiveBody.trim());
+  const correctionCandidate = forcedIntent === "replace_last"
+    || expectedCorrectedMeal
+    || looksLikeCorrection(effectiveBody);
+  const recentBatch = correctionCandidate || modifierFollowUp ? await lastLogBatch(from) : [];
+  const contextBlocks = [
+    formatConversationContext(history),
+    formatLastLogContext(recentBatch),
+  ];
+  const parsed = /^undo$/i.test(effectiveBody.trim())
+    ? { intent: "undo", items: [], parse_notes: "literal undo" }
+    : await parseMeal(effectiveBody, contextBlocks);
+
+  if (forcedIntent) {
+    parsed.intent = forcedIntent;
+  } else if (expectedCorrectedMeal) {
+    if (parsed.intent === "log" && (parsed.items || []).length) {
+      parsed.intent = "replace_last";
+      await saveConversationState(from, {});
+    } else if (parsed.intent !== "query") {
+      return "Send the corrected meal with its food name and amount. Your recent log is unchanged.";
+    }
+  }
+
+  if (shouldPromoteToReplace(parsed, effectiveBody, recentBatch)) {
     parsed.intent = "replace_last";
-    logCorrectionEvent({ intent: "promoted_to_replace", rawMessage: body, parsed, batch: recentBatch, deleted: [], outcome: "promoted" });
+    logCorrectionEvent({ intent: "promoted_to_replace", rawMessage: effectiveBody, parsed, batch: recentBatch, deleted: [], outcome: "promoted" });
   }
 
   // --- set_profile ---
@@ -460,7 +549,7 @@ async function handleMessage(from, body, opts = {}) {
     if ((parsed.items || []).length > 0) {
       if (/\d/.test(note)) note = "";
       const rows = await resolveRows(parsed);
-      if (rows.length >= 2 && /\b(better|vs|versus|compare| or )\b/i.test(body)) {
+      if (rows.length >= 2 && /\b(better|vs|versus|compare| or )\b/i.test(effectiveBody)) {
         const byKcal = [...rows].sort((a, b) => a.kcal - b.kcal);
         const light = byKcal[0], heavy = byKcal[byKcal.length - 1];
         note = `⚖️ Lighter: ${light.food_name} — ${light.kcal} vs ${heavy.kcal} kcal`;
@@ -497,16 +586,16 @@ async function handleMessage(from, body, opts = {}) {
     // day — the narrow last-batch undo silently under-delivering broke trust
     // (2026-07-19: user "deleted all", 178 kcal of roti stayed logged).
     const ALL_SCOPE = /\b(all|everything|entire|whole day|full day|sab ?kuch|sab|saara|sara|poora|pura)\b/i;
-    if (!names.length && ALL_SCOPE.test(body)) {
+    if (!names.length && ALL_SCOPE.test(effectiveBody)) {
       const deleted = await deleteAllToday(from);
       if (!deleted || deleted.length === 0) return "Nothing to clear — no entries logged today.";
-      logCorrectionEvent({ intent: "undo", rawMessage: body, parsed, batch: recentBatch, deleted, outcome: "removed_all" });
+      logCorrectionEvent({ intent: "undo", rawMessage: effectiveBody, parsed, batch: recentBatch, deleted, outcome: "removed_all" });
       const kcal = deleted.reduce((s, r) => s + Number(r.kcal || 0), 0);
       return `↩️ Cleared today's log — ${deleted.length} ${deleted.length === 1 ? "entry" : "entries"} (${Math.round(kcal)} kcal) removed.\n\nFresh start: 0 kcal. \u{1F331}`;
     }
     let deleted;
     if (names.length) {
-      const aligned = await deleteMatchingLastLog(from, names, recentBatch, body);
+      const aligned = await deleteMatchingLastLog(from, names, recentBatch, effectiveBody);
       deleted = aligned ? aligned.filter(Boolean) : null;
       if (!deleted) {
         return `Couldn't find "${names.join(", ")}" in today's log — nothing removed.`;
@@ -517,7 +606,7 @@ async function handleMessage(from, body, opts = {}) {
     if (!deleted || deleted.length === 0) {
       return "Nothing to undo — no entries logged today.";
     }
-    logCorrectionEvent({ intent: "undo", rawMessage: body, parsed, batch: recentBatch, deleted, outcome: "removed" });
+    logCorrectionEvent({ intent: "undo", rawMessage: effectiveBody, parsed, batch: recentBatch, deleted, outcome: "removed" });
     const total = await todayTotal(from);
     const removedLines = deleted.map(r => `${r.food_name} — ${r.kcal} kcal`).join("\n");
     return `↩️ Removed:\n${removedLines}\n\n${dayLine(total, profile)}`;
@@ -538,24 +627,24 @@ async function handleMessage(from, body, opts = {}) {
     if (parsed.replace_target) {
       const target = resolveTargetByName(await todayItems(from), parsed.replace_target);
       if (!target) {
-        logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed, batch: latest, deleted: [], outcome: "dead_end" });
+        logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted: [], outcome: "dead_end" });
         return `Couldn't pin down "${parsed.replace_target}" in today's log — nothing changed. Try the item number, like "replace 2 with …".`;
       }
       const removed = await deleteBySeq(from, [target.day_seq]);
-      logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed, batch: latest, deleted: removed, outcome: "replaced_by_name" });
+      logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted: removed, outcome: "replaced_by_name" });
       const { rows, totals } = await logMeal(from, parsed);
       const removedLines = (removed || []).map(r => `\u{274C} ${r.food_name} — ${r.kcal} kcal`).join("\n");
       const addedLines = fmtItems(rows).map(l => `\u{2705} ${l}`);
       return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
         `${dayLine(totals, profile)}\n${cfLine(totals)}`;
     }
-    const aligned = await deleteMatchingLastLog(from, parsed.items, latest, body);
+    const aligned = await deleteMatchingLastLog(from, parsed.items, latest, effectiveBody);
     let deleted = aligned ? aligned.filter(Boolean) : null;
     if (!deleted && latest.length === 1) {
       deleted = await deleteLastLog(from, parsed.items.length === 1 ? parsed.items[0].food_name : null);
     }
     if (!deleted || deleted.length === 0) {
-      logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed, batch: latest, deleted: [], outcome: "dead_end" });
+      logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted: [], outcome: "dead_end" });
       return "Which item should I change? Name it and I'll fix just that one — like \"the shake was 200 calories\". Everything else stays logged.";
     }
     const inheritFromOld = (it, old) => {
@@ -581,7 +670,7 @@ async function handleMessage(from, body, opts = {}) {
     if (aligned) parsed.items.forEach((it, i) => inheritFromOld(it, aligned[i]));
     else if (deleted && deleted.length === 1 && parsed.items.length === 1)
       inheritFromOld(parsed.items[0], deleted[0]);
-    if (aligned && /\beach\b|\bper piece\b|\bhar ek\b/i.test(body)) {
+    if (aligned && /\beach\b|\bper piece\b|\bhar ek\b/i.test(effectiveBody)) {
       parsed.items.forEach((it, i) => {
         const old = aligned[i];
         if (old && Number(old.quantity) > 1 && Number(it.quantity) === 1) it.quantity = Number(old.quantity);
@@ -592,7 +681,7 @@ async function handleMessage(from, body, opts = {}) {
         Number(deleted[0].quantity) && Number(deleted[0].quantity) !== 1) {
       parsed.items[0].quantity = Number(deleted[0].quantity);
     }
-    logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed, batch: latest, deleted, outcome: "corrected" });
+    logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted, outcome: "corrected" });
     const { rows, totals } = await logMeal(from, parsed);
     const removedLines = (deleted || []).map(r => `❌ ${r.food_name} — ${r.kcal} kcal`).join("\n");
     const addedLines = fmtItems(rows).map(l => `✅ ${l}`);
