@@ -9,6 +9,7 @@ const {
   formatConversationContext,
   refersToRecentMedia,
   isCorrectionCue,
+  correctionCuePayload,
   isExplicitIndependentMutation,
   repeatedMealCandidate,
   repeatMealCandidateBody,
@@ -92,6 +93,7 @@ assert.match(serverSource, /needsConversationContext/);
 assert.match(serverSource, /formatConversationContext/);
 assert.match(serverSource, /refersToRecentMedia/);
 assert.match(serverSource, /isCorrectionCue/);
+assert.match(serverSource, /correctionCuePayload/);
 assert.match(serverSource, /repeatedMealCandidate/);
 assert.match(serverSource, /repeatMealCandidateBody/);
 assert.match(serverSource, /resolvePendingChoice/);
@@ -117,6 +119,7 @@ const historyIndex = indexOfSource("recentConversation(from, new Date(now))");
 const mediaIndex = indexOfSource("refersToRecentMedia(trimmed, history)");
 const pendingIndex = indexOfSource("resolvePendingChoice(trimmed, conversationState, now)");
 const cueIndex = indexOfSource("isCorrectionCue(trimmed)");
+const directCueIndex = indexOfSource("correctionCuePayload(trimmed)");
 const repeatIndex = indexOfSource("repeatedMealCandidate(effectiveBody, history)");
 const contextIndex = indexOfSource("formatConversationContext(needsHistory ? history : [])");
 const parseIndex = indexOfSource("parseMeal(effectiveBody, contextBlocks)");
@@ -125,6 +128,7 @@ assert.ok(stateIndex < proteinIndex && proteinIndex < parseIndex, "contextual pr
 assert.ok(needsHistoryIndex < historyIndex && historyIndex < parseIndex, "history must be gated and loaded before generic parsing");
 assert.ok(historyIndex < mediaIndex && mediaIndex < parseIndex, "recent-media routing must happen before generic parsing");
 assert.ok(pendingIndex < cueIndex, "pending repeat choice must resolve before generic correction cues");
+assert.ok(directCueIndex < cueIndex, "correction cues with payload must route before cue-only state arming");
 assert.ok(cueIndex < repeatIndex && repeatIndex < parseIndex, "correction and repeat routing must happen before generic parsing");
 assert.ok(contextIndex < parseIndex, "recognized conversation context must be built before parsing");
 assert.match(serverSource, /const contextBlocks = \[\s*formatConversationContext\(needsHistory \? history : \[\]\),\s*formatLastLogContext\(recentBatch\),?\s*\]/);
@@ -135,6 +139,9 @@ assert.match(serverSource, /parsed\.intent = forcedIntent/);
 assert.match(serverSource, /candidateBody:\s*effectiveBody\.trim\(\)\.slice\(0, RATE\.maxLen\)/);
 assert.match(serverSource, /repeatMealCandidateBody\(conversationState, history\)/);
 assert.match(serverSource, /if \(forcedIntent === "replace_last"\) parsed\.replace_target = null/);
+assert.match(serverSource, /const directCorrectionPayload = correctionCuePayload\(trimmed\);/);
+assert.match(serverSource, /if \(!forcedIntent && !expectedCorrectedMeal && directCorrectionPayload\) \{\s*effectiveBody = directCorrectionPayload;\s*forcedIntent = "replace_last";\s*\}/);
+assert.match(serverSource, /if \(!forcedIntent && !expectedCorrectedMeal && isCorrectionCue\(trimmed\)\)/);
 assert.match(serverSource, /claimConversationState\(from, conversationState\.nonce\)/);
 assert.match(serverSource, /logRowsByExactIds\(from, conversationState\.targetLogIds\)/);
 assert.match(serverSource, /deleteLogRowsByExactIds\(from, conversationState\.targetLogIds\)/);
@@ -442,7 +449,8 @@ assert.strictEqual(needsConversationContext("kg", {}, now), true);
 assert.strictEqual(needsConversationContext("kilograms", {}, now), true);
 assert.strictEqual(needsConversationContext("lbs", {}, now), true);
 assert.strictEqual(needsConversationContext("2 roti and dal", {}, now), false);
-assert.strictEqual(needsRepeatedMealCheck("idli sambhar coconut chutney", {}, now), false);
+assert.strictEqual(needsRepeatedMealCheck("idli sambhar coconut chutney", {}, now), true);
+assert.strictEqual(needsRepeatedMealCheck("2 roti and dal", {}, now), false);
 assert.strictEqual(needsRepeatedMealCheck("breakfast idli sambhar coconut chutney", {}, now), true);
 assert.strictEqual(needsRepeatedMealCheck("anything", active, now), false);
 assert.strictEqual(needsRepeatedMealCheck("anything", {
@@ -525,6 +533,11 @@ assert.strictEqual(refersToRecentMedia("inspect this photo", [{ body: "food phot
 assert.strictEqual(isCorrectionCue("from first"), true);
 assert.strictEqual(isCorrectionCue("I am telling from first"), true);
 assert.strictEqual(isCorrectionCue("I m telling from first, it was poha"), false);
+assert.strictEqual(correctionCuePayload("I m telling from first, it was poha"), "it was poha");
+assert.strictEqual(correctionCuePayload("from first, poha"), "poha");
+assert.strictEqual(correctionCuePayload("from the first one: 2 idli"), "2 idli");
+assert.strictEqual(correctionCuePayload("I m telling from first"), null);
+assert.strictEqual(correctionCuePayload("actually, it was poha"), null);
 assert.strictEqual(isCorrectionCue("i'm telling you from the first one"), true);
 assert.strictEqual(isCorrectionCue("I am saying it was earlier meal"), false);
 assert.strictEqual(isCorrectionCue("actually meant poha"), false);
@@ -622,6 +635,7 @@ assert.doesNotThrow(() => {
   formatConversationContext([throwing]);
   refersToRecentMedia(throwing, [throwing]);
   isCorrectionCue(throwing);
+  correctionCuePayload(throwing);
   repeatedMealCandidate(throwing, [throwing]);
   resolvePendingChoice(throwing, throwing, now);
   contextualProteinGoalReply(throwing, throwing);

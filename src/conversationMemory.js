@@ -81,6 +81,15 @@ function isCorrectionCue(text) {
   return /^(?:from\s+(?:the\s+)?first(?:\s+one)?|(?:i\s*(?:am|['’]?m|m)|im)\s+(?:just\s+)?(?:telling|saying)(?:\s+you)?\s+(?:from\s+)?(?:the\s+)?first(?:\s+one)?)$/.test(value);
 }
 
+function correctionCuePayload(text) {
+  const raw = normaliseText(text);
+  if (!raw || /\?$/.test(raw)) return null;
+  const match = /^(?:from\s+(?:the\s+)?first(?:\s+one)?|(?:i\s*(?:am|['’]?m|m)|im)\s+(?:just\s+)?(?:telling|saying)(?:\s+you)?\s+(?:from\s+)?(?:the\s+)?first(?:\s+one)?)(?:\s*[,;:–—-]\s*|\s+)(.+)$/i.exec(raw);
+  if (!match) return null;
+  const payload = normaliseText(match[1]).replace(/[.!]+$/, "").trim();
+  return payload || null;
+}
+
 function isExplicitIndependentMutation(text) {
   const value = normaliseText(text).toLowerCase();
   if (!value || isCorrectionCue(value)) return false;
@@ -108,8 +117,7 @@ function needsRepeatedMealCheck(text, state, now = Date.now()) {
   const value = normaliseText(text).toLowerCase();
   if (!value) return false;
   if (normaliseConversationState(state, now).awaiting === "repeat_meal_choice") return true;
-  return /\b(?:morning|breakfast|brkfst|lunch|dinner|snack)\b/.test(value)
-    && mealTokens(value).length >= 3;
+  return mealTokens(value).length >= 3;
 }
 
 function exchangeText(exchange) {
@@ -285,6 +293,7 @@ module.exports = {
   formatConversationContext,
   refersToRecentMedia,
   isCorrectionCue,
+  correctionCuePayload,
   isExplicitIndependentMutation,
   repeatedMealCandidate,
   repeatMealCandidateBody,
