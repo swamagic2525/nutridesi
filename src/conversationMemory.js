@@ -1,3 +1,5 @@
+const { randomUUID } = require("crypto");
+
 const WINDOW_MS = 6 * 60 * 60 * 1000;
 const MAX_EXCHANGES = 10;
 const CONTEXT_BEGIN = "BEGIN APP-PROVIDED RECENT CONVERSATION";
@@ -39,16 +41,32 @@ function normaliseConversationState(raw, now = Date.now()) {
   const awaiting = safeGet(raw, "awaiting");
   const expiresAt = safeGet(raw, "expiresAt");
   const candidateBody = safeGet(raw, "candidateBody");
+  const nonce = safeGet(raw, "nonce");
+  const rawTargetIds = safeGet(raw, "targetLogIds");
   const timestamp = finiteNumber(now);
   const expiry = typeof expiresAt === "string" ? Date.parse(expiresAt) : NaN;
+  const nonceValid = typeof nonce === "string"
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(nonce);
+  const idsValid = Array.isArray(rawTargetIds)
+    && rawTargetIds.length > 0
+    && rawTargetIds.every(id => Number.isInteger(id) && id > 0);
   if (
     !["corrected_meal", "repeat_meal_choice"].includes(awaiting)
     || !Number.isFinite(expiry)
     || timestamp == null
     || expiry <= timestamp
     || !validIsoDateTime(expiresAt)
+    || !nonceValid
+    || !idsValid
   ) return {};
-  const state = { awaiting, expiresAt: new Date(expiry).toISOString() };
+  const targetLogIds = [...new Set(rawTargetIds)].slice(0, 20);
+  if (!targetLogIds.length) return {};
+  const state = {
+    awaiting,
+    expiresAt: new Date(expiry).toISOString(),
+    nonce,
+    targetLogIds,
+  };
   if (awaiting === "repeat_meal_choice" && typeof candidateBody === "string") {
     const candidate = normaliseText(candidateBody).slice(0, 300).trim();
     if (candidate) state.candidateBody = candidate;
@@ -60,27 +78,38 @@ function isCorrectionCue(text) {
   const raw = normaliseText(text).toLowerCase();
   if (/\?$/.test(raw)) return false;
   const value = raw.replace(/[.!]+$/, "").trim();
-  const correction = /\b(?:correction|corrected|correct|fix|replace)\b/.test(value);
-  const newMeal = /\b(?:new|another)\s+meal\b|\blog\s+(?:a\s+)?(?:new|another)\b/.test(value);
-  const negated = /\b(?:don'?t|do not|not|no)\b.{0,20}\b(?:correction|corrected|correct|fix|replace)\b/.test(value);
-  if (negated || (correction && newMeal)) return false;
-  return /\b(?:actually\s+)?i\s+meant\b|\bactually\s+meant\b|\bcorrection\s*[:,-]|\b(?:please\s+)?(?:correct|fix|replace)\s+(?:this|it|the\s+first(?:\s+one)?)\b/.test(value)
-    || /\b(?:i\s*['’]?m|im|i am)\s+(?:just\s+)?(?:telling|saying)(?:\s+you)?\b.*\b(?:first|earlier)\b/.test(value);
+  return /^(?:from\s+(?:the\s+)?first(?:\s+one)?|(?:i\s*(?:am|['’]?m|m)|im)\s+(?:just\s+)?(?:telling|saying)(?:\s+you)?\s+(?:from\s+)?(?:the\s+)?first(?:\s+one)?)$/.test(value);
+}
+
+function isExplicitIndependentMutation(text) {
+  const value = normaliseText(text).toLowerCase();
+  if (!value || isCorrectionCue(value)) return false;
+  return /^(?:undo|delete|remove)\b/.test(value)
+    || /^(?:item|no\.?|number|#)?\s*#?\d+\s+(?:was|is|wasn'?t|isn'?t)\s+(?:wrong|incorrect|a mistake|galat|not right|mislogged)\b/.test(value)
+    || /^(?:replace|change|swap|update)\b.+\b(?:with|to|for|se|ko)\b.+/.test(value)
+    || /\b(?:actually\s+)?i\s+meant\s+\S+|\bactually\s+meant\s+\S+/.test(value)
+    || /\b(?:was|is|had|has)\s+\d+(?:\.\d+)?\s*(?:g|ml|kcal|cal(?:ories)?|g\s*(?:protein|prot))\b/.test(value);
 }
 
 function needsConversationContext(text, state, now = Date.now()) {
   const value = normaliseText(text).toLowerCase();
   if (!value) return false;
-  if (Object.keys(normaliseConversationState(state, now)).length) return true;
+  if (normaliseConversationState(state, now).awaiting === "corrected_meal") return true;
   if (/\b(it|that|this|these|them|same|again|first|earlier|previous|above)\b/.test(value)) return true;
-  if (isCorrectionCue(value) || /\bfrom\s+(?:the\s+)?first\b/.test(value)) return true;
+  if (isCorrectionCue(value) || /\b(?:actually\s+)?i\s+meant\b|\bactually\s+meant\b/.test(value)) return true;
   if (/^(?:with|without|add)\b/.test(value) || /\b(?:this|that)\s+much\b/.test(value)) return true;
   if (/^(?:g|grams?|kg|kgs|kilograms?|lb|lbs|pounds?)$/i.test(value)
     || /^(?:\d+(?:\.\d+)?|half|quarter|one|two|three)\s*(?:g|kg|ml|cup|bowl|katori|plate|piece|pieces|serving)s?$/i.test(value)) return true;
   if (/\b(?:rate|review|analyse|analyze|check)\s+(?:this|it|food)\b/.test(value)) return true;
-  if (mealTokens(value).length >= 3) return true;
-  return words(value).length >= 2
-    && /\b(?:morning|breakfast|brkfst|lunch|dinner|snack)\b/.test(value);
+  return /\b(?:morning|breakfast|brkfst|lunch|dinner|snack)\b.*\bwas\b/.test(value);
+}
+
+function needsRepeatedMealCheck(text, state, now = Date.now()) {
+  const value = normaliseText(text).toLowerCase();
+  if (!value) return false;
+  if (normaliseConversationState(state, now).awaiting === "repeat_meal_choice") return true;
+  return /\b(?:morning|breakfast|brkfst|lunch|dinner|snack)\b/.test(value)
+    && mealTokens(value).length >= 3;
 }
 
 function exchangeText(exchange) {
@@ -129,8 +158,12 @@ function formatConversationContext(exchanges) {
 
 function refersToRecentMedia(text, exchanges) {
   const latest = Array.isArray(exchanges) && exchanges.length ? exchanges[exchanges.length - 1] : null;
-  return hasMedia(latest)
-    && /\b(this|that|it|these|them|above|photo|image|picture|media)\b/i.test(normaliseText(text));
+  if (!hasMedia(latest)) return false;
+  const value = normaliseText(text);
+  const explicitInspection = /\b(?:photo|image|picture|screenshot|media)\b.*\b(?:read|inspect|identify|recognise|recognize|analyse|analyze|check|what)\b|\b(?:read|inspect|identify|recognise|recognize|analyse|analyze|check|what)\b.*\b(?:photo|image|picture|screenshot|media)\b/i.test(value);
+  if (explicitInspection) return true;
+  return !exchangeText(latest)
+    && /\b(this|that|it|these|them|above|photo|image|picture|media)\b/i.test(value);
 }
 
 const MEAL_STOPWORDS = new Set([
@@ -202,16 +235,61 @@ function contextualProteinGoalReply(text, profile) {
   return `For your ${Math.round(kcal).toLocaleString("en-IN")} kcal goal, tell me your weight in kg and whether you're aiming for fat loss or maintenance, and I'll set a protein target.`;
 }
 
+async function persistConversationState({
+  phone,
+  awaiting,
+  targetRows,
+  candidateBody,
+  now = Date.now(),
+  save,
+  nonceFactory = randomUUID,
+}) {
+  if (typeof save !== "function" || typeof nonceFactory !== "function") return null;
+  const targetLogIds = [...new Set((Array.isArray(targetRows) ? targetRows : [])
+    .map(row => safeGet(row, "id"))
+    .filter(id => Number.isInteger(id) && id > 0))].slice(0, 20);
+  if (!targetLogIds.length) return null;
+  let nonce;
+  try { nonce = nonceFactory(); } catch (_) { return null; }
+  const state = normaliseConversationState({
+    awaiting,
+    expiresAt: new Date(Number(now) + WINDOW_MS).toISOString(),
+    nonce,
+    targetLogIds,
+    ...(awaiting === "repeat_meal_choice" ? { candidateBody } : {}),
+  }, now);
+  if (!Object.keys(state).length) return null;
+  try {
+    return await save(phone, state) === true ? state : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function executeClaimedAction({ phone, nonce, claim, action }) {
+  if (typeof claim !== "function" || typeof action !== "function") {
+    return { claimed: false, value: null };
+  }
+  let claimed;
+  try { claimed = await claim(phone, nonce); } catch (_) { claimed = false; }
+  if (claimed !== true) return { claimed: false, value: null };
+  return { claimed: true, value: await action() };
+}
+
 module.exports = {
   WINDOW_MS,
   MAX_EXCHANGES,
   normaliseConversationState,
   needsConversationContext,
+  needsRepeatedMealCheck,
   formatConversationContext,
   refersToRecentMedia,
   isCorrectionCue,
+  isExplicitIndependentMutation,
   repeatedMealCandidate,
   repeatMealCandidateBody,
   resolvePendingChoice,
   contextualProteinGoalReply,
+  persistConversationState,
+  executeClaimedAction,
 };

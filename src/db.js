@@ -63,6 +63,32 @@ async function saveConversationState(phone, state, client = supabase) {
   return true;
 }
 
+async function claimConversationState(phone, nonce, client = supabase) {
+  if (typeof phone !== "string" || !phone || typeof nonce !== "string" || !nonce) return false;
+  const { data, error } = await client.rpc(
+    "claim_conversation_state",
+    { p_phone: phone, p_nonce: nonce }
+  );
+  if (error) {
+    console.error("claimConversationState:", error.message);
+    return false;
+  }
+  return data === true;
+}
+
+async function clearConversationStateIfUnchanged(phone, rawState, client = supabase) {
+  if (!rawState || typeof rawState !== "object") return false;
+  const { data, error } = await client.rpc(
+    "clear_conversation_state_if_match",
+    { p_phone: phone, p_state: rawState }
+  );
+  if (error) {
+    console.error("clearConversationStateIfUnchanged:", error.message);
+    return false;
+  }
+  return data === true;
+}
+
 async function recentConversation(phone, now = new Date(), client = supabase) {
   if (!(now instanceof Date) || !Number.isFinite(now.getTime())) return [];
   const since = new Date(now.getTime() - WINDOW_MS).toISOString();
@@ -577,7 +603,7 @@ async function resolveRows(parsed, opts = {}) {
   return rows;
 }
 
-async function logMeal(phone, parsed) {
+async function logMeal(phone, parsed, options = {}) {
   // Pin the IST date ONCE for this message. todayTotal reads a date, and the
   // insert is fire-and-forget seconds later — near midnight the DB's own
   // `date` default would land on the next day, so the row would vanish from
@@ -604,9 +630,19 @@ async function logMeal(phone, parsed) {
 
   // Fire-and-forget: the reply's totals are computed locally (below), so it need
   // not wait for the write. Saves ~0.7s of India<->Supabase latency per message.
-  supabase.from("user_logs").insert(rows.map(({ stated, userSaid, assumed, portionNote, refVerified, ...r }) => r)).then(({ error }) => {
-    if (error) console.error("SUPABASE INSERT FAILED:", error.message, error.details || "", error.hint || "");
-  });
+  const insert = supabase.from("user_logs")
+    .insert(rows.map(({ stated, userSaid, assumed, portionNote, refVerified, ...r }) => r));
+  if (options.awaitInsert) {
+    const { error } = await insert;
+    if (error) {
+      console.error("SUPABASE INSERT FAILED:", error.message, error.details || "", error.hint || "");
+      throw new Error("meal insert failed");
+    }
+  } else {
+    insert.then(({ error }) => {
+      if (error) console.error("SUPABASE INSERT FAILED:", error.message, error.details || "", error.hint || "");
+    });
+  }
   const sum = (k) => prevTotal[k] + rows.reduce((s, r) => s + Number(r[k] || 0), 0);
 
   // Slot this message into the meal clusters: continues the last meal if within 45 min.
@@ -697,6 +733,50 @@ async function lastLogBatch(phone) {
   if (!data || data.length === 0) return [];
   const lastTs = data[0].logged_at;
   return data.filter(r => r.logged_at === lastTs);
+}
+
+const exactPositiveIds = ids => {
+  if (!Array.isArray(ids) || !ids.length || ids.length > 20) return [];
+  if (!ids.every(id => Number.isInteger(id) && id > 0)) return [];
+  const unique = [...new Set(ids)];
+  return unique.length === ids.length ? unique : [];
+};
+
+async function logRowsByExactIds(phone, ids, client = supabase) {
+  const expected = exactPositiveIds(ids);
+  if (typeof phone !== "string" || !phone || !expected.length) return [];
+  const { data, error } = await client.from("user_logs")
+    .select("id, food_name, kcal, protein, quantity, matched_db_id, is_estimate, logged_at")
+    .eq("phone_number", phone)
+    .in("id", expected);
+  if (error) {
+    console.error("logRowsByExactIds:", error.message);
+    return [];
+  }
+  const rows = Array.isArray(data) ? data : [];
+  const byId = new Map(rows.map(row => [Number(row.id), row]));
+  if (rows.length !== expected.length || expected.some(id => !byId.has(id))) return [];
+  return expected.map(id => byId.get(id));
+}
+
+async function deleteLogRowsByExactIds(phone, ids, client = supabase) {
+  const expected = exactPositiveIds(ids);
+  if (!expected.length) return null;
+  const existing = await logRowsByExactIds(phone, expected, client);
+  if (existing.length !== expected.length) return null;
+  const { data, error } = await client.rpc(
+    "delete_user_logs_exact",
+    { p_phone: phone, p_ids: expected }
+  );
+  if (error) {
+    console.error("deleteLogRowsByExactIds:", error.message);
+    return null;
+  }
+  const deleted = Array.isArray(data) ? data : [];
+  const deletedIds = new Set(deleted.map(row => Number(row.id)));
+  if (deleted.length !== expected.length || expected.some(id => !deletedIds.has(id))) return null;
+  const byId = new Map(deleted.map(row => [Number(row.id), row]));
+  return expected.map(id => byId.get(id));
 }
 
 async function deleteRows(rows) {
@@ -854,4 +934,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, recentConversation, bumpNudge, resolveRows, dayReport };
+module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport };

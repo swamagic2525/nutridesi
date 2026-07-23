@@ -11,19 +11,23 @@ const { parseMeal } = require("./src/parser.js");
 const { advanceTdee } = require("./src/tdee.js");
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
-const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, recentConversation, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
+const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
 const {
   WINDOW_MS,
   normaliseConversationState,
   needsConversationContext,
+  needsRepeatedMealCheck,
   formatConversationContext,
   refersToRecentMedia,
   isCorrectionCue,
+  isExplicitIndependentMutation,
   repeatedMealCandidate,
   repeatMealCandidateBody,
   resolvePendingChoice,
   contextualProteinGoalReply,
+  persistConversationState,
+  executeClaimedAction,
 } = require("./src/conversationMemory.js");
 const { validateSignature, extractMessages, sendMessage, markRead } = require("./src/meta.js");
 const { logCorrectionEvent } = require("./src/correctionLogger.js");
@@ -328,12 +332,30 @@ async function handleMessage(from, body, opts = {}) {
   }
 
   const now = Date.now();
-  const conversationState = normaliseConversationState(profile.conversation_state, now);
+  const rawConversationState = profile.conversation_state;
+  let conversationState = normaliseConversationState(rawConversationState, now);
+  if (
+    rawConversationState
+    && typeof rawConversationState === "object"
+    && Object.keys(rawConversationState).length
+    && !Object.keys(conversationState).length
+  ) {
+    await clearConversationStateIfUnchanged(from, rawConversationState);
+  }
   const proteinGoalReply = contextualProteinGoalReply(trimmed, profile);
   if (proteinGoalReply) return proteinGoalReply;
 
+  if (conversationState.awaiting && isExplicitIndependentMutation(trimmed)) {
+    const cancelled = await claimConversationState(from, conversationState.nonce);
+    if (!cancelled) {
+      return "That pending update expired or was already handled, so nothing changed. Please send your request again.";
+    }
+    conversationState = {};
+  }
+
   const needsHistory = needsConversationContext(trimmed, conversationState, now);
-  const history = needsHistory
+  const needsRepeatCheck = needsRepeatedMealCheck(trimmed, conversationState, now);
+  const history = needsHistory || needsRepeatCheck
     ? await recentConversation(from, new Date(now))
     : [];
   if (refersToRecentMedia(trimmed, history)) {
@@ -445,16 +467,35 @@ async function handleMessage(from, body, opts = {}) {
 
   let effectiveBody = body;
   let forcedIntent = null;
+  let pendingActionClaimed = false;
+  let boundPendingCorrection = false;
+  let boundTargetRows = [];
   const pendingChoice = resolvePendingChoice(trimmed, conversationState, now);
   if (conversationState.awaiting === "repeat_meal_choice") {
     if (!pendingChoice) return REPEAT_CHOICE_PROMPT;
     const candidateBody = repeatMealCandidateBody(conversationState, history);
-    await saveConversationState(from, {});
+    const claimResult = await executeClaimedAction({
+      phone: from,
+      nonce: conversationState.nonce,
+      claim: claimConversationState,
+      action: async () => candidateBody,
+    });
+    if (!claimResult.claimed) {
+      return "That meal choice expired or was already handled, so nothing changed. Please start again.";
+    }
+    pendingActionClaimed = true;
     if (!candidateBody) {
       return "I couldn't find that recent meal, so nothing changed. Send the meal again if you'd like to log it.";
     }
     effectiveBody = candidateBody;
     forcedIntent = pendingChoice === "correction" ? "replace_last" : "log";
+    if (forcedIntent === "replace_last") {
+      boundTargetRows = await logRowsByExactIds(from, conversationState.targetLogIds);
+      if (boundTargetRows.length !== conversationState.targetLogIds.length) {
+        return "That original meal changed, so nothing was updated. Please send the correction again from the start.";
+      }
+      boundPendingCorrection = true;
+    }
   }
 
   const expectedCorrectedMeal = conversationState.awaiting === "corrected_meal";
@@ -465,24 +506,38 @@ async function handleMessage(from, body, opts = {}) {
     if (!recentLoggedExchange) {
       return "I couldn't find a recent logged meal, so nothing changed. Send the meal again if you'd like to log it.";
     }
-    await saveConversationState(from, {
+    const targetRows = await lastLogBatch(from);
+    const savedState = await persistConversationState({
+      phone: from,
       awaiting: "corrected_meal",
-      expiresAt: new Date(now + WINDOW_MS).toISOString(),
+      targetRows,
+      now,
+      save: saveConversationState,
     });
+    if (!savedState) {
+      return "I couldn't safely save that correction request, so nothing changed. Please try again.";
+    }
     return "NutriDesi understands this is a correction. Send the corrected meal once and I'll update the recent log.";
   }
 
   if (
     !forcedIntent
     && !expectedCorrectedMeal
-    && needsHistory
+    && needsRepeatCheck
     && repeatedMealCandidate(effectiveBody, history)
   ) {
-    await saveConversationState(from, {
+    const targetRows = await lastLogBatch(from);
+    const savedState = await persistConversationState({
+      phone: from,
       awaiting: "repeat_meal_choice",
-      expiresAt: new Date(now + WINDOW_MS).toISOString(),
+      targetRows,
       candidateBody: effectiveBody.trim().slice(0, RATE.maxLen),
+      now,
+      save: saveConversationState,
     });
+    if (!savedState) {
+      return "I couldn't safely save that meal choice, so nothing was logged. Please try again.";
+    }
     return REPEAT_CHOICE_PROMPT;
   }
 
@@ -490,9 +545,18 @@ async function handleMessage(from, body, opts = {}) {
   const correctionCandidate = forcedIntent === "replace_last"
     || expectedCorrectedMeal
     || looksLikeCorrection(effectiveBody);
-  const recentBatch = correctionCandidate || modifierFollowUp ? await lastLogBatch(from) : [];
+  if (expectedCorrectedMeal) {
+    boundTargetRows = await logRowsByExactIds(from, conversationState.targetLogIds);
+    if (boundTargetRows.length !== conversationState.targetLogIds.length) {
+      await claimConversationState(from, conversationState.nonce);
+      return "That original meal changed, so nothing was updated. Please send the correction again from the start.";
+    }
+  }
+  const recentBatch = boundTargetRows.length
+    ? boundTargetRows
+    : correctionCandidate || modifierFollowUp ? await lastLogBatch(from) : [];
   const contextBlocks = [
-    formatConversationContext(history),
+    formatConversationContext(needsHistory ? history : []),
     formatLastLogContext(recentBatch),
   ];
   const parsed = /^undo$/i.test(effectiveBody.trim())
@@ -504,8 +568,13 @@ async function handleMessage(from, body, opts = {}) {
     if (forcedIntent === "replace_last") parsed.replace_target = null;
   } else if (expectedCorrectedMeal) {
     if (parsed.intent === "log" && (parsed.items || []).length) {
+      const claimed = await claimConversationState(from, conversationState.nonce);
+      if (!claimed) {
+        return "That correction expired or was already handled, so nothing changed. Please start again.";
+      }
       parsed.intent = "replace_last";
-      await saveConversationState(from, {});
+      parsed.replace_target = null;
+      boundPendingCorrection = true;
     } else if (parsed.intent !== "query") {
       return "Send the corrected meal with its food name and amount. Your recent log is unchanged.";
     }
@@ -621,6 +690,31 @@ async function handleMessage(from, body, opts = {}) {
     }
     const latest = recentBatch.length ? recentBatch : await lastLogBatch(from);
 
+    if (boundPendingCorrection) {
+      parsed.replace_target = null;
+      const deleted = await deleteLogRowsByExactIds(from, conversationState.targetLogIds);
+      if (!deleted || deleted.length !== conversationState.targetLogIds.length) {
+        return "That original meal changed or couldn't be updated, so nothing else was logged. Please retry from the start.";
+      }
+      logCorrectionEvent({
+        intent: "replace_last",
+        rawMessage: effectiveBody,
+        parsed,
+        batch: latest,
+        deleted,
+        outcome: "corrected_bound_state",
+      });
+      try {
+        const { rows, totals } = await logMeal(from, parsed, { awaitInsert: true });
+        const removedLines = deleted.map(r => `❌ ${r.food_name} — ${r.kcal} kcal`);
+        const addedLines = fmtItems(rows).map(line => `✅ ${line}`);
+        return `\u{1F504} Corrected:\n${removedLines.join("\n")}\n${addedLines.join("\n")}\n\n` +
+          `${dayLine(totals, profile)}\n${cfLine(totals)}`;
+      } catch (_) {
+        return "The correction couldn't finish safely. Please send the full meal again from the start.";
+      }
+    }
+
     // Explicit swap ("replace X with Y and Z"): the target and replacements are
     // DIFFERENT foods, possibly 1->N. Resolve the named target STRICTLY against
     // all of today's items (not the fuzzy last-batch fallback, which once
@@ -699,7 +793,14 @@ async function handleMessage(from, body, opts = {}) {
       : "What did you eat? Send me a food name and I'll log it \u{1F642}";
   }
 
-  const result = await logMeal(from, parsed);
+  let result;
+  try {
+    result = pendingActionClaimed
+      ? await logMeal(from, parsed, { awaitInsert: true })
+      : await logMeal(from, parsed);
+  } catch (_) {
+    return "That pending meal couldn't be saved, so nothing was logged. Please retry from the start.";
+  }
   const { rows, totals } = result;
   const ass = assumptionLines(rows);
   let goalAsk = "";

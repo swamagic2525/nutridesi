@@ -5,13 +5,17 @@ const {
   MAX_EXCHANGES,
   normaliseConversationState,
   needsConversationContext,
+  needsRepeatedMealCheck,
   formatConversationContext,
   refersToRecentMedia,
   isCorrectionCue,
+  isExplicitIndependentMutation,
   repeatedMealCandidate,
   repeatMealCandidateBody,
   resolvePendingChoice,
   contextualProteinGoalReply,
+  persistConversationState,
+  executeClaimedAction,
 } = require("../src/conversationMemory.js");
 const { SYSTEM_PROMPT } = require("../src/systemPrompt.js");
 const { buildContextualMessage } = require("../src/parser.js");
@@ -45,10 +49,27 @@ assert.match(dbSource, /\.limit\(MAX_EXCHANGES\)/);
 assert.match(dbSource, /async function saveConversationState\(phone/);
 assert.match(dbSource, /select\(`\$\{profileFields\}, conversation_state`\)/);
 assert.match(dbSource, /conversation_state: state \|\| \{\}/);
-assert.match(dbSource, /saveConversationState, recentConversation/);
+assert.match(dbSource, /saveConversationState[^;]*recentConversation/);
 assert.match(dbSource, /\.select\("body, reply, media, at"\)/);
 assert.match(schemaSource, /conversation_state jsonb not null default '\{\}'::jsonb/);
 assert.match(migrationSource, /add column if not exists conversation_state jsonb/);
+assert.match(migrationSource, /create or replace function public\.claim_conversation_state\(p_phone text, p_nonce text\)/i);
+assert.match(migrationSource, /security definer/i);
+assert.match(migrationSource, /set search_path = public, pg_temp/i);
+assert.match(migrationSource, /conversation_state->>'nonce'\s*=\s*p_nonce/i);
+assert.match(migrationSource, /conversation_state\s*=\s*'\{\}'::jsonb/i);
+assert.match(migrationSource, /revoke all on function public\.claim_conversation_state\(text, text\) from public, anon, authenticated/i);
+assert.match(migrationSource, /grant execute on function public\.claim_conversation_state\(text, text\) to service_role/i);
+assert.match(migrationSource, /create or replace function public\.clear_conversation_state_if_match\(p_phone text, p_state jsonb\)/i);
+assert.match(migrationSource, /conversation_state\s*=\s*p_state/i);
+assert.match(migrationSource, /grant execute on function public\.clear_conversation_state_if_match\(text, jsonb\) to service_role/i);
+assert.match(migrationSource, /create or replace function public\.delete_user_logs_exact\(p_phone text, p_ids bigint\[\]\)/i);
+assert.match(migrationSource, /for update/i);
+assert.match(migrationSource, /unnest\(p_ids\) as item\(value\)/i);
+assert.match(migrationSource, /revoke all on function public\.delete_user_logs_exact\(text, bigint\[\]\) from public, anon, authenticated/i);
+assert.match(migrationSource, /grant execute on function public\.delete_user_logs_exact\(text, bigint\[\]\) to service_role/i);
+assert.match(schemaSource, /create or replace function public\.claim_conversation_state\(p_phone text, p_nonce text\)/i);
+assert.match(schemaSource, /create or replace function public\.delete_user_logs_exact\(p_phone text, p_ids bigint\[\]\)/i);
 assert.match(migrationSource, /create index if not exists idx_msglog_phone_at on message_log \(phone_number, at desc\)/);
 assert.match(messageLogSource, /create index if not exists idx_msglog_phone_at on message_log \(phone_number, at desc\)/);
 assert.match(dbSource, /\.lte\("at", now\.toISOString\(\)\)/);
@@ -57,6 +78,14 @@ assert.match(dbSource, /\.select\(profileFields\)/);
 assert.match(dbSource, /isMissingConversationStateColumn\(error\)/);
 assert.match(dbSource, /\/conversation_state\/i\.test\(message\)/);
 assert.match(dbSource, /error\.code === "42703"/);
+assert.match(dbSource, /async function claimConversationState\(phone, nonce, client = supabase\)/);
+assert.match(dbSource, /\.rpc\(\s*"claim_conversation_state",\s*\{ p_phone: phone, p_nonce: nonce \}\s*\)/);
+assert.match(dbSource, /async function logRowsByExactIds\(phone, ids, client = supabase\)/);
+assert.match(dbSource, /\.rpc\(\s*"clear_conversation_state_if_match",\s*\{ p_phone: phone, p_state: rawState \}\s*\)/);
+assert.match(dbSource, /async function deleteLogRowsByExactIds\(phone, ids, client = supabase\)/);
+assert.match(dbSource, /\.rpc\(\s*"delete_user_logs_exact",\s*\{ p_phone: phone, p_ids: expected \}\s*\)/);
+assert.match(dbSource, /async function logMeal\(phone, parsed, options = \{\}\)/);
+assert.match(dbSource, /if \(options\.awaitInsert\)/);
 
 assert.match(serverSource, /normaliseConversationState/);
 assert.match(serverSource, /needsConversationContext/);
@@ -72,7 +101,7 @@ assert.match(serverSource, /recentConversation/);
 assert.match(serverSource, /saveConversationState/);
 assert.match(serverSource, /require\("\.\/src\/conversationMemory\.js"\)/);
 assert.match(serverSource, /const \{[^;]*saveConversationState[^;]*recentConversation[^;]*\} = require\("\.\/src\/db\.js"\);/);
-assert.match(serverSource, /const modifierFollowUp = [^;]+;\s*const correctionCandidate[\s\S]*const recentBatch = correctionCandidate \|\| modifierFollowUp \? await lastLogBatch\(from\) : \[\];/);
+assert.match(serverSource, /const modifierFollowUp = [^;]+;\s*const correctionCandidate[\s\S]*correctionCandidate \|\| modifierFollowUp \? await lastLogBatch\(from\) : \[\]/);
 assert.match(serverSource, /recordExchange\(from, body, reply, hasMedia\)/);
 
 const indexOfSource = (fragment, message) => {
@@ -81,7 +110,7 @@ const indexOfSource = (fragment, message) => {
   return index;
 };
 const tdeeClearIndex = indexOfSource("if (tdee.clear)");
-const stateIndex = indexOfSource("normaliseConversationState(profile.conversation_state, now)");
+const stateIndex = indexOfSource("normaliseConversationState(rawConversationState, now)");
 const proteinIndex = indexOfSource("contextualProteinGoalReply(trimmed, profile)");
 const needsHistoryIndex = indexOfSource("needsConversationContext(trimmed, conversationState, now)");
 const historyIndex = indexOfSource("recentConversation(from, new Date(now))");
@@ -89,7 +118,7 @@ const mediaIndex = indexOfSource("refersToRecentMedia(trimmed, history)");
 const pendingIndex = indexOfSource("resolvePendingChoice(trimmed, conversationState, now)");
 const cueIndex = indexOfSource("isCorrectionCue(trimmed)");
 const repeatIndex = indexOfSource("repeatedMealCandidate(effectiveBody, history)");
-const contextIndex = indexOfSource("formatConversationContext(history)");
+const contextIndex = indexOfSource("formatConversationContext(needsHistory ? history : [])");
 const parseIndex = indexOfSource("parseMeal(effectiveBody, contextBlocks)");
 assert.ok(tdeeClearIndex < stateIndex, "conversation state must normalize after the TDEE block");
 assert.ok(stateIndex < proteinIndex && proteinIndex < parseIndex, "contextual protein reply must route before generic parsing");
@@ -98,19 +127,29 @@ assert.ok(historyIndex < mediaIndex && mediaIndex < parseIndex, "recent-media ro
 assert.ok(pendingIndex < cueIndex, "pending repeat choice must resolve before generic correction cues");
 assert.ok(cueIndex < repeatIndex && repeatIndex < parseIndex, "correction and repeat routing must happen before generic parsing");
 assert.ok(contextIndex < parseIndex, "recognized conversation context must be built before parsing");
-assert.match(serverSource, /const contextBlocks = \[\s*formatConversationContext\(history\),\s*formatLastLogContext\(recentBatch\),?\s*\]/);
-assert.match(serverSource, /const needsHistory = needsConversationContext\(trimmed, conversationState, now\);\s*const history = needsHistory\s*\?\s*await recentConversation\(from, new Date\(now\)\)\s*:\s*\[\];/);
+assert.match(serverSource, /const contextBlocks = \[\s*formatConversationContext\(needsHistory \? history : \[\]\),\s*formatLastLogContext\(recentBatch\),?\s*\]/);
+assert.match(serverSource, /const needsHistory = needsConversationContext\(trimmed, conversationState, now\);\s*const needsRepeatCheck = needsRepeatedMealCheck\(trimmed, conversationState, now\);\s*const history = needsHistory \|\| needsRepeatCheck\s*\?\s*await recentConversation\(from, new Date\(now\)\)\s*:\s*\[\];/);
 assert.match(serverSource, /forcedIntent === "replace_last"\s*\|\|\s*expectedCorrectedMeal\s*\|\|\s*looksLikeCorrection\(effectiveBody\)/);
 assert.match(serverSource, /parsed\.intent === "log"\s*&&\s*\(parsed\.items \|\| \[\]\)\.length/);
 assert.match(serverSource, /parsed\.intent = forcedIntent/);
 assert.match(serverSource, /candidateBody:\s*effectiveBody\.trim\(\)\.slice\(0, RATE\.maxLen\)/);
 assert.match(serverSource, /repeatMealCandidateBody\(conversationState, history\)/);
 assert.match(serverSource, /if \(forcedIntent === "replace_last"\) parsed\.replace_target = null/);
-assert.match(serverSource, /expiresAt:\s*new Date\(now \+ WINDOW_MS\)\.toISOString\(\)/);
+assert.match(serverSource, /claimConversationState\(from, conversationState\.nonce\)/);
+assert.match(serverSource, /logRowsByExactIds\(from, conversationState\.targetLogIds\)/);
+assert.match(serverSource, /deleteLogRowsByExactIds\(from, conversationState\.targetLogIds\)/);
+assert.match(serverSource, /logMeal\(from, parsed, \{ awaitInsert: true \}\)/);
 
 process.env.SUPABASE_URL ||= "https://example.supabase.co";
 process.env.SUPABASE_SERVICE_KEY ||= "test-key";
-const { recentConversation, saveConversationState } = require("../src/db.js");
+const {
+  recentConversation,
+  saveConversationState,
+  claimConversationState,
+  clearConversationStateIfUnchanged,
+  logRowsByExactIds,
+  deleteLogRowsByExactIds,
+} = require("../src/db.js");
 
 function recentClient(response) {
   const calls = [];
@@ -123,6 +162,62 @@ function recentClient(response) {
     limit(value) { calls.push(["limit", value]); return Promise.resolve(response); },
   };
   return { calls, client: { from(table) { calls.push(["from", table]); return builder; } } };
+}
+
+function exactLogClient(seedRows) {
+  const calls = [];
+  const rows = [...seedRows];
+  return {
+    calls,
+    rows,
+    client: {
+      rpc(name, args) {
+        calls.push(["rpc", name, args]);
+        const matches = rows.filter(row =>
+          row.phone_number === args.p_phone && args.p_ids.includes(row.id)
+        );
+        if (name !== "delete_user_logs_exact" || matches.length !== args.p_ids.length) {
+          return Promise.resolve({ data: [], error: null });
+        }
+        for (const row of matches) rows.splice(rows.indexOf(row), 1);
+        return Promise.resolve({ data: matches, error: null });
+      },
+      from(table) {
+        calls.push(["from", table]);
+        let mode = "read";
+        let phone = null;
+        let ids = [];
+        let deleted = [];
+        const builder = {
+          select(value) {
+            calls.push(["select", value]);
+            if (mode === "delete") return Promise.resolve({ data: deleted, error: null });
+            return this;
+          },
+          delete() { calls.push(["delete"]); mode = "delete"; return this; },
+          eq(field, value) {
+            calls.push(["eq", field, value]);
+            if (field === "phone_number") phone = value;
+            return this;
+          },
+          in(field, value) {
+            calls.push(["in", field, value]);
+            ids = value;
+            if (mode === "read") {
+              return Promise.resolve({
+                data: rows.filter(row => row.phone_number === phone && ids.includes(row.id)),
+                error: null,
+              });
+            }
+            deleted = rows.filter(row => row.phone_number === phone && ids.includes(row.id));
+            for (const row of deleted) rows.splice(rows.indexOf(row), 1);
+            return this;
+          },
+        };
+        return builder;
+      },
+    },
+  };
 }
 
 const queryNow = new Date("2023-11-14T22:13:20.000Z");
@@ -156,6 +251,96 @@ const dbHelperTests = (async () => {
     { onConflict: "phone_number" },
   ]]);
 
+  const claimResults = [true, false];
+  const claimCalls = [];
+  const claimClient = {
+    rpc(name, args) {
+      claimCalls.push([name, args]);
+      return Promise.resolve({ data: claimResults.shift(), error: null });
+    },
+  };
+  assert.strictEqual(await claimConversationState("+919999999999", validNonce, claimClient), true);
+  assert.strictEqual(await claimConversationState("+919999999999", validNonce, claimClient), false);
+  assert.deepStrictEqual(claimCalls, [
+    ["claim_conversation_state", { p_phone: "+919999999999", p_nonce: validNonce }],
+    ["claim_conversation_state", { p_phone: "+919999999999", p_nonce: validNonce }],
+  ]);
+  let mutationCalls = 0;
+  assert.deepStrictEqual(await executeClaimedAction({
+    phone: "+919999999999",
+    nonce: validNonce,
+    claim: async () => false,
+    action: async () => { mutationCalls++; },
+  }), { claimed: false, value: null });
+  assert.strictEqual(mutationCalls, 0);
+  const clearClient = {
+    rpc(name, args) {
+      assert.strictEqual(name, "clear_conversation_state_if_match");
+      assert.deepStrictEqual(args, {
+        p_phone: "+919999999999",
+        p_state: { awaiting: "malformed" },
+      });
+      return Promise.resolve({ data: true, error: null });
+    },
+  };
+  assert.strictEqual(await clearConversationStateIfUnchanged(
+    "+919999999999", { awaiting: "malformed" }, clearClient
+  ), true);
+
+  const oldRows = [
+    { id: 11, phone_number: "+919999999999", food_name: "Idli" },
+    { id: 12, phone_number: "+919999999999", food_name: "Sambhar" },
+    { id: 99, phone_number: "+919999999999", food_name: "Newer meal" },
+  ];
+  const exactFixture = exactLogClient(oldRows);
+  assert.deepStrictEqual(
+    (await logRowsByExactIds("+919999999999", [11, 12], exactFixture.client)).map(row => row.id),
+    [11, 12]
+  );
+  assert.deepStrictEqual(
+    (await deleteLogRowsByExactIds("+919999999999", [11, 12], exactFixture.client)).map(row => row.id),
+    [11, 12]
+  );
+  assert.deepStrictEqual(exactFixture.rows.map(row => row.id), [99]);
+
+  const partialFixture = exactLogClient([
+    { id: 11, phone_number: "+919999999999", food_name: "Idli" },
+  ]);
+  assert.strictEqual(await deleteLogRowsByExactIds(
+    "+919999999999", [11, 12], partialFixture.client
+  ), null);
+  assert.strictEqual(partialFixture.calls.some(call => call[0] === "delete"), false);
+  assert.deepStrictEqual(partialFixture.rows.map(row => row.id), [11]);
+
+  const savedStates = [];
+  const createdState = await persistConversationState({
+    phone: "+919999999999",
+    awaiting: "repeat_meal_choice",
+    targetRows: oldRows.slice(0, 2),
+    candidateBody: "idli sambhar coconut chutney",
+    now,
+    save: async (_phone, state) => { savedStates.push(state); return true; },
+    nonceFactory: () => validNonce,
+  });
+  assert.deepStrictEqual(createdState, {
+    awaiting: "repeat_meal_choice",
+    expiresAt: new Date(now + WINDOW_MS).toISOString(),
+    nonce: validNonce,
+    targetLogIds: [11, 12],
+    candidateBody: "idli sambhar coconut chutney",
+  });
+  assert.deepStrictEqual(savedStates, [createdState]);
+  let failedPromptWrites = 0;
+  assert.strictEqual(await persistConversationState({
+    phone: "+919999999999",
+    awaiting: "corrected_meal",
+    targetRows: oldRows.slice(0, 2),
+    now,
+    save: async () => { failedPromptWrites++; return false; },
+    nonceFactory: () => validNonce,
+  }), null);
+  assert.strictEqual(failedPromptWrites, 1);
+
   const originalConsoleError = console.error;
   console.error = () => {};
   try {
@@ -174,35 +359,53 @@ const dbHelperTests = (async () => {
 
 const now = 1_700_000_000_000;
 const futureIso = new Date(now + 1).toISOString();
+const validNonce = "123e4567-e89b-42d3-a456-426614174000";
+const boundState = { nonce: validNonce, targetLogIds: [11, 12] };
 assert.strictEqual(WINDOW_MS, 6 * 60 * 60 * 1000);
 assert.strictEqual(MAX_EXCHANGES, 10);
 
 assert.deepStrictEqual(normaliseConversationState({
-  awaiting: "corrected_meal", expiresAt: futureIso,
-}, now), { awaiting: "corrected_meal", expiresAt: futureIso });
+  awaiting: "corrected_meal", expiresAt: futureIso, ...boundState,
+}, now), { awaiting: "corrected_meal", expiresAt: futureIso, ...boundState });
 assert.deepStrictEqual(normaliseConversationState({
-  awaiting: "repeat_meal_choice", expiresAt: futureIso,
-}, now), { awaiting: "repeat_meal_choice", expiresAt: futureIso });
+  awaiting: "repeat_meal_choice", expiresAt: futureIso, ...boundState,
+}, now), { awaiting: "repeat_meal_choice", expiresAt: futureIso, ...boundState });
 assert.deepStrictEqual(normaliseConversationState({
   awaiting: "repeat_meal_choice",
   expiresAt: futureIso,
+  ...boundState,
   candidateBody: "  idli sambhar coconut chutney  ",
 }, now), {
   awaiting: "repeat_meal_choice",
   expiresAt: futureIso,
+  ...boundState,
   candidateBody: "idli sambhar coconut chutney",
 });
 assert.strictEqual(normaliseConversationState({
   awaiting: "repeat_meal_choice",
   expiresAt: futureIso,
+  ...boundState,
   candidateBody: "x".repeat(400),
 }, now).candidateBody.length, 300);
 assert.deepStrictEqual(normaliseConversationState({
-  awaiting: "repeat_meal_choice", expiresAt: futureIso, candidateBody: 42,
-}, now), { awaiting: "repeat_meal_choice", expiresAt: futureIso });
+  awaiting: "repeat_meal_choice", expiresAt: futureIso, ...boundState, candidateBody: 42,
+}, now), { awaiting: "repeat_meal_choice", expiresAt: futureIso, ...boundState });
 assert.deepStrictEqual(normaliseConversationState({
-  awaiting: "corrected_meal", expiresAt: futureIso, candidateBody: "must be omitted",
-}, now), { awaiting: "corrected_meal", expiresAt: futureIso });
+  awaiting: "corrected_meal", expiresAt: futureIso, ...boundState, candidateBody: "must be omitted",
+}, now), { awaiting: "corrected_meal", expiresAt: futureIso, ...boundState });
+assert.deepStrictEqual(normaliseConversationState({
+  awaiting: "corrected_meal", expiresAt: futureIso, nonce: "bad", targetLogIds: [11],
+}, now), {});
+assert.deepStrictEqual(normaliseConversationState({
+  awaiting: "corrected_meal", expiresAt: futureIso, nonce: validNonce, targetLogIds: [11, 0],
+}, now), {});
+assert.deepStrictEqual(normaliseConversationState({
+  awaiting: "corrected_meal", expiresAt: futureIso, nonce: validNonce, targetLogIds: [],
+}, now), {});
+assert.deepStrictEqual(normaliseConversationState({
+  awaiting: "corrected_meal", expiresAt: futureIso, nonce: validNonce,
+  targetLogIds: Array.from({ length: 25 }, (_, index) => index + 1),
+}, now).targetLogIds, Array.from({ length: 20 }, (_, index) => index + 1));
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "wrong", expiresAt: futureIso }, now), {});
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: new Date(now).toISOString() }, now), {});
 assert.deepStrictEqual(normaliseConversationState(null, now), {});
@@ -210,16 +413,16 @@ assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", 
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2023-02-29T22:13:20Z" }, now), {});
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2026-04-31T22:13:20Z" }, now), {});
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2026-01-01T24:00:00Z" }, now), {});
-assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2023-11-14T22:13:20.001+00:00" }, now), {
-  awaiting: "corrected_meal", expiresAt: futureIso,
+assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2023-11-14T22:13:20.001+00:00", ...boundState }, now), {
+  awaiting: "corrected_meal", expiresAt: futureIso, ...boundState,
 });
-assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2023-11-15T03:43:20.001+05:30" }, now), {
-  awaiting: "corrected_meal", expiresAt: futureIso,
+assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2023-11-15T03:43:20.001+05:30", ...boundState }, now), {
+  awaiting: "corrected_meal", expiresAt: futureIso, ...boundState,
 });
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: futureIso }, Symbol("now")), {});
 assert.deepStrictEqual(normaliseConversationState(Symbol("state"), now), {});
 
-const active = { awaiting: "corrected_meal", expiresAt: futureIso };
+const active = { awaiting: "corrected_meal", expiresAt: futureIso, ...boundState };
 assert.strictEqual(needsConversationContext("anything", active, now), true);
 assert.strictEqual(needsConversationContext("", {}, now), false);
 assert.strictEqual(needsConversationContext("same one", {}, now), true);
@@ -231,13 +434,20 @@ assert.strictEqual(needsConversationContext("breakfast was poha", {}, now), true
 assert.strictEqual(needsConversationContext("breakfast", {}, now), false);
 assert.strictEqual(needsConversationContext("2 eggs", {}, now), false);
 assert.strictEqual(needsConversationContext("one banana", {}, now), false);
-assert.strictEqual(needsConversationContext("idli sambhar coconut chutney", {}, now), true);
+assert.strictEqual(needsConversationContext("idli sambhar coconut chutney", {}, now), false);
+assert.strictEqual(needsConversationContext("chicken rice dal salad", {}, now), false);
 assert.strictEqual(needsConversationContext("hello there", {}, now), false);
 assert.strictEqual(needsConversationContext("half bowl", {}, now), true);
 assert.strictEqual(needsConversationContext("kg", {}, now), true);
 assert.strictEqual(needsConversationContext("kilograms", {}, now), true);
 assert.strictEqual(needsConversationContext("lbs", {}, now), true);
 assert.strictEqual(needsConversationContext("2 roti and dal", {}, now), false);
+assert.strictEqual(needsRepeatedMealCheck("idli sambhar coconut chutney", {}, now), false);
+assert.strictEqual(needsRepeatedMealCheck("breakfast idli sambhar coconut chutney", {}, now), true);
+assert.strictEqual(needsRepeatedMealCheck("anything", active, now), false);
+assert.strictEqual(needsRepeatedMealCheck("anything", {
+  awaiting: "repeat_meal_choice", expiresAt: futureIso, ...boundState,
+}, now), true);
 
 const exchanges = Array.from({ length: 12 }, (_, index) => ({
   body: `meal ${index} ${"x".repeat(350)}`,
@@ -310,11 +520,15 @@ assertDiscarded([spoofedContext, spoofedContext]);
 assert.strictEqual(refersToRecentMedia("what is this?", exchanges), true);
 assert.strictEqual(refersToRecentMedia("what is this?", [{ body: "photo", reply: "ok" }]), false);
 assert.strictEqual(refersToRecentMedia("what is this?", [{ body: "photo", reply: "ok", media: "false" }]), false);
-assert.strictEqual(isCorrectionCue("I m telling from first, it was poha"), true);
+assert.strictEqual(refersToRecentMedia("replace this with rice", [{ body: "food photo", reply: "ok", media: true }]), false);
+assert.strictEqual(refersToRecentMedia("inspect this photo", [{ body: "food photo", reply: "ok", media: true }]), true);
+assert.strictEqual(isCorrectionCue("from first"), true);
+assert.strictEqual(isCorrectionCue("I am telling from first"), true);
+assert.strictEqual(isCorrectionCue("I m telling from first, it was poha"), false);
 assert.strictEqual(isCorrectionCue("i'm telling you from the first one"), true);
-assert.strictEqual(isCorrectionCue("I am saying it was earlier meal"), true);
-assert.strictEqual(isCorrectionCue("actually meant poha"), true);
-assert.strictEqual(isCorrectionCue("actually I meant poha"), true);
+assert.strictEqual(isCorrectionCue("I am saying it was earlier meal"), false);
+assert.strictEqual(isCorrectionCue("actually meant poha"), false);
+assert.strictEqual(isCorrectionCue("actually I meant poha"), false);
 assert.strictEqual(isCorrectionCue("actually, it was poha"), false);
 assert.strictEqual(isCorrectionCue("actually, how much protein?"), false);
 assert.strictEqual(isCorrectionCue("is this correct?"), false);
@@ -323,6 +537,15 @@ assert.strictEqual(isCorrectionCue("don't correct it, this is a new meal"), fals
 assert.strictEqual(isCorrectionCue("did you apply my correction?"), false);
 assert.strictEqual(isCorrectionCue("is this corrected?"), false);
 assert.strictEqual(isCorrectionCue("2 roti and dal"), false);
+assert.strictEqual(isExplicitIndependentMutation("I meant poha"), true);
+assert.strictEqual(isExplicitIndependentMutation("replace this with rice"), true);
+assert.strictEqual(isExplicitIndependentMutation("cake was 150 calories"), true);
+assert.strictEqual(isExplicitIndependentMutation("undo 2"), true);
+assert.strictEqual(isExplicitIndependentMutation("undo"), true);
+assert.strictEqual(isExplicitIndependentMutation("delete all"), true);
+assert.strictEqual(isExplicitIndependentMutation("item 2 was wrong"), true);
+assert.strictEqual(isExplicitIndependentMutation("from first"), false);
+assert.strictEqual(isExplicitIndependentMutation("correction"), false);
 
 const logged = [{ body: "2 idli sambhar coconut chutney", reply: "✅ Logged: breakfast" }];
 assert.strictEqual(repeatedMealCandidate("idli sambhar coconut chutney", logged), true);
@@ -335,8 +558,9 @@ const anonymizedBreakfast = [{
   reply: "✅ Logged: breakfast",
 }];
 assert.strictEqual(repeatedMealCandidate("rolled oats low fat milk yogabar protein powder mango", anonymizedBreakfast), true);
+assert.strictEqual(needsRepeatedMealCheck("breakfast rolled oats low fat milk yogabar protein powder mango", {}, now), true);
 
-const pending = { awaiting: "repeat_meal_choice", expiresAt: futureIso };
+const pending = { awaiting: "repeat_meal_choice", expiresAt: futureIso, ...boundState };
 const repeatedBody = "rolled oats low fat milk protein powder mango";
 const pendingHistory = [
   { body: repeatedBody, reply: "✅ Logged" },
@@ -348,6 +572,7 @@ const pendingHistory = [
 const persistedPending = normaliseConversationState({
   awaiting: "repeat_meal_choice",
   expiresAt: futureIso,
+  ...boundState,
   candidateBody: " rolled oats low fat milk protein powder mango ",
 }, now);
 assert.strictEqual(resolvePendingChoice("yes", persistedPending, now), null);
