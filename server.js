@@ -8,9 +8,10 @@ const fs = require("fs");
 const path = require("path");
 const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
+const { advanceTdee } = require("./src/tdee.js");
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
-const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
+const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
 const { validateSignature, extractMessages, sendMessage, markRead } = require("./src/meta.js");
 const { logCorrectionEvent } = require("./src/correctionLogger.js");
@@ -300,6 +301,15 @@ async function handleMessage(from, body, opts = {}) {
   }
 
   const profile = await getProfile(from);
+
+  const tdee = advanceTdee(trimmed, profile.tdee_profile || {});
+  if (tdee.handled) {
+    await saveTdeeProfile(from, tdee.state);
+    return tdee.reply;
+  }
+  if (tdee.clear) {
+    await saveTdeeProfile(from, tdee.state);
+  }
 
   // Item-number targeting: "undo 14", "delete 14, 15", "remove #3". A bare
   // number counts as a row reference ONLY here, where a delete verb makes any

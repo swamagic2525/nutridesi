@@ -33,7 +33,15 @@ assert.deepStrictEqual(female.fatLoss, [1300, 1400]);
 const floor = calculateTdee({
   age: 70, formula: "female", heightCm: 145, weightKg: 40, activity: 1,
 });
-assert.ok(floor.fatLoss === null || floor.fatLoss[0] >= 1200);
+assert.strictEqual(floor.fatLoss, null);
+
+const activityExpected = { 1: 2150, 2: 2450, 3: 2750, 4: 3050, 5: 3400 };
+for (const activity of [1, 2, 3, 4, 5]) {
+  const result = calculateTdee({
+    age: 30, formula: "male", heightCm: 180, weightKg: 80, activity,
+  });
+  assert.strictEqual(result.tdee, activityExpected[activity]);
+}
 
 const metric = parseFields("31, male, 175 cm, 80 kg, activity 3", emptyState());
 assert.deepStrictEqual(
@@ -55,6 +63,8 @@ assert.strictEqual(imperial.patch.activity, 2);
 assert.strictEqual(parseFields("height 5.8", emptyState()).error, "ambiguous_height");
 assert.strictEqual(parseFields("weight 180", emptyState()).error, "ambiguous_weight");
 assert.strictEqual(parseFields("age -3", emptyState()).error, "invalid_age");
+assert.strictEqual(parseFields("height 999 cm", emptyState()).error, "invalid_height");
+assert.strictEqual(parseFields("weight 500 kg", emptyState()).error, "invalid_weight");
 assert.ok(
   suspiciousReasons({
     age: 30, formula: "male", heightCm: 175, weightKg: 210, activity: 2,
@@ -118,4 +128,30 @@ const underage = advanceTdee("calculate my calories age 16 male 170 cm 60 kg", {
 assert.strictEqual(underage.state.phase, "inactive");
 assert.match(underage.reply, /under 18/i);
 
+const pregnancy = advanceTdee("calculate my calories while pregnant", {});
+assert.strictEqual(pregnancy.state.phase, "inactive");
+assert.match(pregnancy.reply, /pregnancy or breastfeeding/i);
+
+let lowMaintenance = advanceTdee(
+  "calculate my calories age 70 female 145 cm 40 kg activity 1",
+  {}
+);
+assert.strictEqual(lowMaintenance.state.phase, "confirming");
+lowMaintenance = advanceTdee("yes", lowMaintenance.state);
+assert.strictEqual(lowMaintenance.state.phase, "complete");
+assert.match(lowMaintenance.reply, /Fat loss:\* No automated target/);
+
+const fs = require("fs");
+const serverSource = fs.readFileSync(require.resolve("../server.js"), "utf8");
+assert.match(
+  serverSource,
+  /advanceTdee\(trimmed, profile\.tdee_profile \|\| \{\}\)/
+);
+assert.ok(
+  serverSource.indexOf("advanceTdee(trimmed")
+    < serverSource.indexOf("const correctionCandidate"),
+  "TDEE routing must run before parseMeal/correction routing"
+);
+
 console.log("tdee-test: state machine passed");
+console.log("tdee-test: server routing hook present");

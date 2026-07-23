@@ -31,7 +31,8 @@ async function ensureUser(phone) {
 // default of 2000, so it can't distinguish set-vs-unset on its own).
 async function getProfile(phone) {
   const { data, error } = await supabase.from("users")
-    .select("name, goal_kcal, goal_protein, nudge_count").eq("phone_number", phone).maybeSingle();
+    .select("name, goal_kcal, goal_protein, nudge_count, tdee_profile")
+    .eq("phone_number", phone).maybeSingle();
   if (error) { console.error("getProfile:", error.message); return {}; }
   const p = data || {};
   return { ...p, hasGoal: p.goal_protein != null };
@@ -45,6 +46,18 @@ async function saveProfile(phone, { name, goal_kcal, goal_protein }) {
   if (goal_protein) patch.goal_protein = goal_protein;
   const { error } = await supabase.from("users").upsert(patch, { onConflict: "phone_number" });
   if (error) console.error("saveProfile:", error.message);
+}
+
+async function saveTdeeProfile(phone, tdeeProfile) {
+  const { error } = await supabase.from("users").upsert(
+    { phone_number: phone, tdee_profile: tdeeProfile || {} },
+    { onConflict: "phone_number" }
+  );
+  if (error) {
+    console.error("saveTdeeProfile:", error.message);
+    return false;
+  }
+  return true;
 }
 
 // Fire-and-forget nudge counter bump (drives the "set a goal" prompt cap).
@@ -796,4 +809,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, bumpNudge, resolveRows, dayReport };
+module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, saveTdeeProfile, bumpNudge, resolveRows, dayReport };
