@@ -4,6 +4,7 @@ const {
   calculateTdee,
   parseFields,
   suspiciousReasons,
+  advanceTdee,
   emptyState,
 } = require("../src/tdee.js");
 
@@ -61,3 +62,60 @@ assert.ok(
 );
 
 console.log("tdee-test: calculations and parsing passed");
+
+let step = advanceTdee("calculate my calories", {});
+assert.strictEqual(step.handled, true);
+assert.strictEqual(step.state.phase, "collecting");
+assert.match(step.reply, /Age.*Male\/Female.*Height.*Weight/s);
+
+step = advanceTdee("31 male 175 cm 80 kg", step.state);
+assert.strictEqual(step.state.phase, "collecting");
+assert.match(step.reply, /How active/);
+
+step = advanceTdee("3", step.state);
+assert.strictEqual(step.state.phase, "complete");
+assert.match(step.reply, /Maintenance:\* ~2,700 kcal/);
+assert.match(step.reply, /Fat loss:\* 2,400–2,500 kcal/);
+assert.match(step.reply, /@swapnilgore2525/);
+assert.match(step.reply, /31.*male formula.*175 cm.*80 kg.*activity 3/s);
+
+const oneShot = advanceTdee(
+  "calculate my calories, age 31 male 175 cm 80 kg activity 3",
+  {}
+);
+assert.strictEqual(oneShot.state.phase, "complete");
+assert.match(oneShot.reply, /Maintenance/);
+
+let odd = advanceTdee("calculate my calories", {});
+odd = advanceTdee("age 31 male 175 cm 210 kg activity 2", odd.state);
+assert.strictEqual(odd.state.phase, "confirming");
+assert.match(odd.reply, /Just checking/);
+odd = advanceTdee("YES", odd.state);
+assert.strictEqual(odd.state.phase, "complete");
+
+let invalid = advanceTdee("calculate my calories", {});
+invalid = advanceTdee("height 999 cm", invalid.state);
+assert.strictEqual(invalid.state.invalidAttempts, 1);
+invalid = advanceTdee("height 888 cm", invalid.state);
+assert.strictEqual(invalid.state.phase, "inactive");
+assert.match(invalid.reply, /175 cm/);
+
+const preempt = advanceTdee("2 roti and dal", {
+  ...emptyState(),
+  phase: "collecting",
+  age: 31,
+  formula: "male",
+  heightCm: 175,
+  weightKg: 80,
+});
+assert.strictEqual(preempt.handled, false);
+assert.strictEqual(preempt.clear, true);
+
+const foodQuery = advanceTdee("calories in one samosa?", {});
+assert.strictEqual(foodQuery.handled, false);
+
+const underage = advanceTdee("calculate my calories age 16 male 170 cm 60 kg", {});
+assert.strictEqual(underage.state.phase, "inactive");
+assert.match(underage.reply, /under 18/i);
+
+console.log("tdee-test: state machine passed");

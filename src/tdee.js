@@ -193,6 +193,252 @@ function suspiciousReasons(state) {
   return [...new Set(reasons)];
 }
 
+function normaliseState(raw) {
+  const base = emptyState();
+  const s = raw && typeof raw === "object" ? raw : {};
+  const phase = ["inactive", "collecting", "confirming", "complete"].includes(s.phase)
+    ? s.phase
+    : "inactive";
+  return {
+    ...base,
+    phase,
+    age: Number.isInteger(s.age) && s.age >= 18 && s.age <= 100 ? s.age : null,
+    formula: ["male", "female"].includes(s.formula) ? s.formula : null,
+    heightCm: Number.isFinite(Number(s.heightCm))
+      && Number(s.heightCm) >= 100 && Number(s.heightCm) <= 250
+      ? Number(s.heightCm)
+      : null,
+    weightKg: Number.isFinite(Number(s.weightKg))
+      && Number(s.weightKg) >= 30 && Number(s.weightKg) <= 350
+      ? Number(s.weightKg)
+      : null,
+    activity: Number.isInteger(s.activity) && s.activity >= 1 && s.activity <= 5
+      ? s.activity
+      : null,
+    invalidAttempts: Math.min(Math.max(Number(s.invalidAttempts) || 0, 0), 2),
+    confirmedSignature: typeof s.confirmedSignature === "string"
+      ? s.confirmedSignature
+      : null,
+    bmr: Number.isFinite(Number(s.bmr)) ? Number(s.bmr) : null,
+    tdee: Number.isFinite(Number(s.tdee)) ? Number(s.tdee) : null,
+    calculatedAt: typeof s.calculatedAt === "string" ? s.calculatedAt : null,
+  };
+}
+
+function signature(state) {
+  return [
+    state.age,
+    state.formula,
+    state.heightCm,
+    state.weightKg,
+    state.activity,
+  ].join("|");
+}
+
+function demographicsPrompt(missing) {
+  const labels = [];
+  if (missing.includes("age")) labels.push("Age");
+  if (missing.includes("formula")) labels.push("Male/Female formula");
+  if (missing.includes("heightCm")) labels.push("Height");
+  if (missing.includes("weightKg")) labels.push("Weight");
+  const lead = labels.length === 4
+    ? "Sure 💪 Send these in one message:"
+    : `I still need: *${labels.join(" · ")}*`;
+  return `${lead}\n*${labels.join(" · ")}*\nExample: _31, male, 175 cm, 80 kg_`;
+}
+
+function activityPrompt() {
+  return "How active are you normally?\n\n"
+    + "1️⃣ Mostly sitting, little exercise\n"
+    + "2️⃣ Exercise 1–3 days/week\n"
+    + "3️⃣ Exercise 3–5 days/week\n"
+    + "4️⃣ Exercise 6–7 days/week or an active job\n"
+    + "5️⃣ Hard training plus a physical job\n\n"
+    + "_Choose the lower option if unsure._";
+}
+
+function missingReply(missing) {
+  const demographics = ["age", "formula", "heightCm", "weightKg"]
+    .filter(field => missing.includes(field));
+  return demographics.length ? demographicsPrompt(demographics) : activityPrompt();
+}
+
+function restrictedReply(reason) {
+  const subject = reason === "underage"
+    ? "Because you're under 18"
+    : "During pregnancy or breastfeeding";
+  return `${subject}, I won't calculate an automated calorie target. `
+    + "Your needs are more individual—please speak with a doctor or registered dietitian.";
+}
+
+const INVALID_REPLIES = {
+  ambiguous_height: "Please send height as *175 cm* or *5 ft 9 in*—I won't guess decimal feet.",
+  ambiguous_weight: "Please include the unit: for example *80 kg* or *176 lb*.",
+  invalid_age: "That age doesn't look valid. This calculator is for adults aged 18–100.",
+  invalid_height: "That height doesn't look valid. Send it as *175 cm* or *5 ft 9 in*.",
+  invalid_weight: "That weight doesn't look valid. Send it as *80 kg* or *176 lb*.",
+  invalid_activity: "Please choose an activity level from *1 to 5*.",
+};
+
+function invalidResult(state, error) {
+  const attempts = (state.invalidAttempts || 0) + 1;
+  if (attempts >= 2) {
+    return {
+      handled: true,
+      clear: false,
+      state: emptyState(),
+      reply: "Let's stop the calculator for now so I don't use a wrong number. "
+        + "Start again with: *calculate my calories — 31, male, 175 cm, 80 kg*",
+    };
+  }
+  return {
+    handled: true,
+    clear: false,
+    state: { ...state, phase: "collecting", invalidAttempts: attempts },
+    reply: INVALID_REPLIES[error] || "That answer doesn't look valid. Please send it again.",
+  };
+}
+
+function confirmationReply(state) {
+  return `Just checking: did you mean *${state.weightKg} kg at ${state.heightCm} cm*, `
+    + `age ${state.age}, using the ${state.formula} formula and activity ${state.activity}? `
+    + "Reply *YES* to confirm or send the corrected values.";
+}
+
+function formatKcal(value) {
+  return Math.round(Number(value)).toLocaleString("en-IN");
+}
+
+function resultReply(state, result) {
+  let lossLine;
+  let floorWarning = "";
+  if (!result.fatLoss) {
+    lossLine = "*Fat loss:* No automated target";
+    floorWarning = "\n⚠️ Estimated maintenance is already at or below NutriDesi's "
+      + "1,200 kcal safety floor, so I won't recommend a deficit.";
+  } else if (result.fatLoss[0] === result.fatLoss[1]) {
+    lossLine = `*Fat loss:* ${formatKcal(result.fatLoss[0])} kcal/day`;
+    floorWarning = "\n⚠️ A larger deficit would take you below NutriDesi's 1,200 kcal "
+      + "safety floor, so I won't recommend it. This floor is only a guardrail—not "
+      + "a guarantee that 1,200 is appropriate for everyone.";
+  } else {
+    lossLine = `*Fat loss:* ${formatKcal(result.fatLoss[0])}–${formatKcal(result.fatLoss[1])} kcal/day`;
+    if (result.fatLoss[0] === 1200) {
+      floorWarning = "\n⚠️ A larger deficit would take you below NutriDesi's 1,200 kcal "
+        + "safety floor, so I won't recommend it. This floor is only a guardrail—not "
+        + "a guarantee that 1,200 is appropriate for everyone.";
+    }
+  }
+  return "🔥 *Your estimated daily calories*\n\n"
+    + `_Based on: age ${state.age} · ${state.formula} formula · ${state.heightCm} cm · `
+    + `${state.weightKg} kg · activity ${state.activity}_\n\n`
+    + `*Maintenance:* ~${formatKcal(result.tdee)} kcal/day\n`
+    + `${lossLine}\n`
+    + `*Weight gain:* ${formatKcal(result.weightGain[0])}–${formatKcal(result.weightGain[1])} kcal/day`
+    + `${floorWarning}\n\n`
+    + "Start near the middle of your chosen range and adjust from your results.\n\n"
+    + "_These are predictions and may vary with your actual lifestyle and metabolism. "
+    + "The best approach is to track your food and morning weight consistently for "
+    + "2–3 weeks. If your average weight stays stable, your average calorie intake is "
+    + "close to your real TDEE._\n\n"
+    + "_This is a predicted estimate, not medical advice. For personalised guidance, "
+    + "consult a qualified coach. If you have a medical condition, are under 18, "
+    + "pregnant/breastfeeding, take relevant medication, or have a history of disordered "
+    + "eating, speak with a doctor or registered dietitian before changing your calories._\n\n"
+    + "📘 _Want to plan your own program? DM *\"PDF\"* to Swapnil at "
+    + "*@swapnilgore2525* for his detailed 30-page guide._";
+}
+
+function completedResult(state, now) {
+  const result = calculateTdee(state);
+  const completed = {
+    ...state,
+    phase: "complete",
+    invalidAttempts: 0,
+    bmr: result.bmr,
+    tdee: result.tdee,
+    calculatedAt: now.toISOString(),
+  };
+  return {
+    handled: true,
+    clear: false,
+    state: completed,
+    reply: resultReply(completed, result),
+  };
+}
+
+function advanceTdee(text, stored = {}, now = new Date()) {
+  let state = normaliseState(stored);
+  const explicit = isTdeeRequest(text);
+  const active = state.phase === "collecting" || state.phase === "confirming";
+  if (!explicit && !active) return { handled: false, clear: false, state };
+
+  if (explicit && !active) {
+    state = {
+      ...state,
+      phase: "collecting",
+      invalidAttempts: 0,
+      confirmedSignature: null,
+    };
+  }
+
+  if (
+    state.phase === "confirming"
+    && /^\s*(yes|haan|ha|confirm|correct)\s*$/i.test(text)
+  ) {
+    state.confirmedSignature = signature(state);
+    return completedResult(state, now);
+  }
+
+  const parsed = parseFields(text, state);
+  if (parsed.restricted) {
+    return {
+      handled: true,
+      clear: false,
+      state: emptyState(),
+      reply: restrictedReply(parsed.restricted),
+    };
+  }
+  if (parsed.error) return invalidResult(state, parsed.error);
+
+  const useful = Object.keys(parsed.patch).length > 0;
+  if (!explicit && active && !useful) {
+    return {
+      handled: false,
+      clear: true,
+      state: { ...state, phase: "inactive" },
+    };
+  }
+
+  state = {
+    ...state,
+    ...parsed.patch,
+    phase: "collecting",
+    invalidAttempts: 0,
+  };
+  const missing = ["age", "formula", "heightCm", "weightKg", "activity"]
+    .filter(field => state[field] == null);
+  if (missing.length) {
+    return {
+      handled: true,
+      clear: false,
+      state,
+      reply: missingReply(missing),
+    };
+  }
+
+  const reasons = suspiciousReasons(state);
+  if (reasons.length && state.confirmedSignature !== signature(state)) {
+    return {
+      handled: true,
+      clear: false,
+      state: { ...state, phase: "confirming" },
+      reply: confirmationReply(state),
+    };
+  }
+  return completedResult(state, now);
+}
+
 module.exports = {
   ACTIVITY,
   emptyState,
@@ -200,6 +446,8 @@ module.exports = {
   calculateTdee,
   parseFields,
   suspiciousReasons,
+  normaliseState,
+  advanceTdee,
   lbToKg,
   feetToCm,
 };
