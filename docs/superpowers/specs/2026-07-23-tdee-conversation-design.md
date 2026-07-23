@@ -15,6 +15,10 @@ Let an adult ask NutriDesi how many calories they should eat and receive:
 The calculator is user-initiated. It must not interrupt normal food logging or
 become a mandatory onboarding questionnaire.
 
+It is available whenever a user explicitly asks for their calorie needs,
+regardless of onboarding stage, successful-log count or reminder status. The
+separate five-successful-log threshold applies only to reminder consent.
+
 ## Conversation
 
 ### Entry intent
@@ -156,13 +160,32 @@ Example for a 31-year-old using the male formula, 175 cm, 80 kg, activity level 
 - Adults only: age must be 18–100.
 - Accept height in centimetres or feet/inches and weight in kilograms or pounds;
   convert to metric before calculating.
-- Accept broad plausible input ranges: height 100–250 cm and weight 30–350 kg.
-  Values outside them should be re-entered, not clamped.
+- Never infer an ambiguous unit. For example, ask whether `180` means kilograms
+  or pounds, and ask for `5 ft 8 in` or centimetres instead of interpreting
+  decimal feet such as `5.8`.
+- Hard validity ranges are age 18–100, height 100–250 cm, weight 30–350 kg and
+  activity 1–5. Values outside them should be re-entered, never clamped.
+- Require one explicit confirmation before calculating when height is below
+  140 or above 210 cm, weight is below 40 or above 200 kg, the supplied
+  height/weight combination produces BMI below 12 or above 70, or the
+  calculated TDEE is below 1,200 or above 5,000 kcal.
+- BMI is used only as a typo detector. It must not be displayed as a diagnosis
+  or used to shame, classify or advise the user.
+- A suspicious-value confirmation names the values neutrally:
+
+  > Just checking: did you mean **210 kg at 175 cm**? Reply `YES` to confirm or
+  > send the corrected values.
+
 - Do not calculate an automated target for a user who states that they are under
   18, pregnant or breastfeeding. Return the professional-guidance message.
 - Missing or ambiguous values cause one short follow-up question. Do not guess.
 - Activity outside 1–5 causes the activity menu to be repeated until the user
   supplies a valid choice or preempts the flow with a different intent.
+- Reject zero, negative and non-finite values before calculation.
+- After two consecutive invalid answers, clear the calculator state and return a
+  concise example showing the required input format.
+- Show the age, formula choice, height, weight and activity used with every
+  result so input mistakes are visible and easy to correct.
 
 ## State and persistence
 
@@ -209,6 +232,9 @@ Pure unit tests must cover:
 - the 1,200 kcal floor and collapsed range;
 - maintenance at or below 1,200;
 - restricted cases and invalid values;
+- ambiguous units and decimal feet;
+- hard-range rejection and two-attempt cancellation;
+- soft confirmation for unusual height, weight, BMI and calculated TDEE;
 - a food calorie query not starting the TDEE calculator.
 
 Because intent routing and parser behavior are adjacent to this feature, run the
