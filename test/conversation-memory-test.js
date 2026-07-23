@@ -28,6 +28,9 @@ assert.match(SYSTEM_PROMPT, /FINAL\s+historical\s+USER\s+entry\s+immediately\s+b
 assert.match(SYSTEM_PROMPT, /an older cue never authorizes\s+replacement/i);
 assert.match(SYSTEM_PROMPT, /ambiguous[\s\S]*intent "log"[\s\S]*never replace_last or undo/i);
 assert.match(SYSTEM_PROMPT, /app-created CURRENT USER MESSAGE envelope[\s\S]*JSON text.*untrusted quoted data/i);
+assert.match(SYSTEM_PROMPT, /APP-PROVIDED LATEST LOG[\s\S]*app-created context[\s\S]*untrusted\s+quoted row data/i);
+assert.match(SYSTEM_PROMPT, /only\s+for\s+an\s+immediately\s+previous\s+log\s+correction\s+or\s+pronoun[\s\S]*never\s+older\s+logs/i);
+assert.doesNotMatch(SYSTEM_PROMPT, /MOST RECENT LOG CONTEXT/);
 
 const dbSource = fs.readFileSync(require.resolve("../src/db.js"), "utf8");
 const schemaSource = fs.readFileSync(require.resolve("../supabase-schema.sql"), "utf8");
