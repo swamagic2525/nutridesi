@@ -14,6 +14,24 @@ const finiteNumber = value => {
     return Number.isFinite(number) ? number : null;
   } catch (_) { return null; }
 };
+const isLeapYear = year => year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+const validIsoDateTime = value => {
+  const match = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$/.exec(value);
+  if (!match) return false;
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const second = Number(secondText);
+  const days = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return month >= 1 && month <= 12
+    && day >= 1 && day <= days[month - 1]
+    && hour >= 0 && hour <= 23
+    && minute >= 0 && minute <= 59
+    && second >= 0 && second <= 59;
+};
 
 function normaliseConversationState(raw, now = Date.now()) {
   const awaiting = safeGet(raw, "awaiting");
@@ -25,14 +43,20 @@ function normaliseConversationState(raw, now = Date.now()) {
     || !Number.isFinite(expiry)
     || timestamp == null
     || expiry <= timestamp
-    || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(expiresAt)
+    || !validIsoDateTime(expiresAt)
   ) return {};
   return { awaiting, expiresAt: new Date(expiry).toISOString() };
 }
 
 function isCorrectionCue(text) {
-  const value = normaliseText(text).toLowerCase();
-  return /\b(?:actually\s+)?i\s+meant\b|\bactually\s+meant\b|\b(?:correction|corrected)\b|\b(?:please\s+)?(?:correct|fix|replace)\s+(?:this|it|the\s+first(?:\s+one)?)\b/.test(value)
+  const raw = normaliseText(text).toLowerCase();
+  if (/\?$/.test(raw)) return false;
+  const value = raw.replace(/[.!]+$/, "").trim();
+  const correction = /\b(?:correction|corrected|correct|fix|replace)\b/.test(value);
+  const newMeal = /\b(?:new|another)\s+meal\b|\blog\s+(?:a\s+)?(?:new|another)\b/.test(value);
+  const negated = /\b(?:don'?t|do not|not|no)\b.{0,20}\b(?:correction|corrected|correct|fix|replace)\b/.test(value);
+  if (negated || (correction && newMeal)) return false;
+  return /\b(?:actually\s+)?i\s+meant\b|\bactually\s+meant\b|\bcorrection\s*[:,-]|\b(?:please\s+)?(?:correct|fix|replace)\s+(?:this|it|the\s+first(?:\s+one)?)\b/.test(value)
     || /\b(?:i\s*['’]?m|im|i am)\s+(?:just\s+)?(?:telling|saying)(?:\s+you)?\b.*\b(?:first|earlier)\b/.test(value);
 }
 
@@ -112,7 +136,9 @@ function repeatedMealCandidate(text, exchanges) {
 function resolvePendingChoice(text, state, now = Date.now()) {
   const active = normaliseConversationState(state, now);
   if (active.awaiting !== "repeat_meal_choice") return null;
-  const value = normaliseText(text).toLowerCase();
+  const raw = normaliseText(text).toLowerCase();
+  if (/\?$/.test(raw)) return null;
+  const value = raw.replace(/[.!]+$/, "").trim();
   const correctionCue = /\b(?:correction|correct|fix|replace|first\s+one)\b/.test(value);
   const newCue = /\b(?:new|another)\s+meal\b|\blog\s+(?:a\s+)?(?:new|another)\b/.test(value);
   const negated = /\b(?:don'?t|do not|not|no)\b.{0,20}\b(?:correction|correct|fix|replace|new|another)\b/.test(value);

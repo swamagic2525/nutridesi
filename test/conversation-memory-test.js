@@ -27,6 +27,9 @@ assert.deepStrictEqual(normaliseConversationState({ awaiting: "wrong", expiresAt
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: new Date(now).toISOString() }, now), {});
 assert.deepStrictEqual(normaliseConversationState(null, now), {});
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2023-11-14T22:13:20Z" }, now), {});
+assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2023-02-29T22:13:20Z" }, now), {});
+assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2026-04-31T22:13:20Z" }, now), {});
+assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2026-01-01T24:00:00Z" }, now), {});
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2023-11-14T22:13:20.001+00:00" }, now), {
   awaiting: "corrected_meal", expiresAt: futureIso,
 });
@@ -86,6 +89,10 @@ assert.strictEqual(isCorrectionCue("actually I meant poha"), true);
 assert.strictEqual(isCorrectionCue("actually, it was poha"), false);
 assert.strictEqual(isCorrectionCue("actually, how much protein?"), false);
 assert.strictEqual(isCorrectionCue("is this correct?"), false);
+assert.strictEqual(isCorrectionCue("not a correction, log another meal"), false);
+assert.strictEqual(isCorrectionCue("don't correct it, this is a new meal"), false);
+assert.strictEqual(isCorrectionCue("did you apply my correction?"), false);
+assert.strictEqual(isCorrectionCue("is this corrected?"), false);
 assert.strictEqual(isCorrectionCue("2 roti and dal"), false);
 
 const logged = [{ body: "2 idli sambhar coconut chutney", reply: "✅ Logged: breakfast" }];
@@ -105,6 +112,9 @@ assert.strictEqual(resolvePendingChoice("correct the first one", pending, now), 
 assert.strictEqual(resolvePendingChoice("log another meal", pending, now), "new");
 assert.strictEqual(resolvePendingChoice("correction", pending, now), "correction");
 assert.strictEqual(resolvePendingChoice("new meal", pending, now), "new");
+assert.strictEqual(resolvePendingChoice("correction.", pending, now), "correction");
+assert.strictEqual(resolvePendingChoice("new meal!", pending, now), "new");
+assert.strictEqual(resolvePendingChoice("correction?", pending, now), null);
 assert.strictEqual(resolvePendingChoice("don't correct it, this is a new meal", pending, now), null);
 assert.strictEqual(resolvePendingChoice("not a correction, log another meal", pending, now), null);
 assert.strictEqual(resolvePendingChoice("correct it and log a new meal", pending, now), null);
