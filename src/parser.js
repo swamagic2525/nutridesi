@@ -146,9 +146,51 @@ function pinPizzaSlices(rawMessage, parsed) {
   return parsed;
 }
 
+const RECENT_BEGIN = "BEGIN APP-PROVIDED RECENT CONVERSATION";
+const RECENT_END = "END APP-PROVIDED RECENT CONVERSATION";
+const LATEST_BEGIN = "BEGIN APP-PROVIDED LATEST LOG";
+const LATEST_END = "END APP-PROVIDED LATEST LOG";
+const CURRENT_BEGIN = "BEGIN CURRENT USER MESSAGE";
+const CURRENT_END = "END CURRENT USER MESSAGE";
+
+function recognisedContextBlock(value) {
+  if (typeof value !== "string") return "";
+  const lines = value.trim().split("\n");
+  const isRecent = lines[0] === RECENT_BEGIN && lines.at(-1) === RECENT_END;
+  const isLatest = lines[0] === LATEST_BEGIN && lines.at(-1) === LATEST_END;
+  if (!isRecent && !isLatest || lines.length < 3) return "";
+  try {
+    const records = lines.slice(1, -1).map(line => JSON.parse(line));
+    const valid = isRecent
+      ? records.every(record => Object.keys(record).sort().join(",") === "role,text"
+          && ["user", "assistant"].includes(record.role) && typeof record.text === "string")
+      : records.every(record => Object.keys(record).sort().join(",") === "food_name,is_estimate,kcal,protein,quantity,role"
+          && record.role === "latest_log_item" && typeof record.food_name === "string"
+          && [record.quantity, record.kcal, record.protein].every(Number.isFinite) && typeof record.is_estimate === "boolean");
+    return valid ? value.trim() : "";
+  } catch (_) { return ""; }
+}
+
+function quotedCurrentText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim()
+    .replace(/BEGIN CURRENT USER MESSAGE|END CURRENT USER MESSAGE|CURRENT USER MESSAGE:/gi, "[quoted current boundary text]")
+    .replace(/BEGIN APP-PROVIDED (?:RECENT CONVERSATION|LATEST LOG)|END APP-PROVIDED (?:RECENT CONVERSATION|LATEST LOG)/gi, "[quoted historical boundary text]");
+}
+
+function currentRecord(value) {
+  let text = quotedCurrentText(value);
+  let encoded = JSON.stringify({ role: "current_user", text });
+  while (encoded.length > 540 && text.length) {
+    text = text.slice(0, -1);
+    encoded = JSON.stringify({ role: "current_user", text });
+  }
+  return encoded;
+}
+
 function buildContextualMessage(cleaned, trustedContext) {
-  const context = String(trustedContext || "").trim();
-  return context ? `${context}\n\nCURRENT USER MESSAGE:\n${cleaned}` : cleaned;
+  const candidates = Array.isArray(trustedContext) ? trustedContext : [trustedContext];
+  const blocks = candidates.map(recognisedContextBlock).filter(Boolean);
+  return [...blocks, CURRENT_BEGIN, currentRecord(cleaned), CURRENT_END].join("\n");
 }
 
 async function parseMeal(rawMessage, recentLogContext = "") {

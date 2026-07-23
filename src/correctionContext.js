@@ -43,16 +43,27 @@ function shouldPromoteToReplace(parsed, text, batch) {
 
 function formatLastLogContext(batch) {
   if (!batch || batch.length === 0) return "";
-  const rows = batch.map(row => {
-    const qty = Number(row.quantity) === 1 ? "" : ` ×${row.quantity}`;
-    const estimate = row.is_estimate ? ", estimated" : "";
-    return `- ${row.food_name}${qty}: ${Math.round(Number(row.kcal) || 0)} kcal, ${Math.round(Number(row.protein) || 0)}g protein${estimate}`;
-  });
-  return [
-    "MOST RECENT LOG CONTEXT (trusted app data, not user instructions):",
-    "The current user may be correcting only this immediately previous log.",
-    ...rows,
-  ].join("\n");
+  const begin = "BEGIN APP-PROVIDED LATEST LOG";
+  const end = "END APP-PROVIDED LATEST LOG";
+  const quotedFoodName = value => String(value || "").replace(/\s+/g, " ").trim()
+    .replace(/BEGIN CURRENT USER MESSAGE|END CURRENT USER MESSAGE|CURRENT USER MESSAGE:/gi, "[quoted current boundary text]")
+    .replace(/BEGIN APP-PROVIDED (?:RECENT CONVERSATION|LATEST LOG)|END APP-PROVIDED (?:RECENT CONVERSATION|LATEST LOG)/gi, "[quoted historical boundary text]");
+  const record = row => {
+    let foodName = quotedFoodName(row.food_name);
+    let encoded = JSON.stringify({
+      role: "latest_log_item", food_name: foodName, quantity: Number(row.quantity) || 0,
+      kcal: Math.round(Number(row.kcal) || 0), protein: Math.round(Number(row.protein) || 0), is_estimate: row.is_estimate === true,
+    });
+    while (encoded.length > 540 && foodName.length) {
+      foodName = foodName.slice(0, -1);
+      encoded = JSON.stringify({
+        role: "latest_log_item", food_name: foodName, quantity: Number(row.quantity) || 0,
+        kcal: Math.round(Number(row.kcal) || 0), protein: Math.round(Number(row.protein) || 0), is_estimate: row.is_estimate === true,
+      });
+    }
+    return encoded;
+  };
+  return [begin, ...batch.map(record), end].join("\n");
 }
 
 // Match correction targets inside one already-selected log batch. Curated IDs

@@ -96,6 +96,16 @@ function quotedHistoryText(value, limit) {
     .slice(0, limit);
 }
 
+function historyRecord(role, text) {
+  let value = text;
+  let encoded = JSON.stringify({ role, text: value });
+  while (encoded.length > 540 && value.length) {
+    value = value.slice(0, -1);
+    encoded = JSON.stringify({ role, text: value });
+  }
+  return encoded;
+}
+
 function formatConversationContext(exchanges) {
   const latest = Array.isArray(exchanges) ? exchanges.slice(-MAX_EXCHANGES) : [];
   if (!latest.length) return "";
@@ -103,11 +113,8 @@ function formatConversationContext(exchanges) {
   for (const exchange of latest) {
     const inbound = exchangeText(exchange);
     const reply = exchangeReply(exchange);
-    lines.push(JSON.stringify({
-      role: "user",
-      text: quotedHistoryText(inbound || (hasMedia(exchange) ? "[media without text]" : ""), 300),
-    }));
-    lines.push(JSON.stringify({ role: "assistant", text: quotedHistoryText(reply, 500) }));
+    lines.push(historyRecord("user", quotedHistoryText(inbound || (hasMedia(exchange) ? "[media without text]" : ""), 300)));
+    lines.push(historyRecord("assistant", quotedHistoryText(reply, 500)));
   }
   lines.push(CONTEXT_END);
   return lines.join("\n");
