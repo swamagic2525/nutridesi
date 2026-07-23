@@ -25,15 +25,14 @@ function normaliseConversationState(raw, now = Date.now()) {
     || !Number.isFinite(expiry)
     || timestamp == null
     || expiry <= timestamp
-    || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(expiresAt)
-    || new Date(expiry).toISOString() !== expiresAt
+    || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(expiresAt)
   ) return {};
   return { awaiting, expiresAt: new Date(expiry).toISOString() };
 }
 
 function isCorrectionCue(text) {
   const value = normaliseText(text).toLowerCase();
-  return /\bi\s+meant\b|\b(?:correction|corrected)\b|\b(?:please\s+)?(?:correct|fix|replace)\s+(?:this|it|the\s+first(?:\s+one)?)\b/.test(value)
+  return /\b(?:actually\s+)?i\s+meant\b|\bactually\s+meant\b|\b(?:correction|corrected)\b|\b(?:please\s+)?(?:correct|fix|replace)\s+(?:this|it|the\s+first(?:\s+one)?)\b/.test(value)
     || /\b(?:i\s*['’]?m|im|i am)\s+(?:just\s+)?(?:telling|saying)(?:\s+you)?\b.*\b(?:first|earlier)\b/.test(value);
 }
 
@@ -44,7 +43,8 @@ function needsConversationContext(text, state, now = Date.now()) {
   if (/\b(it|that|this|these|them|same|again|first|earlier|previous|above)\b/.test(value)) return true;
   if (isCorrectionCue(value) || /\bfrom\s+(?:the\s+)?first\b/.test(value)) return true;
   if (/^(?:with|without|add)\b/.test(value) || /\b(?:this|that)\s+much\b/.test(value)) return true;
-  if (/^(?:\d+(?:\.\d+)?|half|quarter|one|two|three)\s*(?:g|kg|ml|cup|bowl|katori|plate|piece|pieces|serving)s?$/i.test(value)) return true;
+  if (/^(?:g|grams?|kg|kgs|kilograms?|lb|lbs|pounds?)$/i.test(value)
+    || /^(?:\d+(?:\.\d+)?|half|quarter|one|two|three)\s*(?:g|kg|ml|cup|bowl|katori|plate|piece|pieces|serving)s?$/i.test(value)) return true;
   if (/\b(?:rate|review|analyse|analyze|check)\s+(?:this|it|food)\b/.test(value)) return true;
   return words(value).length >= 2
     && /\b(?:morning|breakfast|brkfst|lunch|dinner|snack)\b/.test(value);

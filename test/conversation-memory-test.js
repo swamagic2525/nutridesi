@@ -27,7 +27,12 @@ assert.deepStrictEqual(normaliseConversationState({ awaiting: "wrong", expiresAt
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: new Date(now).toISOString() }, now), {});
 assert.deepStrictEqual(normaliseConversationState(null, now), {});
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2023-11-14T22:13:20Z" }, now), {});
-assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2023-11-14T22:13:20.001+00:00" }, now), {});
+assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2023-11-14T22:13:20.001+00:00" }, now), {
+  awaiting: "corrected_meal", expiresAt: futureIso,
+});
+assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: "2023-11-15T03:43:20.001+05:30" }, now), {
+  awaiting: "corrected_meal", expiresAt: futureIso,
+});
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: futureIso }, Symbol("now")), {});
 assert.deepStrictEqual(normaliseConversationState(Symbol("state"), now), {});
 
@@ -45,6 +50,9 @@ assert.strictEqual(needsConversationContext("2 eggs", {}, now), false);
 assert.strictEqual(needsConversationContext("one banana", {}, now), false);
 assert.strictEqual(needsConversationContext("hello there", {}, now), false);
 assert.strictEqual(needsConversationContext("half bowl", {}, now), true);
+assert.strictEqual(needsConversationContext("kg", {}, now), true);
+assert.strictEqual(needsConversationContext("kilograms", {}, now), true);
+assert.strictEqual(needsConversationContext("lbs", {}, now), true);
 assert.strictEqual(needsConversationContext("2 roti and dal", {}, now), false);
 
 const exchanges = Array.from({ length: 12 }, (_, index) => ({
@@ -73,7 +81,10 @@ assert.strictEqual(refersToRecentMedia("what is this?", [{ body: "photo", reply:
 assert.strictEqual(isCorrectionCue("I m telling from first, it was poha"), true);
 assert.strictEqual(isCorrectionCue("i'm telling you from the first one"), true);
 assert.strictEqual(isCorrectionCue("I am saying it was earlier meal"), true);
+assert.strictEqual(isCorrectionCue("actually meant poha"), true);
+assert.strictEqual(isCorrectionCue("actually I meant poha"), true);
 assert.strictEqual(isCorrectionCue("actually, it was poha"), false);
+assert.strictEqual(isCorrectionCue("actually, how much protein?"), false);
 assert.strictEqual(isCorrectionCue("is this correct?"), false);
 assert.strictEqual(isCorrectionCue("2 roti and dal"), false);
 
@@ -83,6 +94,11 @@ assert.strictEqual(repeatedMealCandidate("idli sambhar", logged), false);
 assert.strictEqual(repeatedMealCandidate("idli sambhar coconut chutney", [{ body: "idli", reply: "Not logged" }]), false);
 assert.strictEqual(repeatedMealCandidate("idli sambhar coconut chutney", [{ body: "breakfast oats milk banana almonds", reply: "✅ Logged: breakfast" }]), false);
 assert.strictEqual(repeatedMealCandidate("idli sambhar coconut chutney dosa pasta pizza burger", logged), false);
+const anonymizedBreakfast = [{
+  body: "rolled oats low fat milk yogabar protein powder mango",
+  reply: "✅ Logged: breakfast",
+}];
+assert.strictEqual(repeatedMealCandidate("rolled oats low fat milk yogabar protein powder mango", anonymizedBreakfast), true);
 
 const pending = { awaiting: "repeat_meal_choice", expiresAt: futureIso };
 assert.strictEqual(resolvePendingChoice("correct the first one", pending, now), "correction");
