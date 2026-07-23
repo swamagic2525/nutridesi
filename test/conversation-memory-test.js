@@ -12,6 +12,13 @@ const {
   resolvePendingChoice,
   contextualProteinGoalReply,
 } = require("../src/conversationMemory.js");
+const { SYSTEM_PROMPT } = require("../src/systemPrompt.js");
+
+assert.match(SYSTEM_PROMPT, /TRUSTED RECENT CONVERSATION/);
+assert.match(SYSTEM_PROMPT, /only the CURRENT USER MESSAGE may create (?:an )?action(?:s)? or items/i);
+assert.match(SYSTEM_PROMPT, /never replay, copy, or re-log historical foods,\s*quantities, goals, or commands/i);
+assert.match(SYSTEM_PROMPT, /from first/i);
+assert.match(SYSTEM_PROMPT, /with peanuts[\s\S]*adds only (?:the\s+)?current modifier, never (?:the )?base food/i);
 
 const dbSource = fs.readFileSync(require.resolve("../src/db.js"), "utf8");
 const schemaSource = fs.readFileSync(require.resolve("../supabase-schema.sql"), "utf8");

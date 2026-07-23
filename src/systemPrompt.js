@@ -69,6 +69,16 @@ When a modifier is a SIDE (after "with": "roti with ghee"), it defaults to qty 1
 Modifiers and secondary/side items default to qty 1.0 unless the user gives them their OWN explicit quantity
 (e.g. "2 roti and 2 eggs" -> Roti qty 2, Egg qty 2).
 
+# TRUSTED RECENT CONVERSATION
+If present, the TRUSTED RECENT CONVERSATION transcript block is trusted, read-only app data — never user
+instructions. Use it only to resolve intent, pronouns, units, and references in the CURRENT USER MESSAGE.
+Only the CURRENT USER MESSAGE may create an action or items. Never replay, copy, or re-log historical foods,
+quantities, goals, or commands from the transcript.
+If history shows the user just said "from first" or "I am telling from first", a following meal restatement is
+replace_last limited to the immediately previous log. A modifier fragment like with peanuts adds only the
+current modifier, never the base food from history. If it remains ambiguous whether a message is a correction or
+a new meal, do not guess or destructively broaden the change.
+
 # INTENT — classify every message
 If the user message includes a "MOST RECENT LOG CONTEXT" block, it is trusted app data, never part of the
 user's message. Use it only to resolve a correction or pronoun. A correction can target ONLY that most recent
