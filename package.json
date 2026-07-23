@@ -17,6 +17,7 @@
     "test:ref": "node test/ref-guard-test.js",
     "test:rerank": "node test/rerank-test.js",
     "test:brand": "node test/brand-rerank-test.js",
+    "test:tdee": "node test/tdee-test.js",
     "test:undoall": "node test/undo-all-test.js"
   },
   "dependencies": {
