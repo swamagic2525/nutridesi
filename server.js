@@ -22,7 +22,9 @@ const {
   refersToRecentMedia,
   isCorrectionCue,
   correctionCuePayload,
-  hasRecentLoggedExchange,
+  latestLoggedExchange,
+  loggedExchangeMatchesBatch,
+  stateTargetsCurrentIstDate,
   isExplicitIndependentMutation,
   repeatedMealCandidate,
   repeatMealCandidateBody,
@@ -344,6 +346,12 @@ async function handleMessage(from, body, opts = {}) {
   ) {
     await clearConversationStateIfUnchanged(from, rawConversationState);
   }
+  if (conversationState.awaiting && !stateTargetsCurrentIstDate(conversationState, now)) {
+    const cancelled = await claimConversationState(from, conversationState.nonce);
+    return cancelled
+      ? "That pending update was for a previous day, so nothing was changed. Please send today's request again."
+      : "That pending update expired or was already handled, so nothing was changed. Please send your request again.";
+  }
   const proteinGoalReply = contextualProteinGoalReply(trimmed, profile);
   if (proteinGoalReply) return proteinGoalReply;
 
@@ -461,7 +469,26 @@ async function handleMessage(from, body, opts = {}) {
   if (/^(log it|log|ate it|had it|yes log it)$/i.test(trimmed) &&
       pending && Date.now() - pending.at < PENDING_TTL_MS) {
     pendingQuery.delete(from);
-    const { rows, totals, isNewUser } = await logMeal(from, pending.parsed);
+    let result;
+    try {
+      if (conversationState.awaiting) {
+        const claimed = await executeClaimedAction({
+          phone: from,
+          nonce: conversationState.nonce,
+          claim: claimConversationState,
+          action: async () => logMeal(from, pending.parsed, { awaitInsert: true }),
+        });
+        if (!claimed.claimed) {
+          return "That pending update expired or was already handled, so nothing was logged. Please request the preview again.";
+        }
+        result = claimed.value;
+      } else {
+        result = await logMeal(from, pending.parsed, { awaitInsert: true });
+      }
+    } catch (_) {
+      return "That preview couldn't be saved, so nothing was logged. Please request it again.";
+    }
+    const { rows, totals, isNewUser } = result;
     return `✅ Logged\n${fmtItems(rows).join("\n")}\n\n` +
       `${dayLine(totals, profile)}\n${cfLine(totals)}` +
       (isNewUser ? FIRST_LOG_FOOTER : "");
@@ -493,7 +520,10 @@ async function handleMessage(from, body, opts = {}) {
     forcedIntent = pendingChoice === "correction" ? "replace_last" : "log";
     if (forcedIntent === "replace_last") {
       boundTargetRows = await logRowsByExactIds(from, conversationState.targetLogIds);
-      if (boundTargetRows.length !== conversationState.targetLogIds.length) {
+      if (
+        boundTargetRows.length !== conversationState.targetLogIds.length
+        || boundTargetRows.some(row => row.date !== conversationState.targetDate)
+      ) {
         return "That original meal changed, so nothing was updated. Please send the correction again from the start.";
       }
       boundPendingCorrection = true;
@@ -502,11 +532,16 @@ async function handleMessage(from, body, opts = {}) {
 
   const expectedCorrectedMeal = conversationState.awaiting === "corrected_meal";
   const directCorrectionPayload = correctionCuePayload(trimmed);
-  const recentLoggedExchange = hasRecentLoggedExchange(history);
+  const recentLoggedExchange = latestLoggedExchange(history);
   if (!forcedIntent && !expectedCorrectedMeal && directCorrectionPayload) {
     if (!recentLoggedExchange) {
       return "I couldn't find a recent logged meal, so nothing changed. Send the meal again if you'd like to log it.";
     }
+    const targetRows = await lastLogBatch(from);
+    if (!loggedExchangeMatchesBatch(recentLoggedExchange, targetRows)) {
+      return "I couldn't safely connect that correction to the recent log, so nothing changed. Please try again.";
+    }
+    boundTargetRows = targetRows;
     effectiveBody = directCorrectionPayload;
     forcedIntent = "replace_last";
   }
@@ -515,10 +550,14 @@ async function handleMessage(from, body, opts = {}) {
       return "I couldn't find a recent logged meal, so nothing changed. Send the meal again if you'd like to log it.";
     }
     const targetRows = await lastLogBatch(from);
+    if (!loggedExchangeMatchesBatch(recentLoggedExchange, targetRows)) {
+      return "I couldn't safely connect that correction to the recent log, so nothing changed. Please try again.";
+    }
     const savedState = await persistConversationState({
       phone: from,
       awaiting: "corrected_meal",
       targetRows,
+      loggedExchange: recentLoggedExchange,
       now,
       save: saveConversationState,
     });
@@ -535,10 +574,14 @@ async function handleMessage(from, body, opts = {}) {
     && repeatedMealCandidate(effectiveBody, history)
   ) {
     const targetRows = await lastLogBatch(from);
+    if (!loggedExchangeMatchesBatch(recentLoggedExchange, targetRows)) {
+      return "I couldn't safely connect that correction to the recent log, so nothing changed. Please try again.";
+    }
     const savedState = await persistConversationState({
       phone: from,
       awaiting: "repeat_meal_choice",
       targetRows,
+      loggedExchange: recentLoggedExchange,
       candidateBody: effectiveBody.trim().slice(0, RATE.maxLen),
       now,
       save: saveConversationState,
@@ -555,7 +598,10 @@ async function handleMessage(from, body, opts = {}) {
     || looksLikeCorrection(effectiveBody);
   if (expectedCorrectedMeal) {
     boundTargetRows = await logRowsByExactIds(from, conversationState.targetLogIds);
-    if (boundTargetRows.length !== conversationState.targetLogIds.length) {
+    if (
+      boundTargetRows.length !== conversationState.targetLogIds.length
+      || boundTargetRows.some(row => row.date !== conversationState.targetDate)
+    ) {
       await claimConversationState(from, conversationState.nonce);
       return "That original meal changed, so nothing was updated. Please send the correction again from the start.";
     }
@@ -736,11 +782,15 @@ async function handleMessage(from, body, opts = {}) {
       }
       const removed = await deleteBySeq(from, [target.day_seq]);
       logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted: removed, outcome: "replaced_by_name" });
-      const { rows, totals } = await logMeal(from, parsed);
-      const removedLines = (removed || []).map(r => `\u{274C} ${r.food_name} — ${r.kcal} kcal`).join("\n");
-      const addedLines = fmtItems(rows).map(l => `\u{2705} ${l}`);
-      return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
-        `${dayLine(totals, profile)}\n${cfLine(totals)}`;
+      try {
+        const { rows, totals } = await logMeal(from, parsed, { awaitInsert: true });
+        const removedLines = (removed || []).map(r => `\u{274C} ${r.food_name} — ${r.kcal} kcal`).join("\n");
+        const addedLines = fmtItems(rows).map(l => `\u{2705} ${l}`);
+        return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
+          `${dayLine(totals, profile)}\n${cfLine(totals)}`;
+      } catch (_) {
+        return "The correction couldn't finish safely. Please send the full meal again from the start.";
+      }
     }
     const aligned = await deleteMatchingLastLog(from, parsed.items, latest, effectiveBody);
     let deleted = aligned ? aligned.filter(Boolean) : null;
@@ -786,11 +836,15 @@ async function handleMessage(from, body, opts = {}) {
       parsed.items[0].quantity = Number(deleted[0].quantity);
     }
     logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted, outcome: "corrected" });
-    const { rows, totals } = await logMeal(from, parsed);
-    const removedLines = (deleted || []).map(r => `❌ ${r.food_name} — ${r.kcal} kcal`).join("\n");
-    const addedLines = fmtItems(rows).map(l => `✅ ${l}`);
-    return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
-      `${dayLine(totals, profile)}\n${cfLine(totals)}`;
+    try {
+      const { rows, totals } = await logMeal(from, parsed, { awaitInsert: true });
+      const removedLines = (deleted || []).map(r => `❌ ${r.food_name} — ${r.kcal} kcal`).join("\n");
+      const addedLines = fmtItems(rows).map(l => `✅ ${l}`);
+      return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
+        `${dayLine(totals, profile)}\n${cfLine(totals)}`;
+    } catch (_) {
+      return "The correction couldn't finish safely. Please send the full meal again from the start.";
+    }
   }
 
   // --- log (default) ---

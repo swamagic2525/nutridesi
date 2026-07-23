@@ -725,7 +725,7 @@ async function dayReport(phone, daysAgo = 0) {
 async function lastLogBatch(phone) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const { data, error } = await supabase.from("user_logs")
-    .select("id, food_name, kcal, protein, quantity, matched_db_id, is_estimate, logged_at")
+    .select("id, food_name, kcal, protein, quantity, matched_db_id, is_estimate, logged_at, date")
     .eq("phone_number", phone).eq("date", today)
     .order("logged_at", { ascending: false })
     .limit(30);
@@ -746,7 +746,7 @@ async function logRowsByExactIds(phone, ids, client = supabase) {
   const expected = exactPositiveIds(ids);
   if (typeof phone !== "string" || !phone || !expected.length) return [];
   const { data, error } = await client.from("user_logs")
-    .select("id, food_name, kcal, protein, quantity, matched_db_id, is_estimate, logged_at")
+    .select("id, food_name, kcal, protein, quantity, matched_db_id, is_estimate, logged_at, date")
     .eq("phone_number", phone)
     .in("id", expected);
   if (error) {

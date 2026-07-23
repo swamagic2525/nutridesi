@@ -36,6 +36,30 @@ const validIsoDateTime = value => {
     && minute >= 0 && minute <= 59
     && second >= 0 && second <= 59;
 };
+const validDateOnly = value => {
+  const match = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const days = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return month >= 1 && month <= 12 && day >= 1 && day <= days[month - 1];
+};
+
+function istDateForTimestamp(now = Date.now()) {
+  const timestamp = finiteNumber(now);
+  if (timestamp == null) return null;
+  const date = new Date(timestamp);
+  if (!Number.isFinite(date.getTime())) return null;
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
 
 function normaliseConversationState(raw, now = Date.now()) {
   const awaiting = safeGet(raw, "awaiting");
@@ -43,13 +67,16 @@ function normaliseConversationState(raw, now = Date.now()) {
   const candidateBody = safeGet(raw, "candidateBody");
   const nonce = safeGet(raw, "nonce");
   const rawTargetIds = safeGet(raw, "targetLogIds");
+  const targetDate = safeGet(raw, "targetDate");
   const timestamp = finiteNumber(now);
   const expiry = typeof expiresAt === "string" ? Date.parse(expiresAt) : NaN;
   const nonceValid = typeof nonce === "string"
     && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(nonce);
   const idsValid = Array.isArray(rawTargetIds)
     && rawTargetIds.length > 0
-    && rawTargetIds.every(id => Number.isInteger(id) && id > 0);
+    && rawTargetIds.length <= 20
+    && rawTargetIds.every(id => Number.isInteger(id) && id > 0)
+    && new Set(rawTargetIds).size === rawTargetIds.length;
   if (
     !["corrected_meal", "repeat_meal_choice"].includes(awaiting)
     || !Number.isFinite(expiry)
@@ -58,20 +85,28 @@ function normaliseConversationState(raw, now = Date.now()) {
     || !validIsoDateTime(expiresAt)
     || !nonceValid
     || !idsValid
+    || typeof targetDate !== "string"
+    || !validDateOnly(targetDate)
   ) return {};
-  const targetLogIds = [...new Set(rawTargetIds)].slice(0, 20);
-  if (!targetLogIds.length) return {};
   const state = {
     awaiting,
     expiresAt: new Date(expiry).toISOString(),
     nonce,
-    targetLogIds,
+    targetLogIds: [...rawTargetIds],
+    targetDate,
   };
   if (awaiting === "repeat_meal_choice" && typeof candidateBody === "string") {
     const candidate = normaliseText(candidateBody).slice(0, 300).trim();
     if (candidate) state.candidateBody = candidate;
   }
   return state;
+}
+
+function stateTargetsCurrentIstDate(state, now = Date.now()) {
+  const targetDate = safeGet(state, "targetDate");
+  return typeof targetDate === "string"
+    && validDateOnly(targetDate)
+    && targetDate === istDateForTimestamp(now);
 }
 
 function isCorrectionCue(text) {
@@ -128,9 +163,57 @@ function exchangeReply(exchange) {
   return normaliseText(safeGet(exchange, "reply"));
 }
 
+function latestLoggedExchange(exchanges) {
+  if (!Array.isArray(exchanges)) return null;
+  return [...exchanges].reverse().find(exchange =>
+    /^✅\s*Logged\b/.test(exchangeReply(exchange))
+  ) || null;
+}
+
 function hasRecentLoggedExchange(exchanges) {
-  return Array.isArray(exchanges)
-    && exchanges.some(exchange => /^✅\s*Logged\b/.test(exchangeReply(exchange)));
+  return latestLoggedExchange(exchanges) !== null;
+}
+
+function loggedExchangeMatchesBatch(exchange, rows) {
+  const rawReply = safeGet(exchange, "reply");
+  if (typeof rawReply !== "string" || !Array.isArray(rows) || !rows.length || rows.length > 20) return false;
+  const lines = rawReply.replace(/\r\n?/g, "\n").split("\n");
+  if (lines.shift().trim() !== "✅ Logged") return false;
+  const itemLines = [];
+  let reachedSeparator = false;
+  for (const line of lines) {
+    if (!line.trim()) {
+      reachedSeparator = true;
+      break;
+    }
+    itemLines.push(line.trim());
+  }
+  if (!reachedSeparator || itemLines.length !== rows.length) return false;
+  const normaliseName = value => {
+    try { return normaliseText(value).normalize("NFKC").toLowerCase(); } catch (_) { return ""; }
+  };
+  const displayed = [];
+  for (const line of itemLines) {
+    const match = /^(?:\d+\.\s+)?\*([^*\n]+)\*(?:\s+×(\d+(?:\.\d+)?))?\s+—\s+(\d+(?:\.\d+)?)\s+kcal\b/.exec(line);
+    if (!match) return false;
+    const name = normaliseName(match[1]);
+    const quantity = match[2] == null ? 1 : Number(match[2]);
+    const kcal = Number(match[3]);
+    if (!name || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(kcal)) return false;
+    displayed.push(`${name}|${quantity}|${Math.round(kcal)}`);
+  }
+  const stored = [];
+  for (const row of rows) {
+    const name = normaliseName(safeGet(row, "food_name"));
+    const rawQuantity = safeGet(row, "quantity");
+    const quantity = rawQuantity == null ? 1 : finiteNumber(rawQuantity);
+    const kcal = finiteNumber(safeGet(row, "kcal"));
+    if (!name || quantity == null || quantity <= 0 || kcal == null) return false;
+    stored.push(`${name}|${quantity}|${Math.round(kcal)}`);
+  }
+  displayed.sort();
+  stored.sort();
+  return displayed.every((signature, index) => signature === stored[index]);
 }
 
 function hasMedia(exchange) {
@@ -252,16 +335,22 @@ async function persistConversationState({
   phone,
   awaiting,
   targetRows,
+  loggedExchange,
   candidateBody,
   now = Date.now(),
   save,
   nonceFactory = randomUUID,
 }) {
   if (typeof save !== "function" || typeof nonceFactory !== "function") return null;
-  const targetLogIds = [...new Set((Array.isArray(targetRows) ? targetRows : [])
-    .map(row => safeGet(row, "id"))
-    .filter(id => Number.isInteger(id) && id > 0))].slice(0, 20);
-  if (!targetLogIds.length) return null;
+  if (!Array.isArray(targetRows) || !targetRows.length || targetRows.length > 20) return null;
+  if (!loggedExchangeMatchesBatch(loggedExchange, targetRows)) return null;
+  const targetLogIds = targetRows.map(row => safeGet(row, "id"));
+  if (
+    !targetLogIds.every(id => Number.isInteger(id) && id > 0)
+    || new Set(targetLogIds).size !== targetLogIds.length
+  ) return null;
+  const targetDates = [...new Set(targetRows.map(row => safeGet(row, "date")))];
+  if (targetDates.length !== 1 || typeof targetDates[0] !== "string" || !validDateOnly(targetDates[0])) return null;
   let nonce;
   try { nonce = nonceFactory(); } catch (_) { return null; }
   const state = normaliseConversationState({
@@ -269,6 +358,7 @@ async function persistConversationState({
     expiresAt: new Date(Number(now) + WINDOW_MS).toISOString(),
     nonce,
     targetLogIds,
+    targetDate: targetDates[0],
     ...(awaiting === "repeat_meal_choice" ? { candidateBody } : {}),
   }, now);
   if (!Object.keys(state).length) return null;
@@ -293,6 +383,8 @@ module.exports = {
   WINDOW_MS,
   MAX_EXCHANGES,
   normaliseConversationState,
+  istDateForTimestamp,
+  stateTargetsCurrentIstDate,
   needsConversationContext,
   needsRepeatedMealCheck,
   formatConversationContext,
@@ -300,6 +392,8 @@ module.exports = {
   isCorrectionCue,
   correctionCuePayload,
   hasRecentLoggedExchange,
+  latestLoggedExchange,
+  loggedExchangeMatchesBatch,
   isExplicitIndependentMutation,
   repeatedMealCandidate,
   repeatMealCandidateBody,
