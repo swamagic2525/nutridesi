@@ -10,6 +10,12 @@ const round50 = n => Math.round(Number(n) / 50) * 50;
 const lbToKg = lb => Math.round((Number(lb) * 0.45359237) * 10) / 10;
 const feetToCm = (feet, inches = 0) =>
   Math.round((Number(feet) * 12 + Number(inches)) * 2.54);
+const weightToKg = (value, unit) => {
+  const raw = Number(value);
+  if (!Number.isFinite(raw)) return null;
+  const kg = /^k/.test(unit) ? Math.round(raw * 10) / 10 : lbToKg(raw);
+  return Number.isFinite(kg) ? kg : null;
+};
 
 function emptyState() {
   return {
@@ -68,6 +74,7 @@ function parseFields(text, state = emptyState()) {
   const s = String(text || "").toLowerCase().replace(/,/g, " ").replace(/\s+/g, " ").trim();
   const out = {
     patch: {}, relevant: false, error: null, restricted: null, pendingWeightValue: null,
+    weightProvided: false,
   };
 
   if (/\b(pregnan(?:t|cy)|breast ?feeding|nursing)\b/.test(s)) {
@@ -131,9 +138,9 @@ function parseFields(text, state = emptyState()) {
   const weight = s.match(/(-?\d+(?:\.\d+)?)\s*(kg|kgs|kilograms?|lb|lbs|pounds?)\b/);
   if (weight) {
     out.relevant = true;
-    const raw = Number(weight[1]);
-    const n = /^k/.test(weight[2]) ? Math.round(raw * 10) / 10 : lbToKg(raw);
-    if (n < 30 || n > 350) {
+    out.weightProvided = true;
+    const n = weightToKg(weight[1], weight[2]);
+    if (n == null || n < 30 || n > 350) {
       out.error = "invalid_weight";
       return out;
     }
@@ -400,13 +407,20 @@ function advanceTdee(text, stored = {}, now = new Date()) {
     return completedResult(state, now);
   }
 
-  const unitOnly = /^\s*(kg|kgs|kilograms?|lb|lbs|pounds?)\s*$/i.test(text);
-  const parsed = parseFields(
-    unitOnly && state.pendingWeightValue != null
-      ? `${state.pendingWeightValue} ${String(text).trim()}`
-      : text,
-    state
-  );
+  const unitOnly = String(text).trim().toLowerCase()
+    .match(/^(kg|kgs|kilograms?|lb|lbs|pounds?)$/);
+  let parsed = parseFields(text, state);
+  if (unitOnly && state.pendingWeightValue != null) {
+    const weightKg = weightToKg(state.pendingWeightValue, unitOnly[1]);
+    parsed = {
+      patch: weightKg == null || weightKg < 30 || weightKg > 350 ? {} : { weightKg },
+      relevant: true,
+      error: weightKg == null || weightKg < 30 || weightKg > 350 ? "invalid_weight" : null,
+      restricted: null,
+      pendingWeightValue: null,
+      weightProvided: true,
+    };
+  }
   if (parsed.restricted) {
     return {
       handled: true,
@@ -428,7 +442,12 @@ function advanceTdee(text, stored = {}, now = new Date()) {
       reply: INVALID_REPLIES.ambiguous_weight,
     };
   }
-  if (parsed.error) return invalidResult(state, parsed.error);
+  if (parsed.error) {
+    return invalidResult(
+      parsed.weightProvided ? { ...state, pendingWeightValue: null } : state,
+      parsed.error
+    );
+  }
 
   const useful = Object.keys(parsed.patch).length > 0;
   if (!explicit && active && !useful) {

@@ -107,6 +107,36 @@ unitFollowUp = advanceTdee("1", unitFollowUp.state);
 assert.strictEqual(unitFollowUp.state.phase, "complete");
 assert.match(unitFollowUp.reply, /Maintenance/);
 
+let pendingWeight = advanceTdee("calculate my calories", {});
+pendingWeight = advanceTdee("age 39 female height 155 cm weight 61", pendingWeight.state);
+assert.strictEqual(pendingWeight.state.invalidAttempts, 0);
+pendingWeight = advanceTdee("500 kg", pendingWeight.state);
+assert.match(pendingWeight.reply, /weight doesn't look valid/i);
+assert.strictEqual(pendingWeight.state.pendingWeightValue, null);
+pendingWeight = advanceTdee("kg", pendingWeight.state);
+assert.strictEqual(pendingWeight.handled, false);
+assert.strictEqual(pendingWeight.state.weightKg, null);
+
+const hugePendingKg = advanceTdee("kg", {
+  ...emptyState(), phase: "collecting", pendingWeightValue: 1e31,
+});
+assert.match(hugePendingKg.reply, /weight doesn't look valid/i);
+assert.strictEqual(hugePendingKg.state.weightKg, null);
+
+const hugePendingLb = advanceTdee("lb", {
+  ...emptyState(), phase: "collecting", pendingWeightValue: 1e31,
+});
+assert.match(hugePendingLb.reply, /weight doesn't look valid/i);
+assert.strictEqual(hugePendingLb.state.weightKg, null);
+
+let pendingLb = advanceTdee("calculate my calories", {});
+pendingLb = advanceTdee("weight 132", pendingLb.state);
+pendingLb = advanceTdee("lb", pendingLb.state);
+assert.strictEqual(pendingLb.state.weightKg, 59.9);
+
+const inactiveUnit = advanceTdee("kg", {});
+assert.strictEqual(inactiveUnit.handled, false);
+
 const oneShot = advanceTdee(
   "calculate my calories, age 31 male 175 cm 80 kg activity 3",
   {}
