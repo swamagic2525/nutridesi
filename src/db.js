@@ -6,6 +6,7 @@ const { guardItems } = require("./proteinGuard.js");
 const { contextGuard, contentTokens } = require("./contextGuard.js");
 const { logGapEvent } = require("./gapLogger.js");
 const { rerankReference, rerankTarget } = require("./rerank.js");
+const { WINDOW_MS, MAX_EXCHANGES } = require("./conversationMemory.js");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -31,11 +32,41 @@ async function ensureUser(phone) {
 // default of 2000, so it can't distinguish set-vs-unset on its own).
 async function getProfile(phone) {
   const { data, error } = await supabase.from("users")
-    .select("name, goal_kcal, goal_protein, nudge_count, tdee_profile")
+    .select("name, goal_kcal, goal_protein, nudge_count, tdee_profile, conversation_state")
     .eq("phone_number", phone).maybeSingle();
   if (error) { console.error("getProfile:", error.message); return {}; }
   const p = data || {};
   return { ...p, hasGoal: p.goal_protein != null };
+}
+
+async function saveConversationState(phone, state) {
+  const { error } = await supabase.from("users").upsert(
+    { phone_number: phone, conversation_state: state || {} },
+    { onConflict: "phone_number" }
+  );
+  if (error) {
+    console.error("saveConversationState:", error.message);
+    return false;
+  }
+  return true;
+}
+
+async function recentConversation(phone, now = new Date()) {
+  if (!(now instanceof Date) || !Number.isFinite(now.getTime())) return [];
+  const since = new Date(now.getTime() - WINDOW_MS).toISOString();
+  const { data, error } = await supabase.from("message_log")
+    .select("body, reply, media, at")
+    .eq("phone_number", phone)
+    .gte("at", since)
+    .order("at", { ascending: false })
+    .limit(MAX_EXCHANGES);
+  if (error) {
+    console.error("recentConversation:", error.message);
+    return [];
+  }
+  return Array.isArray(data)
+    ? data.map(({ body, reply, media, at }) => ({ body, reply, media, at })).reverse()
+    : [];
 }
 
 // Save name and/or goal from a set_profile message. Only writes provided fields.
@@ -809,4 +840,4 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, saveTdeeProfile, bumpNudge, resolveRows, dayReport };
+module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, recentConversation, bumpNudge, resolveRows, dayReport };

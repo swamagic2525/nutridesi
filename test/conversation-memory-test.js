@@ -1,4 +1,5 @@
 const assert = require("assert");
+const fs = require("fs");
 const {
   WINDOW_MS,
   MAX_EXCHANGES,
@@ -11,6 +12,20 @@ const {
   resolvePendingChoice,
   contextualProteinGoalReply,
 } = require("../src/conversationMemory.js");
+
+const dbSource = fs.readFileSync(require.resolve("../src/db.js"), "utf8");
+const schemaSource = fs.readFileSync(require.resolve("../supabase-schema.sql"), "utf8");
+const migrationSource = fs.readFileSync(require.resolve("../conversation-state.sql"), "utf8");
+assert.match(dbSource, /async function recentConversation\(phone/);
+assert.match(dbSource, /\.eq\("phone_number", phone\)/);
+assert.match(dbSource, /\.limit\(MAX_EXCHANGES\)/);
+assert.match(dbSource, /async function saveConversationState\(phone/);
+assert.match(dbSource, /select\("name, goal_kcal, goal_protein, nudge_count, tdee_profile, conversation_state"\)/);
+assert.match(dbSource, /conversation_state: state \|\| \{\}/);
+assert.match(dbSource, /saveConversationState, recentConversation/);
+assert.match(dbSource, /\.select\("body, reply, media, at"\)/);
+assert.match(schemaSource, /conversation_state jsonb not null default '\{\}'::jsonb/);
+assert.match(migrationSource, /add column if not exists conversation_state jsonb/);
 
 const now = 1_700_000_000_000;
 const futureIso = new Date(now + 1).toISOString();

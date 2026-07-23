@@ -11,6 +11,7 @@ create table if not exists users (
   roti_size text default 'medium',
   daily_summary_time text,
   tdee_profile jsonb not null default '{}'::jsonb,
+  conversation_state jsonb not null default '{}'::jsonb,
   created_at timestamptz default now()
 );
 
@@ -20,6 +21,7 @@ alter table users add column if not exists name text;
 alter table users add column if not exists goal_protein int;
 alter table users add column if not exists nudge_count int default 0;
 alter table users add column if not exists tdee_profile jsonb not null default '{}'::jsonb;
+alter table users add column if not exists conversation_state jsonb not null default '{}'::jsonb;
 
 -- Food database: the 58-item alias table (seeded by scripts, see src/foods.js)
 create table if not exists foods (
