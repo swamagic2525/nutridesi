@@ -24,6 +24,7 @@ const {
   correctionCuePayload,
   latestLoggedExchange,
   loggedExchangeMatchesBatch,
+  correlatedTargetFromExchange,
   stateTargetsCurrentIstDate,
   isExplicitIndependentMutation,
   repeatedMealCandidate,
@@ -497,7 +498,7 @@ async function handleMessage(from, body, opts = {}) {
   let effectiveBody = body;
   let forcedIntent = null;
   let pendingActionClaimed = false;
-  let boundPendingCorrection = false;
+  let boundCorrectionTarget = null;
   let boundTargetRows = [];
   const pendingChoice = resolvePendingChoice(trimmed, conversationState, now);
   if (conversationState.awaiting === "repeat_meal_choice") {
@@ -526,7 +527,10 @@ async function handleMessage(from, body, opts = {}) {
       ) {
         return "That original meal changed, so nothing was updated. Please send the correction again from the start.";
       }
-      boundPendingCorrection = true;
+      boundCorrectionTarget = {
+        targetLogIds: conversationState.targetLogIds,
+        targetDate: conversationState.targetDate,
+      };
     }
   }
 
@@ -538,10 +542,12 @@ async function handleMessage(from, body, opts = {}) {
       return "I couldn't find a recent logged meal, so nothing changed. Send the meal again if you'd like to log it.";
     }
     const targetRows = await lastLogBatch(from);
-    if (!loggedExchangeMatchesBatch(recentLoggedExchange, targetRows)) {
+    const ephemeralTarget = correlatedTargetFromExchange(recentLoggedExchange, targetRows);
+    if (!ephemeralTarget) {
       return "I couldn't safely connect that correction to the recent log, so nothing changed. Please try again.";
     }
     boundTargetRows = targetRows;
+    boundCorrectionTarget = ephemeralTarget;
     effectiveBody = directCorrectionPayload;
     forcedIntent = "replace_last";
   }
@@ -628,7 +634,10 @@ async function handleMessage(from, body, opts = {}) {
       }
       parsed.intent = "replace_last";
       parsed.replace_target = null;
-      boundPendingCorrection = true;
+      boundCorrectionTarget = {
+        targetLogIds: conversationState.targetLogIds,
+        targetDate: conversationState.targetDate,
+      };
     } else if (parsed.intent !== "query") {
       return "Send the corrected meal with its food name and amount. Your recent log is unchanged.";
     }
@@ -744,17 +753,24 @@ async function handleMessage(from, body, opts = {}) {
     }
     const latest = recentBatch.length ? recentBatch : await lastLogBatch(from);
 
-    if (boundPendingCorrection) {
+    if (boundCorrectionTarget) {
       parsed.replace_target = null;
-      const deleted = await deleteLogRowsByExactIds(from, conversationState.targetLogIds);
-      if (!deleted || deleted.length !== conversationState.targetLogIds.length) {
+      const exactTargetRows = await logRowsByExactIds(from, boundCorrectionTarget.targetLogIds);
+      if (
+        exactTargetRows.length !== boundCorrectionTarget.targetLogIds.length
+        || exactTargetRows.some(row => row.date !== boundCorrectionTarget.targetDate)
+      ) {
+        return "That original meal changed or couldn't be updated, so nothing else was logged. Please retry from the start.";
+      }
+      const deleted = await deleteLogRowsByExactIds(from, boundCorrectionTarget.targetLogIds);
+      if (!deleted || deleted.length !== boundCorrectionTarget.targetLogIds.length) {
         return "That original meal changed or couldn't be updated, so nothing else was logged. Please retry from the start.";
       }
       logCorrectionEvent({
         intent: "replace_last",
         rawMessage: effectiveBody,
         parsed,
-        batch: latest,
+        batch: exactTargetRows,
         deleted,
         outcome: "corrected_bound_state",
       });

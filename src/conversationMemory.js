@@ -216,6 +216,18 @@ function loggedExchangeMatchesBatch(exchange, rows) {
   return displayed.every((signature, index) => signature === stored[index]);
 }
 
+function correlatedTargetFromExchange(exchange, rows) {
+  if (!loggedExchangeMatchesBatch(exchange, rows)) return null;
+  const targetLogIds = rows.map(row => safeGet(row, "id"));
+  if (
+    !targetLogIds.every(id => Number.isInteger(id) && id > 0)
+    || new Set(targetLogIds).size !== targetLogIds.length
+  ) return null;
+  const targetDates = [...new Set(rows.map(row => safeGet(row, "date")))];
+  if (targetDates.length !== 1 || typeof targetDates[0] !== "string" || !validDateOnly(targetDates[0])) return null;
+  return { targetLogIds, targetDate: targetDates[0] };
+}
+
 function hasMedia(exchange) {
   return safeGet(exchange, "media") === true;
 }
@@ -342,23 +354,16 @@ async function persistConversationState({
   nonceFactory = randomUUID,
 }) {
   if (typeof save !== "function" || typeof nonceFactory !== "function") return null;
-  if (!Array.isArray(targetRows) || !targetRows.length || targetRows.length > 20) return null;
-  if (!loggedExchangeMatchesBatch(loggedExchange, targetRows)) return null;
-  const targetLogIds = targetRows.map(row => safeGet(row, "id"));
-  if (
-    !targetLogIds.every(id => Number.isInteger(id) && id > 0)
-    || new Set(targetLogIds).size !== targetLogIds.length
-  ) return null;
-  const targetDates = [...new Set(targetRows.map(row => safeGet(row, "date")))];
-  if (targetDates.length !== 1 || typeof targetDates[0] !== "string" || !validDateOnly(targetDates[0])) return null;
+  const correlatedTarget = correlatedTargetFromExchange(loggedExchange, targetRows);
+  if (!correlatedTarget) return null;
   let nonce;
   try { nonce = nonceFactory(); } catch (_) { return null; }
   const state = normaliseConversationState({
     awaiting,
     expiresAt: new Date(Number(now) + WINDOW_MS).toISOString(),
     nonce,
-    targetLogIds,
-    targetDate: targetDates[0],
+    targetLogIds: correlatedTarget.targetLogIds,
+    targetDate: correlatedTarget.targetDate,
     ...(awaiting === "repeat_meal_choice" ? { candidateBody } : {}),
   }, now);
   if (!Object.keys(state).length) return null;
@@ -394,6 +399,7 @@ module.exports = {
   hasRecentLoggedExchange,
   latestLoggedExchange,
   loggedExchangeMatchesBatch,
+  correlatedTargetFromExchange,
   isExplicitIndependentMutation,
   repeatedMealCandidate,
   repeatMealCandidateBody,

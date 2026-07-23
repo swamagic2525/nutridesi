@@ -13,6 +13,7 @@ const {
   hasRecentLoggedExchange,
   latestLoggedExchange,
   loggedExchangeMatchesBatch,
+  correlatedTargetFromExchange,
   istDateForTimestamp,
   stateTargetsCurrentIstDate,
   isExplicitIndependentMutation,
@@ -100,6 +101,7 @@ assert.match(serverSource, /refersToRecentMedia/);
 assert.match(serverSource, /isCorrectionCue/);
 assert.match(serverSource, /correctionCuePayload/);
 assert.match(serverSource, /loggedExchangeMatchesBatch/);
+assert.match(serverSource, /correlatedTargetFromExchange/);
 assert.match(serverSource, /stateTargetsCurrentIstDate/);
 assert.match(serverSource, /repeatedMealCandidate/);
 assert.match(serverSource, /repeatMealCandidateBody/);
@@ -148,15 +150,16 @@ assert.match(serverSource, /repeatMealCandidateBody\(conversationState, history\
 assert.match(serverSource, /if \(forcedIntent === "replace_last"\) parsed\.replace_target = null/);
 assert.match(serverSource, /const directCorrectionPayload = correctionCuePayload\(trimmed\);/);
 assert.match(serverSource, /const recentLoggedExchange = latestLoggedExchange\(history\);/);
-assert.match(serverSource, /if \(!recentLoggedExchange\) \{\s*return "I couldn't find a recent logged meal, so nothing changed\. Send the meal again if you'd like to log it\.";\s*\}[\s\S]*loggedExchangeMatchesBatch\(recentLoggedExchange, targetRows\)[\s\S]*effectiveBody = directCorrectionPayload;\s*forcedIntent = "replace_last";/);
+assert.match(serverSource, /if \(!recentLoggedExchange\) \{\s*return "I couldn't find a recent logged meal, so nothing changed\. Send the meal again if you'd like to log it\.";\s*\}[\s\S]*correlatedTargetFromExchange\(recentLoggedExchange, targetRows\)[\s\S]*effectiveBody = directCorrectionPayload;\s*forcedIntent = "replace_last";/);
 assert.match(serverSource, /if \(!forcedIntent && !expectedCorrectedMeal && isCorrectionCue\(trimmed\)\)/);
 assert.match(serverSource, /claimConversationState\(from, conversationState\.nonce\)/);
 assert.match(serverSource, /logRowsByExactIds\(from, conversationState\.targetLogIds\)/);
-assert.match(serverSource, /deleteLogRowsByExactIds\(from, conversationState\.targetLogIds\)/);
 assert.match(serverSource, /logMeal\(from, parsed, \{ awaitInsert: true \}\)/);
 assert.match(serverSource, /pending && Date\.now\(\) - pending\.at < PENDING_TTL_MS[\s\S]*executeClaimedAction\([\s\S]*claim: claimConversationState[\s\S]*logMeal\(from, pending\.parsed, \{ awaitInsert: true \}\)/);
 assert.match(serverSource, /if \(conversationState\.awaiting && !stateTargetsCurrentIstDate\(conversationState, now\)\) \{[\s\S]*claimConversationState\(from, conversationState\.nonce\)[\s\S]*nothing was changed/);
 assert.match(serverSource, /loggedExchangeMatchesBatch\(recentLoggedExchange, targetRows\)/);
+assert.match(serverSource, /const ephemeralTarget = correlatedTargetFromExchange\(recentLoggedExchange, targetRows\);[\s\S]*boundCorrectionTarget = ephemeralTarget;/);
+assert.match(serverSource, /logRowsByExactIds\(from, boundCorrectionTarget\.targetLogIds\)[\s\S]*row\.date !== boundCorrectionTarget\.targetDate[\s\S]*deleteLogRowsByExactIds\(from, boundCorrectionTarget\.targetLogIds\)/);
 assert.match(dbSource, /select\("id, food_name, kcal, protein, quantity, matched_db_id, is_estimate, logged_at, date"\)/);
 const replaceBlock = serverSource.slice(
   indexOfSource("// --- replace_last ---"),
@@ -332,13 +335,25 @@ const dbHelperTests = (async () => {
   const oldRowsExchange = {
     reply: "✅ Logged\n1. *Idli* — 89 kcal\n2. *Sambhar* — 120 kcal\n\n*You're at 209 kcal · 7g protein today*",
   };
+  const directTarget = correlatedTargetFromExchange(oldRowsExchange, oldRows.slice(0, 2));
+  assert.deepStrictEqual(directTarget, {
+    targetLogIds: [11, 12],
+    targetDate: "2023-11-15",
+  });
+  let mismatchMutations = 0;
+  const mismatchedTarget = correlatedTargetFromExchange({
+    reply: "✅ Logged\n*Poha* — 250 kcal\n\n*You're at 250 kcal · 6g protein today*",
+  }, oldRows.slice(0, 2));
+  if (mismatchedTarget) mismatchMutations++;
+  assert.strictEqual(mismatchedTarget, null);
+  assert.strictEqual(mismatchMutations, 0);
   const exactFixture = exactLogClient(oldRows);
   assert.deepStrictEqual(
-    (await logRowsByExactIds("+919999999999", [11, 12], exactFixture.client)).map(row => row.id),
+    (await logRowsByExactIds("+919999999999", directTarget.targetLogIds, exactFixture.client)).map(row => row.id),
     [11, 12]
   );
   assert.deepStrictEqual(
-    (await deleteLogRowsByExactIds("+919999999999", [11, 12], exactFixture.client)).map(row => row.id),
+    (await deleteLogRowsByExactIds("+919999999999", directTarget.targetLogIds, exactFixture.client)).map(row => row.id),
     [11, 12]
   );
   assert.deepStrictEqual(exactFixture.rows.map(row => row.id), [99]);
@@ -757,6 +772,7 @@ assert.doesNotThrow(() => {
   hasRecentLoggedExchange([throwing]);
   latestLoggedExchange([throwing]);
   loggedExchangeMatchesBatch(throwing, [throwing]);
+  correlatedTargetFromExchange(throwing, [throwing]);
   istDateForTimestamp(throwing);
   stateTargetsCurrentIstDate(throwing, throwing);
   repeatedMealCandidate(throwing, [throwing]);
