@@ -30,17 +30,29 @@ async function ensureUser(phone) {
 // Fetch the user's name + goal + how many times we've nudged them to set one.
 // A goal is "set" only when goal_protein is non-null (goal_kcal has a legacy
 // default of 2000, so it can't distinguish set-vs-unset on its own).
+const profileFields = "name, goal_kcal, goal_protein, nudge_count, tdee_profile";
+const isMissingConversationStateColumn = error => {
+  const message = String(error && error.message || "");
+  return /conversation_state/i.test(message)
+    && (error && error.code === "42703" || /does not exist|undefined column/i.test(message));
+};
+
 async function getProfile(phone) {
-  const { data, error } = await supabase.from("users")
-    .select("name, goal_kcal, goal_protein, nudge_count, tdee_profile, conversation_state")
+  let { data, error } = await supabase.from("users")
+    .select(`${profileFields}, conversation_state`)
     .eq("phone_number", phone).maybeSingle();
+  if (isMissingConversationStateColumn(error)) {
+    ({ data, error } = await supabase.from("users")
+      .select(profileFields)
+      .eq("phone_number", phone).maybeSingle());
+  }
   if (error) { console.error("getProfile:", error.message); return {}; }
   const p = data || {};
   return { ...p, hasGoal: p.goal_protein != null };
 }
 
-async function saveConversationState(phone, state) {
-  const { error } = await supabase.from("users").upsert(
+async function saveConversationState(phone, state, client = supabase) {
+  const { error } = await client.from("users").upsert(
     { phone_number: phone, conversation_state: state || {} },
     { onConflict: "phone_number" }
   );
@@ -51,14 +63,16 @@ async function saveConversationState(phone, state) {
   return true;
 }
 
-async function recentConversation(phone, now = new Date()) {
+async function recentConversation(phone, now = new Date(), client = supabase) {
   if (!(now instanceof Date) || !Number.isFinite(now.getTime())) return [];
   const since = new Date(now.getTime() - WINDOW_MS).toISOString();
-  const { data, error } = await supabase.from("message_log")
+  const { data, error } = await client.from("message_log")
     .select("body, reply, media, at")
     .eq("phone_number", phone)
     .gte("at", since)
+    .lte("at", now.toISOString())
     .order("at", { ascending: false })
+    .order("id", { ascending: false })
     .limit(MAX_EXCHANGES);
   if (error) {
     console.error("recentConversation:", error.message);

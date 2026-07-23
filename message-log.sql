@@ -14,5 +14,6 @@ create table if not exists message_log (
 );
 
 create index if not exists idx_msglog_at on message_log (at desc);
+create index if not exists idx_msglog_phone_at on message_log (phone_number, at desc);
 
 alter table message_log enable row level security;

@@ -16,16 +16,89 @@ const {
 const dbSource = fs.readFileSync(require.resolve("../src/db.js"), "utf8");
 const schemaSource = fs.readFileSync(require.resolve("../supabase-schema.sql"), "utf8");
 const migrationSource = fs.readFileSync(require.resolve("../conversation-state.sql"), "utf8");
+const messageLogSource = fs.readFileSync(require.resolve("../message-log.sql"), "utf8");
 assert.match(dbSource, /async function recentConversation\(phone/);
 assert.match(dbSource, /\.eq\("phone_number", phone\)/);
 assert.match(dbSource, /\.limit\(MAX_EXCHANGES\)/);
 assert.match(dbSource, /async function saveConversationState\(phone/);
-assert.match(dbSource, /select\("name, goal_kcal, goal_protein, nudge_count, tdee_profile, conversation_state"\)/);
+assert.match(dbSource, /select\(`\$\{profileFields\}, conversation_state`\)/);
 assert.match(dbSource, /conversation_state: state \|\| \{\}/);
 assert.match(dbSource, /saveConversationState, recentConversation/);
 assert.match(dbSource, /\.select\("body, reply, media, at"\)/);
 assert.match(schemaSource, /conversation_state jsonb not null default '\{\}'::jsonb/);
 assert.match(migrationSource, /add column if not exists conversation_state jsonb/);
+assert.match(migrationSource, /create index if not exists idx_msglog_phone_at on message_log \(phone_number, at desc\)/);
+assert.match(messageLogSource, /create index if not exists idx_msglog_phone_at on message_log \(phone_number, at desc\)/);
+assert.match(dbSource, /\.lte\("at", now\.toISOString\(\)\)/);
+assert.match(dbSource, /\.order\("id", \{ ascending: false \}\)/);
+assert.match(dbSource, /\.select\(profileFields\)/);
+assert.match(dbSource, /isMissingConversationStateColumn\(error\)/);
+assert.match(dbSource, /\/conversation_state\/i\.test\(message\)/);
+assert.match(dbSource, /error\.code === "42703"/);
+
+process.env.SUPABASE_URL ||= "https://example.supabase.co";
+process.env.SUPABASE_SERVICE_KEY ||= "test-key";
+const { recentConversation, saveConversationState } = require("../src/db.js");
+
+function recentClient(response) {
+  const calls = [];
+  const builder = {
+    select(value) { calls.push(["select", value]); return this; },
+    eq(field, value) { calls.push(["eq", field, value]); return this; },
+    gte(field, value) { calls.push(["gte", field, value]); return this; },
+    lte(field, value) { calls.push(["lte", field, value]); return this; },
+    order(field, value) { calls.push(["order", field, value]); return this; },
+    limit(value) { calls.push(["limit", value]); return Promise.resolve(response); },
+  };
+  return { calls, client: { from(table) { calls.push(["from", table]); return builder; } } };
+}
+
+const queryNow = new Date("2023-11-14T22:13:20.000Z");
+const recentFixture = recentClient({ data: [
+  { id: 2, phone_number: "+919999999999", body: "new", reply: "new reply", media: false, at: "2023-11-14T22:13:19.000Z" },
+  { id: 1, phone_number: "+919999999999", body: "old", reply: "old reply", media: true, at: "2023-11-14T22:13:18.000Z" },
+], error: null });
+const dbHelperTests = (async () => {
+  const result = await recentConversation("+919999999999", queryNow, recentFixture.client);
+  assert.deepStrictEqual(result, [
+    { body: "old", reply: "old reply", media: true, at: "2023-11-14T22:13:18.000Z" },
+    { body: "new", reply: "new reply", media: false, at: "2023-11-14T22:13:19.000Z" },
+  ]);
+  assert.deepStrictEqual(recentFixture.calls, [
+    ["from", "message_log"], ["select", "body, reply, media, at"], ["eq", "phone_number", "+919999999999"],
+    ["gte", "at", "2023-11-14T16:13:20.000Z"], ["lte", "at", "2023-11-14T22:13:20.000Z"],
+    ["order", "at", { ascending: false }], ["order", "id", { ascending: false }], ["limit", 10],
+  ]);
+
+  const writes = [];
+  const saveClient = { from(table) {
+    assert.strictEqual(table, "users");
+    return { upsert(payload, options) {
+      writes.push([payload, options]);
+      return Promise.resolve({ error: null });
+    } };
+  } };
+  assert.strictEqual(await saveConversationState("+919999999999", { awaiting: "corrected_meal" }, saveClient), true);
+  assert.deepStrictEqual(writes, [[
+    { phone_number: "+919999999999", conversation_state: { awaiting: "corrected_meal" } },
+    { onConflict: "phone_number" },
+  ]]);
+
+  const originalConsoleError = console.error;
+  console.error = () => {};
+  try {
+    const failedRecent = recentClient({ data: null, error: { message: "query failed" } });
+    assert.deepStrictEqual(await recentConversation("+919999999999", queryNow, failedRecent.client), []);
+    assert.deepStrictEqual(await recentConversation("+919999999999", new Date("invalid"), {
+      from() { throw new Error("must not query"); },
+    }), []);
+    assert.strictEqual(await saveConversationState("+919999999999", null, { from() {
+      return { upsert() { return Promise.resolve({ error: { message: "write failed" } }); } };
+    } }), false);
+  } finally {
+    console.error = originalConsoleError;
+  }
+})();
 
 const now = 1_700_000_000_000;
 const futureIso = new Date(now + 1).toISOString();
@@ -153,4 +226,5 @@ assert.doesNotThrow(() => {
   contextualProteinGoalReply(throwing, throwing);
 });
 
-console.log("conversation-memory-test: all passed");
+dbHelperTests.then(() => console.log("conversation-memory-test: all passed"))
+  .catch(error => { console.error(error); process.exitCode = 1; });
