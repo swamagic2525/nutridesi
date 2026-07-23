@@ -643,6 +643,12 @@ async function handleMessage(from, body, opts = {}) {
     }
   }
 
+  if (!forcedIntent && !expectedCorrectedMeal && parsed.intent === "calculate_tdee") {
+    const semanticTdee = advanceTdee("calculate my calories", profile.tdee_profile || {});
+    await saveTdeeProfile(from, semanticTdee.state);
+    return semanticTdee.reply;
+  }
+
   if (shouldPromoteToReplace(parsed, effectiveBody, recentBatch)) {
     parsed.intent = "replace_last";
     logCorrectionEvent({ intent: "promoted_to_replace", rawMessage: effectiveBody, parsed, batch: recentBatch, deleted: [], outcome: "promoted" });

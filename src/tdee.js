@@ -406,6 +406,19 @@ function advanceTdee(text, stored = {}, now = new Date()) {
     state.confirmedSignature = signature(state);
     return completedResult(state, now);
   }
+  if (
+    state.phase === "collecting"
+    && /^\s*(yes|haan|ha)\s*$/i.test(text)
+  ) {
+    const missing = ["age", "formula", "heightCm", "weightKg", "activity"]
+      .filter(field => state[field] == null);
+    return {
+      handled: true,
+      clear: false,
+      state,
+      reply: missingReply(missing),
+    };
+  }
 
   const unitOnly = String(text).trim().toLowerCase()
     .match(/^(kg|kgs|kilograms?|lb|lbs|pounds?)$/);

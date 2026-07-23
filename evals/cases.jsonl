@@ -54,6 +54,8 @@
 {"id":"report-yesterday","tags":["query"],"input":"Total meals I had yesterday","expected":{"intent":"query","items":[],"report_day":"yesterday"}}
 {"id":"chitchat-wassup","tags":["chitchat"],"input":"Wassup dude","expected":{"intent":["query","log"],"items":[]}}
 {"id":"chitchat-bmw","tags":["chitchat"],"input":"BMW","expected":{"intent":["query","log"],"items":[]}}
+{"id":"tdee-requirements","tags":["tdee","intent"],"input":"What's my calories requirements","expected":{"intent":"calculate_tdee","items":[]}}
+{"id":"tdee-hinglish","tags":["tdee","intent"],"input":"Mujhe din mein kitni calories khani chahiye?","expected":{"intent":"calculate_tdee","items":[]}}
 {"id":"annotation-ghee-biryani","tags":["annotation"],"context":"BEGIN APP-PROVIDED LATEST LOG\n{\"role\":\"latest_log_item\",\"food_name\":\"Biryani (Chicken)\",\"quantity\":1,\"kcal\":450,\"protein\":25,\"is_estimate\":false}\nEND APP-PROVIDED LATEST LOG","input":"bahot ghee tha biryani mai","expected":{"intent":"log","items":[{"db_id":48,"qty":2}]}}
 {"id":"annotation-oily-dal","tags":["annotation"],"context":"BEGIN APP-PROVIDED LATEST LOG\n{\"role\":\"latest_log_item\",\"food_name\":\"Dal Tadka\",\"quantity\":1,\"kcal\":180,\"protein\":10,\"is_estimate\":false}\nEND APP-PROVIDED LATEST LOG","input":"the dal was very oily","expected":{"intent":"log","items":[{"db_id":50}]}}
 {"id":"instead-is-log","tags":["annotation"],"input":"I had dal instead of rice","expected":{"intent":"log","items":[{"db_id":17,"qty":1}]}}

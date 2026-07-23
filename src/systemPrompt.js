@@ -115,6 +115,12 @@ intent:
                    (integers) with whatever they gave. A number followed by "cal/calories/kcal" = goal_kcal;
                    a number followed by "protein/g protein" = goal_protein. Leave a field null if not stated.
                    A bare "Name NUMBER cal NUMBER protein" with NO food word is always set_profile.
+  "calculate_tdee" = user wants to calculate their personal daily calorie requirement, maintenance, or
+                   target intake: "what are my calorie requirements?", "how much should I eat daily?",
+                   "calories needed for weight loss?", "mera maintenance kitna hai?", "mujhe din mein
+                   kitni calories khani chahiye?". Return items [] and query_reply null. This is NOT for
+                   calories/macros of a named food ("calories in samosa", "macros for dal") and NOT for
+                   today's logged total; those remain "query".
   "query"        = user is ASKING, not reporting eating. Three forms:
                    (a) food question: "what is calories of 2 banana", "macros for dal chawal 3 plates",
                        "whats better, 2 samosas or 2 chicken sandwiches?" -> parse ALL mentioned food(s)

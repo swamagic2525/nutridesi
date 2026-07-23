@@ -78,6 +78,12 @@ assert.strictEqual(step.handled, true);
 assert.strictEqual(step.state.phase, "collecting");
 assert.match(step.reply, /Age.*Male\/Female.*Height.*Weight/s);
 
+let requirementsStep = advanceTdee("calculate my calories", {});
+requirementsStep = advanceTdee("Yes", requirementsStep.state);
+assert.strictEqual(requirementsStep.handled, true);
+assert.strictEqual(requirementsStep.state.phase, "collecting");
+assert.match(requirementsStep.reply, /Age.*Male\/Female.*Height.*Weight/s);
+
 step = advanceTdee("31 male 175 cm 80 kg", step.state);
 assert.strictEqual(step.state.phase, "collecting");
 assert.match(step.reply, /How active/);
@@ -199,6 +205,15 @@ assert.ok(
   serverSource.indexOf("advanceTdee(trimmed")
     < serverSource.indexOf("const correctionCandidate"),
   "TDEE routing must run before parseMeal/correction routing"
+);
+assert.match(
+  serverSource,
+  /parsed\.intent === "calculate_tdee"[\s\S]*advanceTdee\("calculate my calories", profile\.tdee_profile \|\| \{\}\)[\s\S]*saveTdeeProfile/
+);
+assert.ok(
+  serverSource.indexOf('parsed.intent === "calculate_tdee"')
+    < serverSource.indexOf('parsed.intent === "query"'),
+  "semantic TDEE routing must run before generic query handling"
 );
 
 console.log("tdee-test: state machine passed");
