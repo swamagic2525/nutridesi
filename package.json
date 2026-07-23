@@ -18,7 +18,8 @@
     "test:rerank": "node test/rerank-test.js",
     "test:brand": "node test/brand-rerank-test.js",
     "test:tdee": "node test/tdee-test.js",
-    "test:undoall": "node test/undo-all-test.js"
+    "test:undoall": "node test/undo-all-test.js",
+    "test:memory": "node test/conversation-memory-test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",
