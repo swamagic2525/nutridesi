@@ -103,6 +103,9 @@ assert.match(serverSource, /const needsHistory = needsConversationContext\(trimm
 assert.match(serverSource, /forcedIntent === "replace_last"\s*\|\|\s*expectedCorrectedMeal\s*\|\|\s*looksLikeCorrection\(effectiveBody\)/);
 assert.match(serverSource, /parsed\.intent === "log"\s*&&\s*\(parsed\.items \|\| \[\]\)\.length/);
 assert.match(serverSource, /parsed\.intent = forcedIntent/);
+assert.match(serverSource, /candidateBody:\s*effectiveBody\.trim\(\)\.slice\(0, RATE\.maxLen\)/);
+assert.match(serverSource, /repeatMealCandidateBody\(conversationState, history\)/);
+assert.match(serverSource, /if \(forcedIntent === "replace_last"\) parsed\.replace_target = null/);
 assert.match(serverSource, /expiresAt:\s*new Date\(now \+ WINDOW_MS\)\.toISOString\(\)/);
 
 process.env.SUPABASE_URL ||= "https://example.supabase.co";
@@ -180,6 +183,26 @@ assert.deepStrictEqual(normaliseConversationState({
 assert.deepStrictEqual(normaliseConversationState({
   awaiting: "repeat_meal_choice", expiresAt: futureIso,
 }, now), { awaiting: "repeat_meal_choice", expiresAt: futureIso });
+assert.deepStrictEqual(normaliseConversationState({
+  awaiting: "repeat_meal_choice",
+  expiresAt: futureIso,
+  candidateBody: "  idli sambhar coconut chutney  ",
+}, now), {
+  awaiting: "repeat_meal_choice",
+  expiresAt: futureIso,
+  candidateBody: "idli sambhar coconut chutney",
+});
+assert.strictEqual(normaliseConversationState({
+  awaiting: "repeat_meal_choice",
+  expiresAt: futureIso,
+  candidateBody: "x".repeat(400),
+}, now).candidateBody.length, 300);
+assert.deepStrictEqual(normaliseConversationState({
+  awaiting: "repeat_meal_choice", expiresAt: futureIso, candidateBody: 42,
+}, now), { awaiting: "repeat_meal_choice", expiresAt: futureIso });
+assert.deepStrictEqual(normaliseConversationState({
+  awaiting: "corrected_meal", expiresAt: futureIso, candidateBody: "must be omitted",
+}, now), { awaiting: "corrected_meal", expiresAt: futureIso });
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "wrong", expiresAt: futureIso }, now), {});
 assert.deepStrictEqual(normaliseConversationState({ awaiting: "corrected_meal", expiresAt: new Date(now).toISOString() }, now), {});
 assert.deepStrictEqual(normaliseConversationState(null, now), {});
@@ -314,23 +337,41 @@ const anonymizedBreakfast = [{
 assert.strictEqual(repeatedMealCandidate("rolled oats low fat milk yogabar protein powder mango", anonymizedBreakfast), true);
 
 const pending = { awaiting: "repeat_meal_choice", expiresAt: futureIso };
+const repeatedBody = "rolled oats low fat milk protein powder mango";
 const pendingHistory = [
-  { body: "one banana", reply: "✅ Logged" },
+  { body: repeatedBody, reply: "✅ Logged" },
   {
-    body: "rolled oats low fat milk protein powder mango",
+    body: repeatedBody,
     reply: "That looks like your recent meal. Reply correction or new meal.",
   },
 ];
-assert.strictEqual(repeatMealCandidateBody(pendingHistory), "rolled oats low fat milk protein powder mango");
-assert.strictEqual(repeatMealCandidateBody([
+const persistedPending = normaliseConversationState({
+  awaiting: "repeat_meal_choice",
+  expiresAt: futureIso,
+  candidateBody: " rolled oats low fat milk protein powder mango ",
+}, now);
+assert.strictEqual(resolvePendingChoice("yes", persistedPending, now), null);
+assert.strictEqual(repeatMealCandidateBody(persistedPending, [
   ...pendingHistory,
+  { body: "yes", reply: "That looks like your recent meal. Reply correction or new meal." },
+]), "rolled oats low fat milk protein powder mango");
+assert.strictEqual(resolvePendingChoice("correction", persistedPending, now), "correction");
+assert.strictEqual(repeatMealCandidateBody({}, [
+  { body: "idli sambhar coconut chutney", reply: "✅ Logged" },
   {
     body: "idli sambhar coconut chutney",
     reply: "This may repeat your last log. Reply *correction* or *new meal*.",
   },
 ]), "idli sambhar coconut chutney");
-assert.strictEqual(repeatMealCandidateBody([{ body: "one banana", reply: "✅ Logged" }]), null);
-assert.strictEqual(repeatMealCandidateBody(null), null);
+assert.strictEqual(repeatMealCandidateBody({}, [
+  ...pendingHistory,
+  { body: "yes", reply: "That looks like your recent meal. Reply correction or new meal." },
+]), "rolled oats low fat milk protein powder mango");
+assert.strictEqual(repeatMealCandidateBody({}, [{ body: "one banana", reply: "✅ Logged" }]), null);
+assert.strictEqual(repeatMealCandidateBody({
+  awaiting: "corrected_meal", candidateBody: repeatedBody,
+}, []), null);
+assert.strictEqual(repeatMealCandidateBody(null, null), null);
 assert.strictEqual(resolvePendingChoice("correct the first one", pending, now), "correction");
 assert.strictEqual(resolvePendingChoice("log another meal", pending, now), "new");
 assert.strictEqual(resolvePendingChoice("correction", pending, now), "correction");

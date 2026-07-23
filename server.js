@@ -448,7 +448,7 @@ async function handleMessage(from, body, opts = {}) {
   const pendingChoice = resolvePendingChoice(trimmed, conversationState, now);
   if (conversationState.awaiting === "repeat_meal_choice") {
     if (!pendingChoice) return REPEAT_CHOICE_PROMPT;
-    const candidateBody = repeatMealCandidateBody(history);
+    const candidateBody = repeatMealCandidateBody(conversationState, history);
     await saveConversationState(from, {});
     if (!candidateBody) {
       return "I couldn't find that recent meal, so nothing changed. Send the meal again if you'd like to log it.";
@@ -481,6 +481,7 @@ async function handleMessage(from, body, opts = {}) {
     await saveConversationState(from, {
       awaiting: "repeat_meal_choice",
       expiresAt: new Date(now + WINDOW_MS).toISOString(),
+      candidateBody: effectiveBody.trim().slice(0, RATE.maxLen),
     });
     return REPEAT_CHOICE_PROMPT;
   }
@@ -500,6 +501,7 @@ async function handleMessage(from, body, opts = {}) {
 
   if (forcedIntent) {
     parsed.intent = forcedIntent;
+    if (forcedIntent === "replace_last") parsed.replace_target = null;
   } else if (expectedCorrectedMeal) {
     if (parsed.intent === "log" && (parsed.items || []).length) {
       parsed.intent = "replace_last";

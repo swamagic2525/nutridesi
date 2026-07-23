@@ -38,6 +38,7 @@ const validIsoDateTime = value => {
 function normaliseConversationState(raw, now = Date.now()) {
   const awaiting = safeGet(raw, "awaiting");
   const expiresAt = safeGet(raw, "expiresAt");
+  const candidateBody = safeGet(raw, "candidateBody");
   const timestamp = finiteNumber(now);
   const expiry = typeof expiresAt === "string" ? Date.parse(expiresAt) : NaN;
   if (
@@ -47,7 +48,12 @@ function normaliseConversationState(raw, now = Date.now()) {
     || expiry <= timestamp
     || !validIsoDateTime(expiresAt)
   ) return {};
-  return { awaiting, expiresAt: new Date(expiry).toISOString() };
+  const state = { awaiting, expiresAt: new Date(expiry).toISOString() };
+  if (awaiting === "repeat_meal_choice" && typeof candidateBody === "string") {
+    const candidate = normaliseText(candidateBody).slice(0, 300).trim();
+    if (candidate) state.candidateBody = candidate;
+  }
+  return state;
 }
 
 function isCorrectionCue(text) {
@@ -155,12 +161,21 @@ function repeatedMealCandidate(text, exchanges) {
     && longer / shorter <= 1.5;
 }
 
-function repeatMealCandidateBody(exchanges) {
+function repeatMealCandidateBody(state, exchanges) {
+  const stored = safeGet(state, "candidateBody");
+  if (safeGet(state, "awaiting") === "repeat_meal_choice" && typeof stored === "string") {
+    const candidate = normaliseText(stored).slice(0, 300).trim();
+    if (candidate) return candidate;
+  }
   const entries = Array.isArray(exchanges) ? exchanges : [];
-  const candidate = [...entries].reverse().find(entry =>
-    /\breply\s+\*?["']?correction["']?\*?\s+or\s+\*?["']?new meal["']?\*?[.!]?$/i.test(exchangeReply(entry))
-  );
-  return candidate ? exchangeText(candidate) || null : null;
+  for (let index = entries.length - 1; index >= 0; index--) {
+    const entry = entries[index];
+    const askedChoice = /\breply\s+\*?["']?correction["']?\*?\s+or\s+\*?["']?new meal["']?\*?[.!]?$/i
+      .test(exchangeReply(entry));
+    const body = exchangeText(entry);
+    if (askedChoice && body && repeatedMealCandidate(body, entries.slice(0, index))) return body;
+  }
+  return null;
 }
 
 function resolvePendingChoice(text, state, now = Date.now()) {
