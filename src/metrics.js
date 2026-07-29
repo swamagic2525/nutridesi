@@ -7,6 +7,11 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // "Day N" milestone card.
 const LAUNCH_DATE = "2026-07-11";
 
+// Waitlist ranks 1..50 hold the free-for-life promise. Signups past it are
+// still recorded; this only splits the dashboard count. Mirrors FOUNDING_SPOTS
+// in server.js.
+const FOUNDING_SPOTS = 50;
+
 function istDate(value = new Date()) {
   return new Date(value).toLocaleDateString("en-CA", { timeZone: IST });
 }
@@ -121,6 +126,7 @@ function buildMetrics(rawUsers, rawLogs, now = new Date(), goalFieldAvailable = 
     foodsLogged: logs.length,
     directMatchRate: percent(logs.filter(r => r.matched_db_id != null).length, logs.length),
     foundingMembers: extras.foundingMembers ?? null,
+    waitlistTotal: extras.waitlistTotal ?? null,
     corrections: extras.corrections ?? null,
   };
   return {
@@ -179,10 +185,18 @@ async function loadMetrics() {
   const logs = await fetchAll(client, "user_logs", "phone_number,food_name,matched_db_id,is_estimate,date");
   // Milestone extras — both fail soft: a missing table or log file just leaves
   // that card blank rather than breaking the dashboard.
+  // The table records every signup, not just the first 50 — the promise applies
+  // to ranks 1..50, the rest are waitlisted behind it. Count the two separately
+  // so the card doesn't read "63 / 50".
   let foundingMembers = null;
+  let waitlistTotal = null;
   try {
-    const { count } = await client.from("founding_members").select("*", { count: "exact", head: true });
-    foundingMembers = count ?? null;
+    const { count: total } = await client.from("founding_members")
+      .select("*", { count: "exact", head: true });
+    waitlistTotal = total ?? null;
+    const { count: claimed } = await client.from("founding_members")
+      .select("*", { count: "exact", head: true }).lte("waitlist_rank", FOUNDING_SPOTS);
+    foundingMembers = claimed ?? null;
   } catch (error) { console.warn("metrics: founding_members unavailable:", error.message); }
   let corrections = null;
   try {
@@ -190,7 +204,7 @@ async function loadMetrics() {
       .trim().split("\n").filter(Boolean);
     corrections = lines.filter(l => /"outcome":"(corrected|removed|removed_all)"/.test(l)).length;
   } catch { /* no correction log yet */ }
-  return buildMetrics(users.map(user => ({ ...user, goal_protein: goalByPhone.get(user.phone_number) })), logs, new Date(), goalFieldAvailable, { foundingMembers, corrections });
+  return buildMetrics(users.map(user => ({ ...user, goal_protein: goalByPhone.get(user.phone_number) })), logs, new Date(), goalFieldAvailable, { foundingMembers, waitlistTotal, corrections });
 }
 
 module.exports = { buildMetrics, loadMetrics, normalizeFoodName, istDate };

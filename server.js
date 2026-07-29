@@ -127,6 +127,9 @@ a,button{color:#72dc9a;background:none;border:1px solid #72dc9a;border-radius:6p
 // ---------------------------------------------------------------------------
 
 const RATE = { perHour: 25, perDay: 60, maxLen: 300 };
+// Ranks 1..FOUNDING_SPOTS hold the free-for-life promise (made 2026-07-19).
+// Signups past it are still recorded — this only labels them.
+const FOUNDING_SPOTS = 50;
 const usage = new Map();
 function rateLimitCheck(phone) {
   const now = Date.now();
@@ -1037,7 +1040,13 @@ app.post("/netlify-waitlist", async (req, res) => {
   // never be invisible (2026-07-20: a signup left no trace anywhere).
   console.log(`netlify-waitlist: ${maskName(name)} · ${classified ? classified.type : `UNCLASSIFIED ${maskContact(rawContact)}`}`);
 
-  // Auto-insert into founding_members (skip if duplicate or past cap)
+  // Auto-insert into founding_members (skip duplicates only).
+  // Every valid signup is recorded, however many there are — the table is the
+  // durable waitlist. FOUNDING_SPOTS is a *label*, not an insert gate: ranks
+  // 1..50 hold the free-for-life promise, higher ranks are waitlisted behind
+  // it. Capping the insert silently dropped signups instead (rows 51+ were
+  // never written), which is unrecoverable — Netlify's notification is the
+  // only copy. Who beyond 50 gets what is a separate call, made from the data.
   if (classified) {
     try {
       const { data: existing } = await supabase
@@ -1052,18 +1061,17 @@ app.post("/netlify-waitlist", async (req, res) => {
           .order("waitlist_rank", { ascending: false })
           .limit(1);
         const nextRank = ((all && all[0]?.waitlist_rank) || 0) + 1;
-        if (nextRank <= 50) {
-          const row = {
-            contact: classified.norm,
-            name: name || null,
-            source: "waitlist",
-            waitlist_rank: nextRank,
-            phone_number: classified.type === "phone" ? classified.norm : null,
-          };
-          const { error: insErr } = await supabase.from("founding_members").insert([row]);
-          if (insErr) throw new Error(insErr.message);
-          console.log(`founding_members: #${nextRank} ${maskName(name)} · ${classified.type}`);
-        }
+        const row = {
+          contact: classified.norm,
+          name: name || null,
+          source: "waitlist",
+          waitlist_rank: nextRank,
+          phone_number: classified.type === "phone" ? classified.norm : null,
+        };
+        const { error: insErr } = await supabase.from("founding_members").insert([row]);
+        if (insErr) throw new Error(insErr.message);
+        const tier = nextRank <= FOUNDING_SPOTS ? "founding" : "waitlist";
+        console.log(`founding_members: #${nextRank} ${maskName(name)} · ${classified.type} · ${tier}`);
       }
     } catch (err) {
       console.error("netlify-waitlist: founding_members insert failed:", err.message);

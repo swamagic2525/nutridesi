@@ -59,7 +59,8 @@ function metricsPage() {
     text('dayNumber', m.dayNumber == null ? '—' : 'Day ' + m.dayNumber);
     text('launchHint', m.launchDate ? 'since launch on ' + shortDate(m.launchDate) : 'since first public share');
     text('foodsLogged', m.foodsLogged == null ? '—' : m.foodsLogged.toLocaleString('en-IN'));
-    text('foundingMembers', m.foundingMembers == null ? '—' : m.foundingMembers + ' / 50');
+    text('foundingMembers', m.foundingMembers == null ? '—'
+      : m.foundingMembers + ' / 50' + (m.waitlistTotal > m.foundingMembers ? ' (+' + (m.waitlistTotal - m.foundingMembers) + ' waitlisted)' : ''));
     text('directMatch', pct(m.directMatchRate));
     text('corrections', m.corrections == null ? '—' : m.corrections);
     text('d7Hint', data.d7.eligibleUsers + ' eligible joined users');

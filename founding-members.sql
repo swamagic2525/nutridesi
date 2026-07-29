@@ -10,7 +10,7 @@ create table if not exists founding_members (
   contact text not null unique,                -- phone / email / IG handle exactly as submitted
   name text,                                   -- as given on the waitlist form
   source text not null default 'waitlist',     -- waitlist | beta | manual
-  waitlist_rank int,                           -- 1..50, signup order from Netlify Forms
+  waitlist_rank int,                           -- signup order; 1..50 hold the free-for-life promise, higher = waitlisted
   phone_number text,                           -- filled when they join the bot
   promised_at timestamptz not null default now()
 );
