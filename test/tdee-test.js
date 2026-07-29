@@ -6,6 +6,9 @@ const {
   suspiciousReasons,
   advanceTdee,
   emptyState,
+  normaliseState,
+  tdeeRouteAction,
+  shouldRouteSemanticTdee,
 } = require("../src/tdee.js");
 
 assert.strictEqual(isTdeeRequest("calculate my calories"), true);
@@ -195,26 +198,169 @@ lowMaintenance = advanceTdee("yes", lowMaintenance.state);
 assert.strictEqual(lowMaintenance.state.phase, "complete");
 assert.match(lowMaintenance.reply, /Fat loss:\* No automated target/);
 
+console.log("tdee-test: state machine passed");
+
+// --- normaliseState: the trust boundary for users.tdee_profile jsonb ---
+// Anything can be in that column (bad write, schema drift, manual edit). These
+// assert it always yields a usable state rather than propagating garbage into
+// calculateTdee.
+assert.deepStrictEqual(normaliseState(null), emptyState());
+assert.deepStrictEqual(normaliseState("not an object"), emptyState());
+assert.deepStrictEqual(normaliseState([1, 2, 3]), emptyState());
+assert.deepStrictEqual(normaliseState(undefined), emptyState());
+
+// Out-of-range values are dropped, not clamped to a plausible-but-wrong number.
+const outOfRange = normaliseState({
+  phase: "collecting", age: 999, formula: "alien",
+  heightCm: 1e9, weightKg: -50, activity: 99,
+});
+assert.strictEqual(outOfRange.age, null);
+assert.strictEqual(outOfRange.formula, null);
+assert.strictEqual(outOfRange.heightCm, null);
+assert.strictEqual(outOfRange.weightKg, null);
+assert.strictEqual(outOfRange.activity, null);
+
+// An unknown phase falls back to inactive rather than stranding the user.
+assert.strictEqual(normaliseState({ phase: "banana" }).phase, "inactive");
+for (const phase of ["inactive", "collecting", "confirming", "complete"]) {
+  assert.strictEqual(normaliseState({ phase }).phase, phase, `${phase} preserved`);
+}
+
+// NaN/Infinity must not survive into arithmetic.
+const nonFinite = normaliseState({
+  phase: "collecting", age: NaN, heightCm: Infinity,
+  weightKg: -Infinity, pendingWeightValue: Infinity, activity: NaN,
+});
+assert.strictEqual(nonFinite.age, null);
+assert.strictEqual(nonFinite.heightCm, null);
+assert.strictEqual(nonFinite.weightKg, null);
+assert.strictEqual(nonFinite.pendingWeightValue, null);
+assert.strictEqual(nonFinite.activity, null);
+
+// invalidAttempts is clamped into [0, 2] so a poisoned counter can neither
+// loop forever nor skip the abandon path.
+assert.strictEqual(normaliseState({ invalidAttempts: -99 }).invalidAttempts, 0);
+assert.strictEqual(normaliseState({ invalidAttempts: 1e9 }).invalidAttempts, 2);
+assert.strictEqual(normaliseState({ invalidAttempts: "junk" }).invalidAttempts, 0);
+
+// A __proto__ key in the stored JSON must not pollute Object.prototype.
+normaliseState(JSON.parse('{"__proto__":{"tdeePolluted":true},"phase":"complete"}'));
+assert.strictEqual({}.tdeePolluted, undefined, "no prototype pollution");
+
+// A corrupt row can yield phase=complete with no data. That must degrade to
+// passthrough (user keeps logging food) rather than emitting a null-filled
+// summary, and a fresh request must restart collection cleanly.
+const hollowComplete = { phase: "complete", age: 999, heightCm: 1e9, weightKg: -50 };
+assert.strictEqual(advanceTdee("2 roti and dal", hollowComplete).handled, false);
+assert.strictEqual(advanceTdee("what is my tdee", hollowComplete).state.phase, "collecting");
+
+console.log("tdee-test: normaliseState guards passed");
+
+// --- suspiciousReasons: every branch ---
+const sane = { age: 30, formula: "male", heightCm: 175, weightKg: 75, activity: 3 };
+assert.deepStrictEqual(suspiciousReasons(sane), [], "a normal body is not suspicious");
+
+// Incomplete/invalid input short-circuits to ["invalid"].
+assert.deepStrictEqual(suspiciousReasons({}), ["invalid"]);
+assert.deepStrictEqual(suspiciousReasons(null), ["invalid"]);
+assert.deepStrictEqual(suspiciousReasons({ ...sane, activity: 9 }), ["invalid"]);
+
+assert.ok(suspiciousReasons({ ...sane, heightCm: 135 }).includes("height"));
+assert.ok(suspiciousReasons({ ...sane, heightCm: 215 }).includes("height"));
+assert.ok(suspiciousReasons({ ...sane, weightKg: 210 }).includes("weight"));
+assert.ok(suspiciousReasons({ ...sane, weightKg: 35 }).includes("weight"));
+
+// "combination" is the only cross-field check: each value is individually
+// plausible but the BMI they imply is not.
+const highBmi = suspiciousReasons({ ...sane, heightCm: 150, weightKg: 190 });
+assert.ok(highBmi.includes("combination"), `expected combination, got ${highBmi}`);
+
+// "tdee" fires when the computed target itself lands outside 1200-5000.
+const hugeTdee = suspiciousReasons({
+  age: 18, formula: "male", heightCm: 210, weightKg: 200, activity: 5,
+});
+assert.ok(hugeTdee.includes("tdee"), `expected tdee, got ${hugeTdee}`);
+
+// Reasons are de-duplicated.
+const multi = suspiciousReasons({ ...sane, heightCm: 145, weightKg: 205 });
+assert.deepStrictEqual(multi, [...new Set(multi)], "reasons are unique");
+
+console.log("tdee-test: suspiciousReasons branches passed");
+
+// --- Routing decisions (behaviour, not source text) ---
+// These replace assertions that grepped server.js. That approach broke on a
+// harmless variable rename and passed when the call sat in dead code.
+assert.deepStrictEqual(
+  tdeeRouteAction({ handled: true, clear: false, state: { phase: "collecting" }, reply: "ask age" }),
+  { action: "reply", state: { phase: "collecting" }, reply: "ask age" }
+);
+assert.deepStrictEqual(
+  tdeeRouteAction({ handled: false, clear: true, state: { phase: "inactive" } }),
+  { action: "clear", state: { phase: "inactive" }, reply: null }
+);
+assert.strictEqual(
+  tdeeRouteAction({ handled: false, clear: false, state: {} }).action,
+  "passthrough"
+);
+// handled wins over clear — never drop a reply on the floor.
+assert.strictEqual(
+  tdeeRouteAction({ handled: true, clear: true, state: {}, reply: "r" }).action,
+  "reply"
+);
+for (const bad of [null, undefined, "x", 42, []]) {
+  assert.strictEqual(tdeeRouteAction(bad).action, "passthrough", `${bad} -> passthrough`);
+}
+
+// The real flows must produce the actions the webhook depends on.
+assert.strictEqual(tdeeRouteAction(advanceTdee("what is my TDEE?", {})).action, "reply");
+assert.strictEqual(tdeeRouteAction(advanceTdee("calories in one samosa?", {})).action, "passthrough");
+assert.strictEqual(tdeeRouteAction(advanceTdee("2 roti and dal", {
+  ...emptyState(), phase: "collecting", age: 31, formula: "male", heightCm: 175, weightKg: 80,
+})).action, "clear", "food mid-collection clears TDEE state and keeps routing");
+
+assert.strictEqual(
+  shouldRouteSemanticTdee({ intent: "calculate_tdee" }), true
+);
+assert.strictEqual(
+  shouldRouteSemanticTdee({ intent: "query" }), false
+);
+// A user mid-correction or under a forced intent is not pulled into TDEE.
+assert.strictEqual(
+  shouldRouteSemanticTdee({ intent: "calculate_tdee", forcedIntent: "replace_last" }), false
+);
+assert.strictEqual(
+  shouldRouteSemanticTdee({ intent: "calculate_tdee", expectedCorrectedMeal: true }), false
+);
+assert.strictEqual(shouldRouteSemanticTdee({}), false);
+assert.strictEqual(shouldRouteSemanticTdee(null), false);
+
+console.log("tdee-test: routing decisions passed");
+
+// Ordering is the one property that still needs the source, because server.js
+// calls app.listen() at module load and cannot be require()d here. Anchored on
+// exported function names (stable API) rather than local variable names.
 const fs = require("fs");
 const serverSource = fs.readFileSync(require.resolve("../server.js"), "utf8");
-assert.match(
-  serverSource,
-  /advanceTdee\(trimmed, profile\.tdee_profile \|\| \{\}\)/
-);
-assert.ok(
-  serverSource.indexOf("advanceTdee(trimmed")
-    < serverSource.indexOf("const correctionCandidate"),
+
+// Assert presence explicitly before comparing positions. A bare
+// `indexOf(a) < indexOf(b)` silently passes when `a` is absent, because a
+// missing marker yields -1 and -1 is less than everything — so deleting the
+// call entirely would look like correct ordering.
+function assertOrder(before, after, why) {
+  const i = serverSource.indexOf(before);
+  const j = serverSource.indexOf(after);
+  assert.notStrictEqual(i, -1, `server.js must call ${before}`);
+  assert.notStrictEqual(j, -1, `server.js must contain ${after}`);
+  assert.ok(i < j, why);
+}
+
+assertOrder(
+  "tdeeRouteAction(", "const correctionCandidate",
   "TDEE routing must run before parseMeal/correction routing"
 );
-assert.match(
-  serverSource,
-  /parsed\.intent === "calculate_tdee"[\s\S]*advanceTdee\("calculate my calories", profile\.tdee_profile \|\| \{\}\)[\s\S]*saveTdeeProfile/
-);
-assert.ok(
-  serverSource.indexOf('parsed.intent === "calculate_tdee"')
-    < serverSource.indexOf('parsed.intent === "query"'),
+assertOrder(
+  "shouldRouteSemanticTdee(", 'parsed.intent === "query"',
   "semantic TDEE routing must run before generic query handling"
 );
 
-console.log("tdee-test: state machine passed");
-console.log("tdee-test: server routing hook present");
+console.log("tdee-test: routing order verified (structural)");

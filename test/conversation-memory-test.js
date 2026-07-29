@@ -120,7 +120,9 @@ const indexOfSource = (fragment, message) => {
   assert.notStrictEqual(index, -1, message || `Missing server source fragment: ${fragment}`);
   return index;
 };
-const tdeeClearIndex = indexOfSource("if (tdee.clear)");
+// Anchored on the exported routing helper rather than a local variable name,
+// so a behaviour-preserving rename inside handleMessage doesn't fail this.
+const tdeeClearIndex = indexOfSource("tdeeRouteAction(");
 const stateIndex = indexOfSource("normaliseConversationState(rawConversationState, now)");
 const proteinIndex = indexOfSource("contextualProteinGoalReply(trimmed, profile)");
 const needsHistoryIndex = indexOfSource("needsConversationContext(trimmed, conversationState, now)");

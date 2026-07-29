@@ -503,6 +503,32 @@ function advanceTdee(text, stored = {}, now = new Date()) {
   return completedResult(state, now);
 }
 
+// --- Routing decisions ---
+// These live here, not inline in server.js, so they can be asserted by
+// behaviour. server.js cannot be require()d from a test (it calls app.listen
+// at module load), so anything left inline can only be checked by grepping the
+// source — which both fails on a harmless rename and passes on dead code.
+
+// What the webhook should do with an advanceTdee() result.
+//   "reply"       -> persist state, return the reply, stop
+//   "clear"       -> persist the cleared state, then keep routing the message
+//   "passthrough" -> TDEE has no claim on this message
+function tdeeRouteAction(step) {
+  if (!step || typeof step !== "object") return { action: "passthrough", state: null, reply: null };
+  if (step.handled) return { action: "reply", state: step.state || null, reply: step.reply || null };
+  if (step.clear) return { action: "clear", state: step.state || null, reply: null };
+  return { action: "passthrough", state: null, reply: null };
+}
+
+// Whether a parsed message should enter TDEE via the semantic intent. Must be
+// decided before generic query handling, or "how many calories should I eat"
+// gets answered as a day-total query. An explicit forced intent or a pending
+// corrected-meal prompt always wins — the user is mid-flow elsewhere.
+function shouldRouteSemanticTdee(ctx) {
+  const { forcedIntent, expectedCorrectedMeal, intent } = ctx || {};
+  return !forcedIntent && !expectedCorrectedMeal && intent === "calculate_tdee";
+}
+
 module.exports = {
   ACTIVITY,
   emptyState,
@@ -512,6 +538,8 @@ module.exports = {
   suspiciousReasons,
   normaliseState,
   advanceTdee,
+  tdeeRouteAction,
+  shouldRouteSemanticTdee,
   lbToKg,
   feetToCm,
 };

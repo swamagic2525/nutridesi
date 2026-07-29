@@ -8,7 +8,7 @@ const fs = require("fs");
 const path = require("path");
 const twilio = require("twilio");
 const { parseMeal } = require("./src/parser.js");
-const { advanceTdee } = require("./src/tdee.js");
+const { advanceTdee, tdeeRouteAction, shouldRouteSemanticTdee } = require("./src/tdee.js");
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
 const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
@@ -340,13 +340,15 @@ async function handleMessage(from, body, opts = {}) {
 
   const profile = await getProfile(from);
 
-  const tdee = advanceTdee(trimmed, profile.tdee_profile || {});
-  if (tdee.handled) {
-    await saveTdeeProfile(from, tdee.state);
-    return tdee.reply;
+  // Runs before correction/parseMeal routing: a bare "3" mid-collection is an
+  // activity level, not a food. Decision logic is in tdee.js so it is testable.
+  const tdeeRoute = tdeeRouteAction(advanceTdee(trimmed, profile.tdee_profile || {}));
+  if (tdeeRoute.action === "reply") {
+    await saveTdeeProfile(from, tdeeRoute.state);
+    return tdeeRoute.reply;
   }
-  if (tdee.clear) {
-    await saveTdeeProfile(from, tdee.state);
+  if (tdeeRoute.action === "clear") {
+    await saveTdeeProfile(from, tdeeRoute.state);
   }
 
   const now = Date.now();
@@ -656,7 +658,8 @@ async function handleMessage(from, body, opts = {}) {
     }
   }
 
-  if (!forcedIntent && !expectedCorrectedMeal && parsed.intent === "calculate_tdee") {
+  // Must precede the generic query branch below.
+  if (shouldRouteSemanticTdee({ forcedIntent, expectedCorrectedMeal, intent: parsed.intent })) {
     const semanticTdee = advanceTdee("calculate my calories", profile.tdee_profile || {});
     await saveTdeeProfile(from, semanticTdee.state);
     return semanticTdee.reply;
