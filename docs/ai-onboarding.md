@@ -83,7 +83,8 @@ against recent exchanges). Both persist state on the `users` row — see §4.
 |---|---|
 | `evals/run.js` | Eval suite runner — 160 golden cases through the real LLM |
 | `evals/cases.jsonl` | The eval cases themselves (one JSON per line) |
-| `test/*.js` | 16 unit/integration test files |
+| `test/*.js` | 17 unit/integration test files |
+| `test/server-routing-test.js` | Requires the real `server.js` with `src/db.js` and `src/parser.js` swapped in `require.cache`, then asserts routing **order** by behaviour. `server.js` exports `handleMessage` and guards `app.listen` behind `require.main === module` to make this possible — keep both. |
 | `scripts/ingest-foods/` | Bulk ingestion pipeline for reference tier (markdown → Supabase rows) |
 | `scripts/healthcheck.js` | Watchdog that alerts if the server goes down |
 | `*.sql` (repo root) | Schema migrations, applied by hand in the Supabase SQL editor. `supabase-schema.sql` is the consolidated current schema; the others are incremental. |
@@ -222,6 +223,7 @@ npm run test:serving       # unit vs gram resolution
 npm run test:ref           # acceptableRef fuzzy floor
 npm run test:undoall       # undo behavior
 npm run test:tdee          # TDEE math, state machine, input guards
+npm run test:routing       # handleMessage routing ORDER (real server.js, stubbed I/O)
 npm run test:memory        # conversation memory window, envelope, concurrency
 npm run test:metrics       # metrics aggregation
 node test/pizza-slice-test.js
@@ -231,6 +233,15 @@ node test/ingest-foods-test.js
 All of the above pass as of 24 Jul 2026. `test:tdee` and `test:memory` are the
 two biggest suites — treat them as the regression net for the stateful flows,
 since the evals only cover single-turn parsing.
+
+**On source-text assertions.** Several suites read `server.js`/`db.js` as a
+string and regex them. Prefer not to add more: a behaviour-preserving rename
+breaks them, and `indexOf(a) < indexOf(b)` silently *passes* when `a` is absent
+(a missing marker is `-1`, which is less than everything). If you must, assert
+the marker exists before comparing positions, and anchor on exported function
+names rather than local variables. `test:routing` shows the better option —
+stub the I/O modules in `require.cache`, require the real module, assert what
+happens.
 
 ### After merging, restart the live server:
 The bot runs on a **Mac Mini under launchd** (not a cloud host).

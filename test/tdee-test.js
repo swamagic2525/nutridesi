@@ -339,28 +339,6 @@ console.log("tdee-test: routing decisions passed");
 // Ordering is the one property that still needs the source, because server.js
 // calls app.listen() at module load and cannot be require()d here. Anchored on
 // exported function names (stable API) rather than local variable names.
-const fs = require("fs");
-const serverSource = fs.readFileSync(require.resolve("../server.js"), "utf8");
-
-// Assert presence explicitly before comparing positions. A bare
-// `indexOf(a) < indexOf(b)` silently passes when `a` is absent, because a
-// missing marker yields -1 and -1 is less than everything — so deleting the
-// call entirely would look like correct ordering.
-function assertOrder(before, after, why) {
-  const i = serverSource.indexOf(before);
-  const j = serverSource.indexOf(after);
-  assert.notStrictEqual(i, -1, `server.js must call ${before}`);
-  assert.notStrictEqual(j, -1, `server.js must contain ${after}`);
-  assert.ok(i < j, why);
-}
-
-assertOrder(
-  "tdeeRouteAction(", "const correctionCandidate",
-  "TDEE routing must run before parseMeal/correction routing"
-);
-assertOrder(
-  "shouldRouteSemanticTdee(", 'parsed.intent === "query"',
-  "semantic TDEE routing must run before generic query handling"
-);
-
-console.log("tdee-test: routing order verified (structural)");
+// Routing ORDER inside handleMessage is verified behaviourally in
+// test/server-routing-test.js (`npm run test:routing`), which require()s
+// server.js with the DB and parser stubbed. No source-text assertions here.

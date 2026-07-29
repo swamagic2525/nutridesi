@@ -1084,4 +1084,13 @@ app.post("/netlify-waitlist", async (req, res) => {
 // ---------------------------------------------------------------------------
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`NutriDesi listening on :${PORT}`));
+
+// Only bind a port when run directly (`node server.js`, which is how launchd
+// starts it). When require()d — from a test — the module loads without
+// listening, so handleMessage's routing can be exercised behaviourally instead
+// of asserted by grepping this file.
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`NutriDesi listening on :${PORT}`));
+}
+
+module.exports = { app, handleMessage };
