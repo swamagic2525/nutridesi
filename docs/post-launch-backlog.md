@@ -235,3 +235,23 @@ before it (per the D7 kill-criteria in CLAUDE.md).
 3. ~~**Dedupe papad/almonds/peanuts in `src/foods.js`**~~ — done 2026-07-19
    (commit 87c07b6): survivors 147/151/159 keep merged aliases, 4 old log rows
    repointed in Supabase, server restarted.
+
+---
+
+## Later — bounded conversation context (parked 2026-07-23)
+
+**Outcome:** understand short follow-on messages such as "with peanuts",
+"add 50g rice to that", and clarifications that restate the previous meal,
+without sending the LLM a full-day chat transcript.
+
+**Approach:** detect anaphoric/modifier fragments, load only the immediately
+preceding log batch, and route through an explicit `modify_last` /
+`append_modifier` intent. Auto-apply only when the target is unambiguous;
+preserve latest-batch scoping and atomic corrections.
+
+**Before building:** add a multi-turn eval harness covering modifier additions,
+restated-meal clarification, corrections, queries about "that", duplicate-log
+prevention, and ambiguous previous batches.
+
+**Priority:** Later / not started. Production reliability, bad-outcome tracking,
+and the incidents from 2026-07-23 take precedence.

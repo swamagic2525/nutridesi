@@ -1,5 +1,5 @@
 # NutriDesi — Claude Code Project Rules
-**Version:** 1.0 | Based on PRD v0.5
+**Version:** 1.1 | Updated 23 July 2026
 **What we're building:** A WhatsApp-native Indian food calorie tracking bot. No app. No account. Users text what they ate in Hinglish and get calories back in seconds.
 
 ---
@@ -10,48 +10,53 @@ People don't fail at calorie tracking because the database is wrong — they fai
 
 ---
 
-## Stack (Non-Negotiable for Beta)
+## Stack
 
 ```
-Twilio WhatsApp Sandbox → Make.com → Claude Haiku API → Supabase → Twilio reply
+WhatsApp → Twilio Sandbox → POST /whatsapp (Node/Express) → LLM parse → Supabase → TwiML reply
 ```
 
-| Layer | Tool | Why |
+| Layer | Tool | Notes |
 |---|---|---|
-| WhatsApp interface | Twilio Sandbox (free) | Instant setup, no WABA approval needed for 50-user beta |
-| Orchestration | Make.com (~₹800/month) | No-code, visual, solo-founder buildable |
-| NLP Parser | Claude Haiku API (pay-per-use) | Cheapest model capable of Hinglish parsing |
+| WhatsApp interface | Twilio Sandbox (free) | Instant setup, no WABA approval needed for beta |
+| Server | Node.js + Express (`server.js`) | Single synchronous webhook, Mac Mini under launchd |
+| NLP Parser | Gemini → Groq → Claude (fallback chain) | `LLM_PROVIDER` env var sets primary; others are fallbacks |
 | Database + state | Supabase free tier | Phone number → daily log → goal → calibration |
-| Scheduled summaries | Make.com time trigger | Same tool, no extra infra |
+| Food data | Curated (347 items, in-prompt) + Reference (2,825 rows in Supabase, LLM-reranked) | Two-tier architecture |
+| Tunnel | ngrok (stable URL) | Forwards to localhost:3000 |
 
 **Do not introduce new tools without strong reason.** Complexity is the enemy at this stage.
 
 ---
 
-## Architecture: Two-Scenario Pattern (Critical — Do Not Collapse Into One)
+## Architecture: Single Synchronous Webhook
 
-Twilio requires an HTTP `200 OK` almost instantly. A single scenario calling Claude + Supabase + reply takes 4–6 seconds and causes Twilio timeouts, dropped messages, and duplicates.
+Everything happens in one HTTP request — no queue, no background jobs.
 
-**Scenario A — Ingestion (instant):**
-1. Receives Twilio webhook
-2. Writes `{phone_number, raw_message, timestamp, status: "pending"}` to Supabase `pending_jobs` table
-3. Returns `200 OK` to Twilio immediately
-4. Does NOT call Claude. Does NOT do any calculation.
+1. Twilio sends POST to `/whatsapp` with the user's message
+2. `server.js` → `handleMessage()` routes by intent (log / correct / undo / query / chitchat)
+3. `preprocess()` strips WhatsApp markdown (`*`, `_`, `~`) — keeps emojis
+4. `parseMeal()` calls the LLM (Gemini → Groq → Claude fallback chain) with system prompt + curated food directory
+5. `resolveRows()` resolves nutrition: curated match → reference rerank → LLM estimate → placeholder
+6. Logs to Supabase `user_logs`, calculates running daily total
+7. Returns TwiML reply inline in the HTTP response
 
-**Scenario B — Processing (triggered by new Supabase row):**
-1. Picks up new row from `pending_jobs`
-2. Runs text pre-processor (strip `*`, `_`, `~` WhatsApp markdown — keep emojis)
-3. Calls Claude Haiku API with system prompt + alias map + user message
-4. Parses JSON response
-5. Calculates running daily total from Supabase `user_logs`
-6. Updates `user_logs` and marks `pending_jobs` row as `"done"`
-7. Sends WhatsApp reply via Twilio
+Response time is ~2-4 seconds. Twilio tolerates this within its webhook timeout.
+
+**Two stateful flows sit alongside logging** (added 23-24 July 2026):
+- **TDEE calculator** (`src/tdee.js`) — multi-turn collection of age/sex/height/weight/
+  activity, then Mifflin-St Jeor. The LLM only classifies intent; **all arithmetic is
+  deterministic code.** State in `users.tdee_profile`.
+- **6-hour conversation memory** (`src/conversationMemory.js`) — up to 10 recent
+  exchanges so short follow-ups resolve. History is passed to the LLM inside a quoted
+  `BEGIN/END APP-PROVIDED RECENT CONVERSATION` envelope and treated as data, never
+  instructions. State in `users.conversation_state`.
 
 ---
 
-## The Parser Contract (Claude Haiku Output Schema)
+## The Parser Contract (LLM Output Schema)
 
-Every call to Claude Haiku must request this exact JSON structure. Do not deviate.
+Every call to the parse LLM must request this exact JSON structure. Do not deviate.
 
 ```json
 {
@@ -76,8 +81,8 @@ Every call to Claude Haiku must request this exact JSON structure. Do not deviat
 **`match_type` values:** `"direct"` | `"category"` | `"none"`
 **`portion_clarity` values:** `"specified"` | `"inferred"` | `"unknown"`
 
-### Quantity Field — Enum Constraint (Make.com Critical)
-In a coded backend this is enforced via enum. In Make.com, it must be enforced in the schema sent to Claude. Always include this in the `quantity` property description:
+### Quantity Field — Enum Constraint
+The quantity field is constrained in the system prompt to prevent the LLM from returning arbitrary decimals. Always include this constraint:
 
 ```json
 {
@@ -90,7 +95,7 @@ In a coded backend this is enforced via enum. In Make.com, it must be enforced i
 }
 ```
 
-Without this, Claude may return `0.35` or `1.25` — values Make.com's math modules cannot handle cleanly.
+Without this, the LLM may return `0.35` or `1.25` — values that don't map cleanly to the quantity normalisation table below.
 
 ---
 
@@ -129,7 +134,7 @@ The bot must always log *something*. Never ask the user "how many calories do yo
 
 ## System Prompt Seeding Strategy
 
-Do not pass raw JSON array to Claude. Use alias-formatted single-line entries:
+Do not pass raw JSON array to the LLM. Use alias-formatted single-line entries:
 
 ```
 FOOD DATABASE — match only to items in this list. Return matched_db_id or null.
@@ -141,7 +146,7 @@ ID 48 | Ghee | aliases: ghee, desi ghee | 45 kcal/tsp — MODIFIER ONLY, never b
 ...
 ```
 
-This format uses 60–70% fewer tokens than raw JSON and puts alias strings where Claude's attention lands.
+This format uses 60–70% fewer tokens than raw JSON and puts alias strings where the LLM's attention lands.
 
 ---
 
@@ -157,7 +162,7 @@ Example: "2 roti with Amul butter" →
 
 ## Quantity Normalisation Map
 
-Apply this *before* the string reaches Claude (Make.com text processing step):
+Applied by `preprocess()` in `src/parser.js` before the string reaches the LLM:
 
 | User input | Normalised quantity |
 |---|---|
@@ -181,28 +186,39 @@ Apply this *before* the string reaches Claude (Make.com text processing step):
 
 ---
 
-## Supabase Schema (Minimum Viable)
+## Supabase Schema
 
 **`users` table:**
 ```
-phone_number (PK), goal_kcal, katori_size, roti_size, created_at, daily_summary_time
+phone_number (PK), name, goal_kcal, goal_protein, katori_size, roti_size, created_at,
+daily_summary_time, nudge_count, tdee_profile (jsonb), conversation_state (jsonb)
 ```
+The two jsonb columns back the stateful flows: `tdee_profile` for the TDEE
+calculator, `conversation_state` for the 6-hour conversation memory.
 
 **`user_logs` table:**
 ```
 id, phone_number (FK), food_name, matched_db_id, quantity, unit, kcal, protein, carbs, fat,
-meal_time, is_estimate, logged_at, date (YYYY-MM-DD IST)
+meal_time, is_estimate, logged_at, date (YYYY-MM-DD IST), day_seq
 ```
 
-**`pending_jobs` table:**
+**`foods_reference` table (reference tier):**
 ```
-id, phone_number, raw_message, status ("pending"/"done"/"failed"), created_at, processed_at
+food_code (PK), food_name, serving_kcal, serving_protein, serving_carbs, serving_fat, ...
 ```
+~2,825 rows of branded products, recipes, regional dishes, fitness supplements. Matched via retrieve-then-rerank
+(see `refCandidates` + `refRerank` in `src/db.js`).
 
 **`food_preferences` table:**
 ```
 phone_number (FK), food_type (e.g. "dal"), preference (e.g. "makhani"), set_at
 ```
+
+**`message_log` / `founding_members`:** raw message records and waitlist signups.
+Both hold real user text and real names — never export either into a committed file.
+
+Migrations are `*.sql` files in the repo root, applied by hand in the Supabase SQL
+editor. `supabase-schema.sql` is the consolidated current state.
 
 ---
 
@@ -242,18 +258,9 @@ Do not add features. Validate retention first.
 
 ## Reference Files
 
-- `../NutriDesi-PRD.md` — Full PRD v0.5
-- `../NutriDesi-TestSuite-v1.xlsx` — 50-phrase test suite with expected outputs
-- `../NutriDesi-Validation-Brief.md` — Director + FITTR founder validation brief
-
----
-
-## Build Order (3-Day Sprint)
-
-**Day 1:** Twilio Sandbox → Make.com Scenario A webhook → Supabase `pending_jobs` row → `200 OK`. Nothing else.
-
-**Day 2:** Make.com Scenario B → picks up row → calls Claude Haiku with system prompt → structured JSON output logged to console/Supabase.
-
-**Day 3:** Map JSON fields → calculate running total → format WhatsApp reply → send back via Twilio. First end-to-end test message on your own phone.
-
-**Week 2:** Wire personal calibration, daily summary opt-in, undo. Invite first 10 beta users.
+- `docs/ai-onboarding.md` — Full AI handoff doc (module map, workflow, invariants, open work)
+- `docs/churn-reduction-report-2026-07-23.md` — Measured retention analysis. **Read before picking growth/retention work.**
+- `docs/correction-incidents.md` — Real incident writeups (context for guardrails)
+- `docs/superpowers/specs/` + `plans/` — Design docs for TDEE + conversation memory
+- `evals/cases.jsonl` — 160 golden eval cases (the regression net)
+- `.env.example` — All env vars with placeholder values
