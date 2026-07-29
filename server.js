@@ -170,6 +170,19 @@ const RECENT_MAX = 50;
 const recentExchanges = [];
 let msgLogTableMissing = false;
 const maskPhone = (p) => String(p || "").replace(/^(\+\d{2})\d+(\d{4})$/, "$1••••••$2");
+// Signup names are real people. The full name belongs in the DB row, never in a
+// log line — logs get tailed, pasted into issues, and this repo is public.
+const maskName = (n) => {
+  const initials = String(n || "").trim().split(/\s+/).filter(Boolean)
+    .map(w => w[0].toUpperCase()).join(".");
+  return initials ? `${initials}.` : "(no name)";
+};
+// An unclassified contact still has to be debuggable (2026-07-20: a signup left
+// no trace anywhere), but it's an email or phone — log its shape, not its value.
+const maskContact = (c) => {
+  const s = String(c || "").trim();
+  return s ? `${s.slice(0, 3)}•••(${s.length})` : "(empty)";
+};
 
 // Strict target resolution for a name-based "replace X with…": match X's words
 // against today's item names, alpha tokens only (so "250g" is ignored). Returns
@@ -1019,7 +1032,7 @@ app.post("/netlify-waitlist", async (req, res) => {
   const contact = classified ? classified.norm : rawContact || "(no contact)";
   // Every valid-signature hit gets a log line — an unclassifiable contact must
   // never be invisible (2026-07-20: a signup left no trace anywhere).
-  console.log(`netlify-waitlist: ${name || "(no name)"} · ${classified ? classified.type : `UNCLASSIFIED "${rawContact.slice(0, 40)}"`}`);
+  console.log(`netlify-waitlist: ${maskName(name)} · ${classified ? classified.type : `UNCLASSIFIED ${maskContact(rawContact)}`}`);
 
   // Auto-insert into founding_members (skip if duplicate or past cap)
   if (classified) {
@@ -1046,7 +1059,7 @@ app.post("/netlify-waitlist", async (req, res) => {
           };
           const { error: insErr } = await supabase.from("founding_members").insert([row]);
           if (insErr) throw new Error(insErr.message);
-          console.log(`founding_members: #${nextRank} ${name || "(no name)"} · ${classified.type}`);
+          console.log(`founding_members: #${nextRank} ${maskName(name)} · ${classified.type}`);
         }
       }
     } catch (err) {
