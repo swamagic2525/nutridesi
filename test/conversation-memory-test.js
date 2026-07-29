@@ -115,33 +115,22 @@ assert.match(serverSource, /const \{[^;]*saveConversationState[^;]*recentConvers
 assert.match(serverSource, /const modifierFollowUp = [^;]+;\s*const correctionCandidate[\s\S]*correctionCandidate \|\| modifierFollowUp \? await lastLogBatch\(from\) : \[\]/);
 assert.match(serverSource, /recordExchange\(from, body, reply, hasMedia\)/);
 
-const indexOfSource = (fragment, message) => {
-  const index = serverSource.indexOf(fragment);
-  assert.notStrictEqual(index, -1, message || `Missing server source fragment: ${fragment}`);
-  return index;
-};
-// Anchored on the exported routing helper rather than a local variable name,
-// so a behaviour-preserving rename inside handleMessage doesn't fail this.
-const tdeeClearIndex = indexOfSource("tdeeRouteAction(");
-const stateIndex = indexOfSource("normaliseConversationState(rawConversationState, now)");
-const proteinIndex = indexOfSource("contextualProteinGoalReply(trimmed, profile)");
-const needsHistoryIndex = indexOfSource("needsConversationContext(trimmed, conversationState, now)");
-const historyIndex = indexOfSource("recentConversation(from, new Date(now))");
-const mediaIndex = indexOfSource("refersToRecentMedia(trimmed, history)");
-const pendingIndex = indexOfSource("resolvePendingChoice(trimmed, conversationState, now)");
-const cueIndex = indexOfSource("isCorrectionCue(trimmed)");
-const directCueIndex = indexOfSource("correctionCuePayload(trimmed)");
-const repeatIndex = indexOfSource("repeatedMealCandidate(effectiveBody, history)");
-const contextIndex = indexOfSource("formatConversationContext(needsHistory ? history : [])");
-const parseIndex = indexOfSource("parseMeal(effectiveBody, contextBlocks)");
-assert.ok(tdeeClearIndex < stateIndex, "conversation state must normalize after the TDEE block");
-assert.ok(stateIndex < proteinIndex && proteinIndex < parseIndex, "contextual protein reply must route before generic parsing");
-assert.ok(needsHistoryIndex < historyIndex && historyIndex < parseIndex, "history must be gated and loaded before generic parsing");
-assert.ok(historyIndex < mediaIndex && mediaIndex < parseIndex, "recent-media routing must happen before generic parsing");
-assert.ok(pendingIndex < cueIndex, "pending repeat choice must resolve before generic correction cues");
-assert.ok(directCueIndex < cueIndex, "correction cues with payload must route before cue-only state arming");
-assert.ok(cueIndex < repeatIndex && repeatIndex < parseIndex, "correction and repeat routing must happen before generic parsing");
-assert.ok(contextIndex < parseIndex, "recognized conversation context must be built before parsing");
+// Routing ORDER inside handleMessage used to be asserted here by comparing
+// positions of source-text markers. That proved one string preceded another,
+// not that the precedence rule actually held — a call sitting in the right
+// place but gated wrong still passed, and a behaviour-preserving rename made
+// it fail. Those properties are now asserted by behaviour in
+// test/server-routing-test.js (`npm run test:routing`), which require()s the
+// real server.js with the DB and parser stubbed:
+//
+//   - history is loaded only when the message needs it (both directions)
+//   - a pending corrected_meal always loads history
+//   - a state targeting another IST date is cancelled, not applied
+//   - loaded history reaches the parser inside the quoted envelope
+//   - media follow-ups and the protein-goal reply short-circuit before parsing
+//
+// The checks below stay as a cheap wiring smoke test: they assert the module
+// is actually referenced from server.js, not where.
 assert.match(serverSource, /const contextBlocks = \[\s*formatConversationContext\(needsHistory \? history : \[\]\),\s*formatLastLogContext\(recentBatch\),?\s*\]/);
 assert.match(serverSource, /const needsHistory = needsConversationContext\(trimmed, conversationState, now\);\s*const needsRepeatCheck = needsRepeatedMealCheck\(trimmed, conversationState, now\);\s*const history = needsHistory \|\| needsRepeatCheck\s*\?\s*await recentConversation\(from, new Date\(now\)\)\s*:\s*\[\];/);
 assert.match(serverSource, /forcedIntent === "replace_last"\s*\|\|\s*expectedCorrectedMeal\s*\|\|\s*looksLikeCorrection\(effectiveBody\)/);
@@ -163,6 +152,14 @@ assert.match(serverSource, /loggedExchangeMatchesBatch\(recentLoggedExchange, ta
 assert.match(serverSource, /const ephemeralTarget = correlatedTargetFromExchange\(recentLoggedExchange, targetRows\);[\s\S]*boundCorrectionTarget = ephemeralTarget;/);
 assert.match(serverSource, /logRowsByExactIds\(from, boundCorrectionTarget\.targetLogIds\)[\s\S]*row\.date !== boundCorrectionTarget\.targetDate[\s\S]*deleteLogRowsByExactIds\(from, boundCorrectionTarget\.targetLogIds\)/);
 assert.match(dbSource, /select\("id, food_name, kcal, protein, quantity, matched_db_id, is_estimate, logged_at, date"\)/);
+// Locates a marker, asserting it exists first. Used only to slice a region of
+// the source so the assertions below can be scoped to the replace_last block —
+// not to compare positions. Ordering lives in test/server-routing-test.js.
+const indexOfSource = (fragment, message) => {
+  const index = serverSource.indexOf(fragment);
+  assert.notStrictEqual(index, -1, message || `Missing server source fragment: ${fragment}`);
+  return index;
+};
 const replaceBlock = serverSource.slice(
   indexOfSource("// --- replace_last ---"),
   indexOfSource("// --- log (default) ---")
