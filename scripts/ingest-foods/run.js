@@ -15,10 +15,10 @@ const { buildReport } = require("./report.js");
 const { FOODS } = require("../../src/foods.js");
 
 const INCOMING = path.join(__dirname, "..", "..", "data", "incoming");
-// Held back per review: this branded-supplement file uses generic copy-pasted
-// values (every chocolate PB got identical macros) and overlaps top brands
-// already hand-verified in the curated tier. Add per-SKU verified labels later.
-const SKIP_FILES = new Set(["Fitness_Commercial_Products_DB.md"]);
+// All incoming files are now processed. Fitness_Commercial_Products_DB.md was
+// previously held back (copy-pasted PB flavour macros), but the collapse step
+// handles flavour clones, and the rest has differentiated brand-specific values.
+const SKIP_FILES = new Set([]);
 const OUT_REPORT = path.join(__dirname, "review-report.md");
 const OUT_ROWS = path.join(__dirname, "to-load.json");
 

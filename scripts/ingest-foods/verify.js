@@ -5,7 +5,10 @@ const { createClient } = require("@supabase/supabase-js");
 
 const PROBES = ["kanda poha", "masala dosa", "misal pav", "veg pulao", "rava idli",
   "chana masala", "aloo gobi", "bhindi masala", "egg curry", "mutton keema",
-  "paneer bhurji", "vegetable sandwich", "cold coffee", "gulab jamun", "poha"];
+  "paneer bhurji", "vegetable sandwich", "cold coffee", "gulab jamun", "poha",
+  // Fitness brands (AIF tier)
+  "muscleblaze whey", "on gold standard whey", "myfitness peanut butter",
+  "epigamia greek yogurt", "amul high protein milk shake"];
 
 async function main() {
   const s = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);

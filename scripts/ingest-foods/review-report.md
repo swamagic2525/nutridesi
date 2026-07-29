@@ -1,27 +1,32 @@
 # Bulk Food Ingestion — Review Report
 
-Generated: 2026-07-22T15:34:36.633Z
+Generated: 2026-07-23T03:34:16.599Z
 
 ## Funnel (per file)
 
 | File | Parsed | After gate | After collapse | After dedup | To load |
 |:-----|-------:|-----------:|---------------:|------------:|--------:|
+| Fitness_Commercial_Products_DB.md | 380 | 376 | 322 | 249 | 249 |
 | Food_Nutrition_DB.md | 20 | 20 | 20 | 0 | 0 |
 | Indian_Household_Nutrition_Database_2500.md | 2500 | 2316 | 904 | 0 | 0 |
 | Indian_Liquor_Nutrition_DB.md | 152 | 152 | 151 | 2 | 2 |
 | QuickCommerce_Restaurant_Food_DB_1000.md | 1000 | 893 | 892 | 0 | 0 |
-| Supplement_List_v2.md | 157 | 156 | 137 | 1 | 1 |
+| Supplement_List_v2.md | 157 | 156 | 137 | 0 | 0 |
 | Top10_Supplements_And_HighProtein_Foods_Complete_DB.md | 155 | 154 | 136 | 0 | 0 |
 
-**Total: 3984 parsed → 3 to load.**
+**Total: 4364 parsed → 251 to load.**
 
-## Rejected rows (293)
+## Rejected rows (297)
 
-- **macro_cal_mismatch**: 174
+- **macro_cal_mismatch**: 178
 - **spam_name**: 119
 
 <details><summary>All rejected rows</summary>
 
+- Veeba Zero Sugar Tomato Ketchup — macro_cal_mismatch
+- Nutrabay Apple Cider Vinegar with Mother — macro_cal_mismatch
+- Kapiva Apple Cider Vinegar — macro_cal_mismatch
+- Heinz Zero Sugar Tomato Ketchup — macro_cal_mismatch
 - Paneer Dosa (Homestyle Ghee) — macro_cal_mismatch
 - Paneer Dosa (Low Oil Diet) — macro_cal_mismatch
 - Toor Dal (South Indian Tempering (Mustard & Curry Leaves)) — spam_name
@@ -317,10 +322,64 @@ Generated: 2026-07-22T15:34:36.633Z
 - Optimum Nutrition (ON) Gold Standard BCAA Train & Sustain — macro_cal_mismatch
 </details>
 
-## Collapse decisions (1451 dropped)
+## Collapse decisions (1505 dropped)
 
 <details><summary>All collapses (dropped → kept)</summary>
 
+- MyFitness Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
+- MyFitness Chocolate Peanut Butter (Smooth) → Alpino Chocolate Peanut Butter (Smooth)
+- Pintola Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
+- Pintola Chocolate Peanut Butter (Smooth) → Alpino Chocolate Peanut Butter (Smooth)
+- Alpino Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
+- Yoga Bar Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
+- Yoga Bar Chocolate Peanut Butter (Smooth) → Alpino Chocolate Peanut Butter (Smooth)
+- Disano Chocolate Peanut Butter (Crunchy) → Alpino Chocolate Peanut Butter (Smooth)
+- Disano Chocolate Peanut Butter (Smooth) → Alpino Chocolate Peanut Butter (Smooth)
+- MyFitness Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- MyFitness Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Pintola Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Pintola Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Alpino Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Yoga Bar Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Yoga Bar Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Disano Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Disano Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- As-It-Is Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- As-It-Is Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Asitis Nut Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Asitis Nut Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Sundrop Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Sundrop Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- The Whole Truth Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- The Whole Truth Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Nutriorg Natural Peanut Butter (Crunchy - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- Nutriorg Natural Peanut Butter (Smooth - Unsweetened) → Alpino Natural Peanut Butter (Smooth - Unsweetened)
+- MyFitness High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Pintola High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Yoga Bar High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Disano High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- As-It-Is High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Asitis Nut High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Sundrop High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- The Whole Truth High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- Nutriorg High Protein Peanut Butter (Dark Chocolate) → Alpino High Protein Peanut Butter (Dark Chocolate)
+- MyFitness High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Pintola High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Yoga Bar High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Disano High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- As-It-Is High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Asitis Nut High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Sundrop High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- The Whole Truth High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Nutriorg High Protein Peanut Butter (Whey Enriched) → Alpino High Protein Peanut Butter (Whey Enriched)
+- Origins Nutritive Rolled Oats → True Elements Rolled Oats
+- Dymatize ISO100 Hydrolyzed Whey Isolate (Gourmet Chocolate) → Dymatize ISO100 Hydrolyzed Whey Isolate (Fudge Brownie)
+- Wellcore Micronized Creatine Monohydrate → As-It-Is Creatine Monohydrate Powder
+- MuscleBlaze Creatine Monohydrate CreAMP → As-It-Is Creatine Monohydrate Powder
+- Optimum Nutrition (ON) Micronized Creatine Powder → As-It-Is Creatine Monohydrate Powder
+- Nutrela Soya Chunks (Mini / Regular) → Nutrela Soya Granules
+- Veeba Tomato Ketchup No Onion No Garlic → Heinz Tomato Ketchup Classic
+- Zindagi Stevia Powder Natural Sweetener → Sugar Free Green Stevia Powder
 - Sabudana Khichdi (Fasting Meal) → Sabudana Khichdi
 - Sabudana Vada → Sabudana Vada
 - Paneer Paratha (Homestyle Ghee) → Paneer Paratha (Low Oil Diet)
@@ -1774,10 +1833,107 @@ Generated: 2026-07-22T15:34:36.633Z
 - The Whole Truth Natural Peanut Butter Unsweetened → Pintola All Natural Peanut Butter (Smooth)
 </details>
 
-## Sample of rows to load (3)
+## Sample of rows to load (100)
 
 | Food | Unit | kcal | Protein | kcal/100g |
 |:-----|:-----|-----:|--------:|----------:|
-| Kingfisher Premium Lager | serving | 142 | 1.6 | 43.03 |
-| Kingfisher Ultra | serving | 138 | 1.5 | 41.82 |
-| Provilac High Protein Milk - Vanilla | serving | 140 | 18 | 70 |
+| Alpino Chocolate Peanut Butter (Smooth) | 2 tbsp | 190 | 8 | 593.75 |
+| Quaker Rolled Oats | serving | 160 | 5.2 | 400 |
+| Quaker Oats Lassi Powder / Oats Mix | serving | 165 | 6 | 412.5 |
+| Saffola Veggie Twist Masala Oats | serving | 146 | 3.6 | 384.21 |
+| Saffola Curry & Pepper Oats | serving | 149 | 3.9 | 392.11 |
+| Bagrry's Rolled Oats | serving | 156 | 5.4 | 390 |
+| Bagrry's Crunchy Muesli Almond & Raisin | serving | 215 | 4.5 | 430 |
+| True Elements Steel Cut Oats | serving | 152 | 5.5 | 380 |
+| MuscleBlaze High Protein Oats (Unflavored) | serving | 192 | 18 | 384 |
+| Yoga Bar Dark Chocolate Cranberry Muesli | serving | 210 | 6 | 420 |
+| Kellogg's Corn Flakes Original | serving | 115 | 2.4 | 383.33 |
+| Urban Platter Rolled Oats Gluten-Free | serving | 155 | 5.2 | 387.5 |
+| Monsoon Harvest Toasted Millet Muesli | serving | 170 | 4 | 425 |
+| Yogabar Wholegrain Rolled Oats | serving | 155 | 5.2 | 387.5 |
+| Soulfull Millet Smooth (Chocolate Drink Mix) | serving | 110 | 3 | 366.67 |
+| Kapiva Get Slim Oats | serving | 150 | 5 | 375 |
+| 24 Mantra Organic Rolled Oats | serving | 154 | 5.2 | 385 |
+| Kwality Rolled Oats | serving | 156 | 5.1 | 390 |
+| Optimum Nutrition (ON) Gold Standard 100% Isolate | scoop | 110 | 25 | 366.67 |
+| MuscleBlaze Super Gainer XXL | serving | 375 | 15 | 375 |
+| As-It-Is Whey Protein Concentrate 80% (Unflavored) | scoop | 120 | 24 | 400 |
+| As-It-Is ATOM Whey Protein (Double Chocolate) | scoop | 137 | 27 | 380.56 |
+| As-It-Is Pea Protein Isolate 85% | scoop | 118 | 25.5 | 393.33 |
+| Rule 1 R1 Protein Isolate (Chocolate Fudge) | scoop | 110 | 25 | 379.31 |
+| Cosmix Plant Protein (Indulgent Chocolate) | scoop | 132 | 24 | 377.14 |
+| Kapiva Vegan Protein (Chocolate) | scoop | 134 | 25 | 382.86 |
+| Proburst Ultimate Whey Protein (Chocolate) | scoop | 128 | 24 | 387.88 |
+| Nutrabay Pure Whey Protein Isolate 90% | scoop | 111 | 26.5 | 370 |
+| MuscleTech Nitrotech Gold 100% Whey | scoop | 120 | 24 | 363.64 |
+| Isopure Zero Carb 100% Whey Isolate (Unflavored) | scoop | 100 | 25 | 344.83 |
+| Scitron Advance Whey Protein with Isolate | scoop | 132 | 25.5 | 377.14 |
+| Scivation XTEND BCAA (Mango Madness) | scoop | 0 | 0 | 0 |
+| RiteBite Max Protein Protein Desi Natures (Peri Peri) | serving | 195 | 10 | 433.33 |
+| The Whole Truth Mini Protein Bar (Cocoa Fudge) | serving | 108 | 7.5 | 415.38 |
+| Yoga Bar Breakfast Protein Bar (Almond Coconut) | serving | 195 | 10 | 390 |
+| Phab Protein Bar (Rich Chocolate - 21g) | serving | 225 | 21 | 375 |
+| Hyp Lean Protein Bar (Chocolate Brownie 10g) | serving | 140 | 10 | 350 |
+| MuscleBlaze Hi-Protein Cookies (7g Protein per cookie) | cookie | 135 | 7 | 450 |
+| Quest Nutrition Quest Protein Bar (Cookies & Cream) | serving | 200 | 21 | 333.33 |
+| True Elements Roasted Pumpkin Seeds | serving | 170 | 9 | 566.67 |
+| True Elements Raw Chia Seeds | serving | 146 | 5 | 486.67 |
+| Farmley Roasted & Salted Makhana (Classic Salt) | serving | 130 | 3 | 433.33 |
+| Farmley 5-in-1 Seed Mix | serving | 165 | 7.5 | 550 |
+| Nutty Gritties Southern Pepper Roasted Almonds | serving | 175 | 6.2 | 583.33 |
+| Lo! Foods Low Carb Protein Chips | serving | 135 | 9 | 450 |
+| Ketofy Keto Nachos | serving | 140 | 7 | 466.67 |
+| Cornitos Nacho Crisps (Sea Salt) | serving | 150 | 2.4 | 500 |
+| Amul High Protein Milk Shake (Chocolate - 20g Protein) | serving | 160 | 20 | 80 |
+| Amul Taaza Toned Milk (3% Fat) | serving | 58 | 3 | 58 |
+| Amul Cow Milk (3.5% Fat) | serving | 62 | 3 | 62 |
+| Amul Buffalo Milk (6.5% Fat) | serving | 92 | 3.5 | 92 |
+| Amul Fresh Malai Paneer | serving | 314 | 20 | 314 |
+| Amul Slim Dahi (Zero Fat Yogurt) | serving | 38 | 4.3 | 38 |
+| Amul Processed Cheese Slices | serving | 311 | 20 | 311 |
+| Amul Sugar Free Ice Cream | serving | 110 | 3.5 | 110 |
+| Mother Dairy Toned Milk | serving | 59 | 3 | 59 |
+| Mother Dairy Classic Paneer | serving | 289 | 18 | 289 |
+| Country Delight Cow Milk (Pure Native) | serving | 66 | 3.2 | 66 |
+| Country Delight Fresh Taaza Dahi | serving | 61 | 3.8 | 61 |
+| Epigamia Greek Yogurt Blueberry | serving | 96 | 6 | 96 |
+| Epigamia Coconut Milk Drink | serving | 32 | 0.5 | 32 |
+| Sofit Soya Milk (Unsweetened Natural) | serving | 38 | 3.6 | 38 |
+| Sofit Soya Milk (Vanilla Flavor) | serving | 65 | 3.2 | 65 |
+| OatMlk Oat Milk (Unsweetened Classic) | serving | 48 | 1.2 | 48 |
+| Raw Pressery Almond Milk (Cacao) | serving | 55 | 1.2 | 55 |
+| Nandini GoodLife Toned Milk | serving | 59 | 3.1 | 59 |
+| Verka Skimmed Milk | serving | 35 | 3.2 | 35 |
+| Britannia Winkin' Cow Milkshake (Chocolate) | serving | 160 | 4.5 | 88.89 |
+| Generic / Local Egg Whole (Large) | egg | 72 | 6.3 | 144 |
+| Eggee Brown Eggs Organic | egg | 74 | 6.5 | 148 |
+| Suguna DHA Enriched Fortified Eggs | egg | 72 | 6.4 | 144 |
+| Licious Chicken Thighs (Boneless) | serving | 145 | 19.5 | 145 |
+| Licious Lamb / Mutton Mince | serving | 210 | 18 | 210 |
+| Zappfresh Turkey Breast Boneless | serving | 104 | 24 | 104 |
+| FreshToHome Seer Fish / Surmai Slices | serving | 125 | 20 | 125 |
+| FreshToHome Rohu / Katla Fish Cut | serving | 97 | 16.5 | 97 |
+| Nutrela Soya Granules | Dry | 345 | 52 | 345 |
+| Urban Platter Textured Vegetable Protein (TVP) | serving | 330 | 50 | 330 |
+| John West Canned Tuna in Olive Oil | Drained | 180 | 24 | 180 |
+| Prasuma Chicken Delicatessen Smoked Sausage | serving | 190 | 14 | 190 |
+| Venky's Chicken Breast Fillet | serving | 112 | 22.5 | 112 |
+| Venky's Chicken Grilled Patties | serving | 170 | 15 | 170 |
+| Zorabian Chicken Breast Skinless | serving | 109 | 23.2 | 109 |
+| Blue Tribe Plant Based Chicken Nuggets | serving | 210 | 13 | 210 |
+| Imagine Meats Plant Based Chicken Keema | serving | 175 | 16.5 | 175 |
+| Shaka Harry Just Like Chicken Nuggets | serving | 205 | 14 | 205 |
+| GoodDot Proteiz Soy Slices | serving | 320 | 50 | 320 |
+| Harvest Gold Multigrain Bread | 2 slices | 130 | 5.2 | 260 |
+| Britannia 100% Whole Wheat Bread | 2 slices | 122 | 4.4 | 244 |
+| Britannia Multigrain Bread | 2 slices | 132 | 5 | 264 |
+| English Oven Brown Bread | 2 slices | 126 | 4.2 | 252 |
+| Modern 100% Whole Wheat Bread | 2 slices | 123 | 4.5 | 246 |
+| Aashirvaad Shuddha Chakki Atta (Whole Wheat) | serving | 341 | 12 | 341 |
+| Patanjali Whole Wheat Atta | serving | 338 | 11.5 | 338 |
+| 24 Mantra Organic Ragi Flour (Finger Millet) | serving | 328 | 7.3 | 328 |
+| 24 Mantra Organic Bajra Flour (Pearl Millet) | serving | 360 | 11.6 | 360 |
+| Ketofy Keto Atta (Ultra Low Carb) | serving | 380 | 28 | 380 |
+| Lo! Foods Ultra Low Carb Flour | serving | 365 | 26 | 365 |
+| India Gate Brown Basmati Rice | Uncooked | 345 | 9 | 345 |
+| Daawat Brown Rice Quick Cooking | Uncooked | 342 | 8.8 | 342 |
