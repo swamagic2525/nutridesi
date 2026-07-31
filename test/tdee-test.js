@@ -9,6 +9,9 @@ const {
   normaliseState,
   tdeeRouteAction,
   shouldRouteSemanticTdee,
+  parseGoalChoice,
+  goalForObjective,
+  proteinTarget,
 } = require("../src/tdee.js");
 
 assert.strictEqual(isTdeeRequest("calculate my calories"), true);
@@ -92,7 +95,7 @@ assert.strictEqual(step.state.phase, "collecting");
 assert.match(step.reply, /How active/);
 
 step = advanceTdee("3", step.state);
-assert.strictEqual(step.state.phase, "complete");
+assert.strictEqual(step.state.phase, "goal_offer", "a finished calculation now waits on the goal choice");
 assert.match(step.reply, /Maintenance:\* ~2,700 kcal/);
 assert.match(step.reply, /Fat loss:\* 2,400–2,500 kcal/);
 assert.match(step.reply, /@swapnilgore2525/);
@@ -113,7 +116,7 @@ assert.strictEqual(unitFollowUp.state.weightKg, 61);
 assert.strictEqual(unitFollowUp.state.pendingWeightValue, null);
 assert.match(unitFollowUp.reply, /How active/);
 unitFollowUp = advanceTdee("1", unitFollowUp.state);
-assert.strictEqual(unitFollowUp.state.phase, "complete");
+assert.strictEqual(unitFollowUp.state.phase, "goal_offer", "a finished calculation now waits on the goal choice");
 assert.match(unitFollowUp.reply, /Maintenance/);
 
 let pendingWeight = advanceTdee("calculate my calories", {});
@@ -150,7 +153,7 @@ const oneShot = advanceTdee(
   "calculate my calories, age 31 male 175 cm 80 kg activity 3",
   {}
 );
-assert.strictEqual(oneShot.state.phase, "complete");
+assert.strictEqual(oneShot.state.phase, "goal_offer", "a finished calculation now waits on the goal choice");
 assert.match(oneShot.reply, /Maintenance/);
 
 let odd = advanceTdee("calculate my calories", {});
@@ -158,7 +161,7 @@ odd = advanceTdee("age 31 male 175 cm 210 kg activity 2", odd.state);
 assert.strictEqual(odd.state.phase, "confirming");
 assert.match(odd.reply, /Just checking/);
 odd = advanceTdee("YES", odd.state);
-assert.strictEqual(odd.state.phase, "complete");
+assert.strictEqual(odd.state.phase, "goal_offer", "a finished calculation now waits on the goal choice");
 
 let invalid = advanceTdee("calculate my calories", {});
 invalid = advanceTdee("height 999 cm", invalid.state);
@@ -195,7 +198,7 @@ let lowMaintenance = advanceTdee(
 );
 assert.strictEqual(lowMaintenance.state.phase, "confirming");
 lowMaintenance = advanceTdee("yes", lowMaintenance.state);
-assert.strictEqual(lowMaintenance.state.phase, "complete");
+assert.strictEqual(lowMaintenance.state.phase, "goal_offer", "a finished calculation now waits on the goal choice");
 assert.match(lowMaintenance.reply, /Fat loss:\* No automated target/);
 
 console.log("tdee-test: state machine passed");
@@ -292,11 +295,11 @@ console.log("tdee-test: suspiciousReasons branches passed");
 // harmless variable rename and passed when the call sat in dead code.
 assert.deepStrictEqual(
   tdeeRouteAction({ handled: true, clear: false, state: { phase: "collecting" }, reply: "ask age" }),
-  { action: "reply", state: { phase: "collecting" }, reply: "ask age" }
+  { action: "reply", state: { phase: "collecting" }, reply: "ask age", setGoal: null }
 );
 assert.deepStrictEqual(
   tdeeRouteAction({ handled: false, clear: true, state: { phase: "inactive" } }),
-  { action: "clear", state: { phase: "inactive" }, reply: null }
+  { action: "clear", state: { phase: "inactive" }, reply: null, setGoal: null }
 );
 assert.strictEqual(
   tdeeRouteAction({ handled: false, clear: false, state: {} }).action,
@@ -339,6 +342,88 @@ console.log("tdee-test: routing decisions passed");
 // Ordering is the one property that still needs the source, because server.js
 // calls app.listen() at module load and cannot be require()d here. Anchored on
 // exported function names (stable API) rather than local variable names.
+// --- TDEE -> goal loop ---
+// The calculator used to compute the numbers, show them, and discard them.
+// These cover the handoff into an actual goal.
+
+// "goal" reaches the calculator (the first-log prompt tells people to send it),
+// but a stated number still belongs to set_profile.
+assert.strictEqual(isTdeeRequest("goal"), true);
+assert.strictEqual(isTdeeRequest("set my goal"), true);
+assert.strictEqual(isTdeeRequest("Goals"), true);
+assert.strictEqual(isTdeeRequest("set my target to 1800 calories"), false, "a stated number is not a request to compute one");
+assert.strictEqual(isTdeeRequest("goal 1800 cal"), false);
+
+assert.strictEqual(parseGoalChoice("fat loss"), "fatLoss");
+assert.strictEqual(parseGoalChoice("I want to lose weight"), "fatLoss");
+assert.strictEqual(parseGoalChoice("maintenance"), "maintenance");
+assert.strictEqual(parseGoalChoice("weight gain"), "weightGain");
+assert.strictEqual(parseGoalChoice("bulk"), "weightGain");
+assert.strictEqual(parseGoalChoice("skip"), "skip");
+assert.strictEqual(parseGoalChoice("2 roti and dal"), null, "a meal is not a choice");
+assert.strictEqual(parseGoalChoice(""), null);
+
+// Protein is bodyweight-driven, but capped by protein's share of the day's
+// calories — without body-fat data, weight alone is absurd at the extremes.
+assert.strictEqual(proteinTarget(80, 2400, "fatLoss"), 160);      // 80 * 2.0
+assert.strictEqual(proteinTarget(80, 2700, "maintenance"), 130);  // 80 * 1.6 -> 128 -> 130
+const capped = proteinTarget(150, 2000, "fatLoss");               // 300g would be absurd
+assert.ok(capped <= (2000 * 0.35) / 4, `capped by calorie share, got ${capped}`);
+assert.strictEqual(proteinTarget(0, 2000, "fatLoss"), null);
+
+// A completed calculation offers the goal rather than ending on a PDF pitch.
+let goalFlow = advanceTdee("calculate my calories", {});
+goalFlow = advanceTdee("31 male 175 cm 80 kg activity 3", goalFlow.state);
+assert.strictEqual(goalFlow.state.phase, "goal_offer", "parks awaiting a choice, not 'complete'");
+assert.match(goalFlow.reply, /Maintenance:\* ~2,700 kcal/);
+assert.match(goalFlow.reply, /Want me to track against one of these/);
+assert.match(goalFlow.reply, /\*fat loss\*/);
+
+// Choosing one sets a real goal, and the caller is handed the values.
+const chose = advanceTdee("fat loss", goalFlow.state);
+assert.strictEqual(chose.handled, true);
+assert.strictEqual(chose.state.phase, "complete");
+assert.ok(chose.setGoal, "setGoal is returned for the caller to persist");
+assert.strictEqual(chose.setGoal.goal_kcal, 2450, "midpoint of the 2,400-2,500 fat-loss range");
+assert.strictEqual(chose.setGoal.goal_protein, 160);
+assert.match(chose.reply, /Daily goal set/);
+assert.match(chose.reply, /160g protein/);
+
+const choseMaint = advanceTdee("maintenance", goalFlow.state);
+assert.strictEqual(choseMaint.setGoal.goal_kcal, 2700);
+
+// Skipping is allowed and leaves no goal.
+const skipped = advanceTdee("skip", goalFlow.state);
+assert.strictEqual(skipped.handled, true);
+assert.strictEqual(skipped.state.phase, "complete");
+assert.strictEqual(skipped.setGoal, undefined, "skip sets nothing");
+
+// An optional question must never hold the conversation hostage: a meal sent
+// instead of an answer falls through to be logged (PRD: no deadlocks).
+const mealInstead = advanceTdee("2 roti and dal", goalFlow.state);
+assert.strictEqual(mealInstead.handled, false, "a meal is not swallowed by the offer");
+assert.strictEqual(mealInstead.clear, true, "and the offer is cleared");
+assert.strictEqual(mealInstead.state.phase, "complete");
+
+// Below the 1,200 kcal floor there is no fat-loss target, so it is neither
+// offered nor settable.
+let floorFlow = advanceTdee("calculate my calories age 70 female 145 cm 40 kg activity 1", {});
+floorFlow = advanceTdee("yes", floorFlow.state);
+assert.strictEqual(floorFlow.state.phase, "goal_offer");
+assert.doesNotMatch(floorFlow.reply, /\*fat loss\*/, "fat loss is not offered below the floor");
+const refused = advanceTdee("fat loss", floorFlow.state);
+assert.strictEqual(refused.setGoal, undefined, "and cannot be set");
+assert.match(refused.reply, /can't set a safe target/i);
+assert.ok(advanceTdee("maintenance", floorFlow.state).setGoal, "maintenance still works there");
+
+// goalForObjective is pure and refuses unknown objectives.
+assert.strictEqual(goalForObjective({ age: 31, formula: "male", heightCm: 175, weightKg: 80, activity: 3 }, "nonsense"), null);
+
+// A goal_offer state restored from jsonb survives normalisation.
+assert.strictEqual(normaliseState({ phase: "goal_offer" }).phase, "goal_offer");
+
+console.log("tdee-test: goal loop passed");
+
 // Routing ORDER inside handleMessage is verified behaviourally in
 // test/server-routing-test.js (`npm run test:routing`), which require()s
 // server.js with the DB and parser stubbed. No source-text assertions here.

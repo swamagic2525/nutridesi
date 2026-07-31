@@ -36,8 +36,19 @@ let historyFixture = [];
 stubModule("../src/db.js", {
   supabase: {},
   getProfile: async () => profileFixture,
-  saveTdeeProfile: recordAsync("saveTdeeProfile", true),
-  saveProfile: recordAsync("saveProfile", true),
+  // These two write back into the fixture, because multi-turn flows (TDEE ->
+  // goal) reload the profile on the next message and must see what the
+  // previous turn stored. A write-only stub would silently break the loop.
+  saveTdeeProfile: async (...args) => {
+    calls.push({ name: "saveTdeeProfile", args });
+    profileFixture = { ...profileFixture, tdee_profile: args[1] };
+    return true;
+  },
+  saveProfile: async (...args) => {
+    calls.push({ name: "saveProfile", args });
+    profileFixture = { ...profileFixture, ...(args[1] || {}) };
+    return true;
+  },
   ensureUser: recordAsync("ensureUser", false),
   logMeal: recordAsync("logMeal", {
     rows: [], totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, fibre: 0 }, isNewUser: false,
@@ -327,6 +338,41 @@ const midCollection = () => ({
   const capAgain = await handleMessageOnce(phone, "2 roti and dal", { media: true });
   assert.match(capAgain, /already logged, nothing added/i, "resent captioned photo dedupes");
   assert.strictEqual(called("logMeal"), 0, "and writes no second row");
+
+  // 18c. The TDEE goal loop actually PERSISTS. The calculator used to compute
+  //      the numbers, show them, and drop them — tdee_profile was written,
+  //      goal_kcal/goal_protein never were. Goal-setters return at ~2x, so the
+  //      write is the whole point of the feature.
+  phone = reset({ tdee_profile: {}, conversation_state: {} });
+  let r = await handleMessageOnce(phone, "calculate my calories age 31 male 175 cm 80 kg activity 3");
+  assert.match(r, /Want me to track against one of these/, "the result offers a goal");
+  calls.length = 0;
+  r = await handleMessageOnce(phone, "fat loss");
+  assert.match(r, /Daily goal set/, "choosing one confirms");
+
+  const saved = calls.find(c => c.name === "saveProfile");
+  assert.ok(saved, "saveProfile was called — the goal is persisted, not just displayed");
+  assert.strictEqual(saved.args[1].goal_kcal, 2450);
+  assert.strictEqual(saved.args[1].goal_protein, 160);
+  assert.ok(calls.find(c => c.name === "saveTdeeProfile"), "and the tdee profile is still stored");
+
+  // 18d. Skipping writes no goal.
+  phone = reset({ tdee_profile: {}, conversation_state: {} });
+  await handleMessageOnce(phone, "calculate my calories age 31 male 175 cm 80 kg activity 3");
+  calls.length = 0;
+  r = await handleMessageOnce(phone, "skip");
+  assert.strictEqual(called("saveProfile"), 0, "skip persists no goal");
+
+  // 18e. Sending a meal instead of answering logs the meal — the optional
+  //      question must not deadlock the conversation.
+  phone = reset({ tdee_profile: {}, conversation_state: {} },
+    { intent: "log", items: [{ food_name: "roti", quantity: 2, unit: "piece" }] });
+  await handleMessageOnce(phone, "calculate my calories age 31 male 175 cm 80 kg activity 3");
+  calls.length = 0;
+  r = await handleMessageOnce(phone, "2 roti and dal");
+  assert.strictEqual(called("parseMeal"), 1, "the meal reaches the parser");
+  assert.strictEqual(called("saveProfile"), 0, "and sets no goal");
+  assert.match(r, /Logged/, "and is logged");
 
   // 19. The window actually expires. Driven through duplicateReplay/rememberBody
   //     with an injected clock, because a test never waits 90 seconds — without

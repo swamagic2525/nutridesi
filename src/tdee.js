@@ -41,8 +41,13 @@ function isTdeeRequest(text) {
     /\b(calories?|kcal)\s+(?:in|of|for)\s+(?:a|an|one|two|\d+)?\s*[a-z]/.test(s)
     && !/\b(tdee|maintenance|fat loss|weight loss|weight gain)\b/.test(s)
   ) return false;
-  if (/\b(set|change|update)\b.{0,20}\b(target|goal)\b/.test(s)) return false;
+  // "set my target to 1800" is the user stating a number — that belongs to
+  // set_profile. "set my goal" with no number is a request to work one out,
+  // which is exactly this flow, so only defer when a figure is actually given.
+  if (/\b(set|change|update)\b.{0,20}\b(target|goal)\b/.test(s) && /\d/.test(s)) return false;
   if (/\bi (?:ate|had|consumed)\b/.test(s)) return false;
+  // The first-log prompt tells people to reply "goal"; honour it literally.
+  if (/^(?:set )?(?:my )?(?:daily )?goals?$/.test(s)) return true;
   return /\btdee\b|\bmaintenance calories?\b|\bcalorie needs?\b|\bdaily calories?\b/.test(s)
     || /\bhow many calories should i (?:eat|consume|have)\b/.test(s)
     || /\bcalculate (?:my )?(?:daily )?calories?\b/.test(s)
@@ -208,7 +213,7 @@ function suspiciousReasons(state) {
 function normaliseState(raw) {
   const base = emptyState();
   const s = raw && typeof raw === "object" ? raw : {};
-  const phase = ["inactive", "collecting", "confirming", "complete"].includes(s.phase)
+  const phase = ["inactive", "collecting", "confirming", "goal_offer", "complete"].includes(s.phase)
     ? s.phase
     : "inactive";
   return {
@@ -366,11 +371,84 @@ function resultReply(state, result) {
     + "*@swapnilgore2525* for his detailed 30-page guide._";
 }
 
+// --- Turning the result into an actual goal --------------------------------
+// The calculator produced the exact numbers the goal prompt asks users to type
+// from memory, then threw them away into tdee_profile. Goal-setters return at
+// roughly twice the rate of everyone else (51% vs 26% over 2+ days, measured
+// 29 Jul), and only ~24% ever set one, so closing this loop is the point of the
+// flow — not a nicety at the end of it.
+//
+// Same rule as the rest of this module: every number here is computed, never
+// generated. The LLM has no part in it.
+
+// Protein per kg of bodyweight. Within the ISSN's 1.4–2.0 g/kg band for active
+// people, higher in a deficit where protein protects lean mass.
+const PROTEIN_G_PER_KG = { maintenance: 1.6, fatLoss: 2.0, weightGain: 1.8 };
+// Bodyweight alone gives absurd targets at the extremes (a 150 kg user would be
+// told 300 g), because without body-fat data we cannot use lean mass. Cap
+// protein's share of the day's calories instead.
+const MAX_PROTEIN_CAL_SHARE = 0.35;
+
+function proteinTarget(weightKg, kcal, objective) {
+  const perKg = PROTEIN_G_PER_KG[objective] || PROTEIN_G_PER_KG.maintenance;
+  const byWeight = Number(weightKg) * perKg;
+  const byCalories = (Number(kcal) * MAX_PROTEIN_CAL_SHARE) / 4;
+  const grams = Math.min(byWeight, byCalories);
+  return Number.isFinite(grams) && grams > 0 ? Math.round(grams / 5) * 5 : null;
+}
+
+const midpoint = range => (Array.isArray(range) && range.length === 2
+  ? round50((range[0] + range[1]) / 2) : null);
+
+// Which objective the user picked. Null when the message isn't a choice at all,
+// so the caller can fall through instead of deadlocking.
+function parseGoalChoice(text) {
+  const v = String(text || "").toLowerCase().replace(/\s+/g, " ").trim().replace(/[.!]+$/, "");
+  if (!v) return null;
+  if (/^(skip|no|nope|later|not now|nahi|cancel)$/.test(v)) return "skip";
+  if (/\b(fat ?loss|weight ?loss|lose|losing|cut|cutting|deficit|reduce)\b/.test(v)) return "fatLoss";
+  if (/\b(weight ?gain|gain|gaining|bulk|bulking|muscle|surplus)\b/.test(v)) return "weightGain";
+  if (/\b(maintenance|maintain|maintaining|same|steady|recomp)\b/.test(v)) return "maintenance";
+  return null;
+}
+
+// Returns { goal_kcal, goal_protein, label } for a chosen objective, or null
+// when that objective has no safe target (fat loss below the 1,200 floor).
+function goalForObjective(state, objective) {
+  const result = calculateTdee(state);
+  if (!result) return null;
+  let kcal = null;
+  let label = null;
+  if (objective === "maintenance") { kcal = result.tdee; label = "maintenance"; }
+  else if (objective === "fatLoss") { kcal = midpoint(result.fatLoss); label = "fat loss"; }
+  else if (objective === "weightGain") { kcal = midpoint(result.weightGain); label = "weight gain"; }
+  if (!Number.isFinite(kcal) || kcal <= 0) return null;
+  const protein = proteinTarget(state.weightKg, kcal, objective);
+  if (!protein) return null;
+  return { goal_kcal: kcal, goal_protein: protein, label };
+}
+
+function goalOfferLine(result) {
+  const options = ["*maintenance*"];
+  if (result.fatLoss) options.push("*fat loss*");
+  options.push("*weight gain*");
+  return "\n\n\u{1F3AF} _Want me to track against one of these? Reply "
+    + `${options.join(", ")} — or *skip* and I'll just track totals._`;
+}
+
+function goalSetReply(goal) {
+  return `\u{1F3AF} Daily goal set: *${goal.goal_kcal.toLocaleString("en-IN")} kcal · `
+    + `${goal.goal_protein}g protein* (${goal.label}).\n\n`
+    + "I'll show your progress with every meal. Change it anytime — just tell me a new target.";
+}
+
 function completedResult(state, now) {
   const result = calculateTdee(state);
   const completed = {
     ...state,
-    phase: "complete",
+    // Not "complete": the number is useless until it becomes a goal. Park in
+    // goal_offer so the next message can be read as the answer.
+    phase: "goal_offer",
     invalidAttempts: 0,
     bmr: result.bmr,
     tdee: result.tdee,
@@ -380,13 +458,41 @@ function completedResult(state, now) {
     handled: true,
     clear: false,
     state: completed,
-    reply: resultReply(completed, result),
+    reply: resultReply(completed, result) + goalOfferLine(result),
   };
 }
 
 function advanceTdee(text, stored = {}, now = new Date()) {
   let state = normaliseState(stored);
   const explicit = isTdeeRequest(text);
+
+  // Sitting on a fresh result, waiting to hear which target they want.
+  if (!explicit && state.phase === "goal_offer") {
+    const choice = parseGoalChoice(text);
+    const settled = { ...state, phase: "complete" };
+    if (choice === "skip") {
+      return {
+        handled: true, clear: false, state: settled,
+        reply: "No problem — I'll just track your totals. Say \"set my goal\" whenever you want one.",
+      };
+    }
+    if (choice) {
+      const goal = goalForObjective(state, choice);
+      if (goal) {
+        // setGoal is applied by the caller; this module stays pure.
+        return { handled: true, clear: false, state: settled, setGoal: goal, reply: goalSetReply(goal) };
+      }
+      return {
+        handled: true, clear: false, state: settled,
+        reply: "I can't set a safe target for that one. Reply *maintenance* or *weight gain*, "
+          + "or tell me a number directly.",
+      };
+    }
+    // Not an answer — almost always a meal. Never hold the conversation
+    // hostage over an optional question (PRD: conversations never deadlock).
+    return { handled: false, clear: true, state: settled };
+  }
+
   const active = state.phase === "collecting" || state.phase === "confirming";
   if (!explicit && !active) return { handled: false, clear: false, state };
 
@@ -514,10 +620,12 @@ function advanceTdee(text, stored = {}, now = new Date()) {
 //   "clear"       -> persist the cleared state, then keep routing the message
 //   "passthrough" -> TDEE has no claim on this message
 function tdeeRouteAction(step) {
-  if (!step || typeof step !== "object") return { action: "passthrough", state: null, reply: null };
-  if (step.handled) return { action: "reply", state: step.state || null, reply: step.reply || null };
-  if (step.clear) return { action: "clear", state: step.state || null, reply: null };
-  return { action: "passthrough", state: null, reply: null };
+  if (!step || typeof step !== "object") return { action: "passthrough", state: null, reply: null, setGoal: null };
+  if (step.handled) {
+    return { action: "reply", state: step.state || null, reply: step.reply || null, setGoal: step.setGoal || null };
+  }
+  if (step.clear) return { action: "clear", state: step.state || null, reply: null, setGoal: null };
+  return { action: "passthrough", state: null, reply: null, setGoal: null };
 }
 
 // Whether a parsed message should enter TDEE via the semantic intent. Must be
@@ -540,6 +648,9 @@ module.exports = {
   advanceTdee,
   tdeeRouteAction,
   shouldRouteSemanticTdee,
+  parseGoalChoice,
+  goalForObjective,
+  proteinTarget,
   lbToKg,
   feetToCm,
 };

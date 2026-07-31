@@ -405,6 +405,15 @@ async function handleMessage(from, body, opts = {}) {
   const tdeeRoute = tdeeRouteAction(advanceTdee(trimmed, profile.tdee_profile || {}));
   if (tdeeRoute.action === "reply") {
     await saveTdeeProfile(from, tdeeRoute.state);
+    // The calculator worked out a target and the user accepted it. Persist it
+    // as their actual goal — otherwise the number is computed, shown, and lost,
+    // which is what used to happen.
+    if (tdeeRoute.setGoal) {
+      await saveProfile(from, {
+        goal_kcal: tdeeRoute.setGoal.goal_kcal,
+        goal_protein: tdeeRoute.setGoal.goal_protein,
+      });
+    }
     return tdeeRoute.reply;
   }
   if (tdeeRoute.action === "clear") {
@@ -965,10 +974,16 @@ async function handleMessage(from, body, opts = {}) {
   const ass = assumptionLines(rows);
   let goalAsk = "";
   if (!profile.hasGoal) {
+    // The old ask demanded three things at once — name, calorie target and
+    // protein target — two of which most people don't know. Adoption sat at
+    // ~24%. Offer the calculator instead: one word, and it works the numbers
+    // out from the answers it collects.
     if (result.isNewUser) {
-      goalAsk = "\n\n\u{1F3AF} _Want me to track against a daily goal? Reply your name + target — like \"Priya, 1800 cal 120g protein\". Or skip, I'll just track totals._";
+      goalAsk = "\n\n\u{1F3AF} _Want me to track against a daily goal? Reply *goal* and I'll work out your numbers "
+        + "— or send your own, like \"1800 cal 120g protein\"._";
     } else if ((profile.nudge_count || 0) < 2) {
-      goalAsk = "\n\n\u{1F3AF} _New: set a daily goal and I'll track your progress. Reply \"Rahul 2000 cal 140 protein\" anytime._";
+      goalAsk = "\n\n\u{1F3AF} _Set a daily goal and I'll track progress with every meal. Reply *goal* and I'll "
+        + "work out your numbers._";
       bumpNudge(from, profile.nudge_count);
     }
   }
