@@ -72,6 +72,7 @@ against recent exchanges). Both persist state on the `users` row — see §4.
 
 | File | What it does |
 |---|---|
+| `src/outcomes.js` | **Bad-outcome instrumentation.** Classifies every exchange in `message_log` from its reply, links each failure to what the user did next (recovered / retried / abandoned), and compares churn **within message-count bands**. Pure — no writes, no hot-path coupling, works retroactively over all history. Run via `npm run outcomes`. |
 | `src/proteinGuard.js` | Flags implausible protein/calorie ratios |
 | `src/gapLogger.js` | Logs uncovered foods to `evals/db-gaps.jsonl` for analysis |
 | `src/correctionLogger.js` | Logs correction events for analysis |
@@ -84,10 +85,11 @@ against recent exchanges). Both persist state on the `users` row — see §4.
 |---|---|
 | `evals/run.js` | Eval suite runner — 160 golden cases through the real LLM |
 | `evals/cases.jsonl` | The eval cases themselves (one JSON per line) |
-| `test/*.js` | 18 unit/integration test files |
+| `test/*.js` | 19 unit/integration test files |
 | `test/server-routing-test.js` | Requires the real `server.js` with `src/db.js` and `src/parser.js` swapped in `require.cache`, then asserts routing **order** by behaviour. `server.js` exports `handleMessage` and guards `app.listen` behind `require.main === module` to make this possible — keep both. |
 | `scripts/ingest-foods/` | Bulk ingestion pipeline for reference tier (markdown → Supabase rows) |
 | `scripts/healthcheck.js` | Watchdog (own launchd job, 5 min). Alerts via WhatsApp, falling back to a local desktop notification + `~/Library/Logs/nutridesi-alerts.log` when the network is the thing that died. |
+| `scripts/outcome-report.js` | Read-only bad-outcome report over `message_log`. `--days N`, `--worst`. Safe to run any time. |
 | `scripts/daily-summary.js` | Sends the opt-in daily summary (own launchd job, 5 min). The only outbound message in the product. Aborts if `daily-summary.sql` has not been applied, rather than risk repeat sends. |
 | `*.sql` (repo root) | Schema migrations, applied by hand in the Supabase SQL editor. `supabase-schema.sql` is the consolidated current schema; the others are incremental. |
 
@@ -227,6 +229,7 @@ npm run test:undoall       # undo behavior
 npm run test:tdee          # TDEE math, state machine, input guards
 npm run test:routing       # handleMessage routing ORDER (real server.js, stubbed I/O)
 npm run test:reminders     # daily-summary opt-in, due-window, 24h session guard
+npm run test:outcomes      # bad-outcome classifier + cohort banding
 npm run test:memory        # conversation memory window, envelope, concurrency
 npm run test:metrics       # metrics aggregation
 node test/pizza-slice-test.js
@@ -373,11 +376,35 @@ tunnel to localhost:3000, and the webhook URL set in Twilio console.
 | Priority | Item | Notes |
 |---|---|---|
 | ~~1~~ | ~~Reliability patch~~ | Partly done 31 Jul: the healthcheck now has a local alert path that survives a network outage, and can't wedge. Honest outage copy for users is still unwritten. |
-| 2 | **Bad-outcome instrumentation** | Events table + recovery metrics. Currently there's no way to see a user hitting a wrong match and giving up. **Now the top unbuilt item.** |
+| ~~2~~ | ~~Bad-outcome instrumentation~~ | Built 31 Jul (`src/outcomes.js`, `npm run outcomes`). Built as a classifier over `message_log` rather than a new events table: no new write paths, and it works retroactively. **Read the methodology note below before quoting any number from it.** |
 | ~~3~~ | ~~One-action commitment loop~~ | Done 31 Jul: the TDEE result sets the goal, and the first-log ask is one word (`goal`). |
 | ~~4~~ | ~~Opt-in reminder~~ | Built 31 Jul (`src/reminders.js`). **Needs `daily-summary.sql` applied before it does anything.** |
 | 5 | **Targeted trust fixes** | Generic-brand guard is done; duplicate-restatement is done (dedup, 29 Jul). What remains is **multi-turn evals** — the suite only covers single-turn parsing, so the stateful flows have no golden cases. |
 | 6 | **WABA migration** | `src/meta.js` has the Cloud API path. Gates trustworthy D3/D7 measurement, and gates reminders reaching anyone outside the 24h window. Run in parallel. |
+
+### Reading the bad-outcome report (methodology)
+
+`npm run outcomes` answers "did failures cost us retention". One trap is built
+into the data and worth knowing before you quote anything:
+
+**The naive split is confounded and inverts the answer.** Comparing users who
+hit a failure against everyone else showed bad-outcome users churning *23.7
+points less*. That is not a finding — hitting a failure requires sending
+several messages, so the "clean run" group fills with one-and-done users who
+never sent enough to hit one. The report keeps that view but labels it
+`do not quote`.
+
+The headline compares **within message-count bands**. Controlled that way the
+sign flips and failures track more churn in every band (measured 31 Jul:
++13.2 / +20.7 / +6.9 points). Still correlational, not causal.
+
+Two numbers need no matching and are the most trustworthy:
+- **abandon rate** — share of failures after which the user never messaged again
+- **ended-on-bad rate** — share of affected users whose last interaction was a failure
+
+**Silent wrong matches are inferred, not observed.** A confidently wrong match
+produces a reply that looks successful, so it is detected as a log immediately
+followed by a correction attempt. Treat it as a lower bound.
 
 ### The #1 retention finding (31 Jul)
 
