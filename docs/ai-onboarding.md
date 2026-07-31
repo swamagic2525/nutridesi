@@ -15,6 +15,7 @@ before touching code. Reflects the codebase as of **24 July 2026** (live private
 | `docs/ai-onboarding.md` | **This file** | You're reading it. |
 | `docs/correction-incidents.md` | Accurate | Real incident writeups — read for context on why certain guardrails exist. |
 | `docs/churn-reduction-report-2026-07-23.md` | Accurate | **Read this before picking retention work.** Real metrics: D7 is 5.3% vs a 40% target. Says database coverage is NOT the main lever. |
+| `docs/product-experience-backlog.md` | Living backlog | **Read this before planning onboarding, retention, images, or user-feedback features.** Approved ideas, constraints, priority candidates, and success metrics live here. Items are not necessarily shipped. |
 | `docs/superpowers/specs/` + `plans/` | Accurate | Design docs + implementation plans for TDEE and conversation memory. Both shipped. |
 | `docs/post-launch-backlog.md` | Partially stale | Some items are done (rerank, meal blocks). Treat as idea list, not a plan. |
 | `docs/codex-handoff-2026-07-17.md` | Stale | Pre-dates rerank, typo tolerance, meal blocks, TDEE, conversation memory. Ignore. |
