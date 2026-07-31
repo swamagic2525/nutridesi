@@ -71,8 +71,9 @@ stubModule("../src/parser.js", {
   CHAIN: ["stub"],
 });
 
-const { handleMessage } = require("../server.js");
+const { handleMessage, handleMessageOnce, duplicateReplay, rememberBody, DUP_WINDOW_MS } = require("../server.js");
 assert.strictEqual(typeof handleMessage, "function", "server.js must export handleMessage");
+assert.strictEqual(typeof handleMessageOnce, "function", "server.js must export handleMessageOnce");
 
 // A phone per case: rate limiting is in-memory and per-number.
 let phoneSeq = 0;
@@ -248,6 +249,106 @@ const midCollection = () => ({
   const proteinReply = await handleMessage(phone, "what protein should i eat for this goal");
   assert.match(String(proteinReply), /protein target/, "protein-goal reply is returned");
   assert.strictEqual(called("parseMeal"), 0, "and it short-circuits before the parser");
+
+  // --- Duplicate-message guard ------------------------------------------
+  // Measured 29 Jul: 12 duplicate rows across 12 users silently doubled their
+  // day totals. The guard must kill that WITHOUT breaking legitimate repeats.
+
+  // 12. An identical meal resent inside the window logs once, not twice.
+  phone = reset({ tdee_profile: {}, conversation_state: {} },
+    { intent: "log", items: [{ food_name: "roti", quantity: 2, unit: "piece" }] });
+  const first = await handleMessageOnce(phone, "2 roti and dal");
+  assert.match(first, /Logged/, "first send logs");
+  const secondCalls = (calls.length = 0, await handleMessageOnce(phone, "2 roti and dal"));
+  assert.match(secondCalls, /already logged, nothing added/i, "the resend is flagged as a duplicate");
+  assert.strictEqual(called("logMeal"), 0, "and writes NO second row");
+  assert.strictEqual(called("parseMeal"), 0, "and does not even reach the parser");
+
+  // 13. Whitespace/case variations of the same message are still duplicates —
+  //     WhatsApp clients and copy-paste introduce these.
+  calls.length = 0;
+  const variant = await handleMessageOnce(phone, "  2 Roti  and   dal ");
+  assert.match(variant, /already logged, nothing added/i, "normalised match still dedupes");
+  assert.strictEqual(called("logMeal"), 0);
+
+  // 14. A DIFFERENT meal from the same user is unaffected.
+  calls.length = 0;
+  const other = await handleMessageOnce(phone, "1 bowl poha");
+  assert.doesNotMatch(other, /already logged, nothing added/i, "a different meal is not a duplicate");
+  assert.strictEqual(called("parseMeal"), 1, "and is parsed normally");
+
+  // 15. The SAME text from a DIFFERENT user is not a duplicate — the key is
+  //     per-phone, or one user's meal would suppress another's.
+  const otherPhone = reset({ tdee_profile: {}, conversation_state: {} },
+    { intent: "log", items: [{ food_name: "roti", quantity: 2, unit: "piece" }] });
+  const across = await handleMessageOnce(otherPhone, "2 roti and dal");
+  assert.match(across, /Logged/, "another user's identical text logs normally");
+  assert.doesNotMatch(across, /already logged, nothing added/i);
+
+  // 16. Repeats whose first reply was NOT a log must still be processed. This
+  //     is the guard on the guard: "yes"/"3"/"kg" legitimately recur as answers
+  //     to different prompts, and replaying a stale answer would be its own bug.
+  phone = reset({ tdee_profile: {}, conversation_state: {} },
+    { intent: "chitchat", chitchat_reply: "Sure — what did you have?" });
+  await handleMessageOnce(phone, "yes");
+  calls.length = 0;
+  const repeatedYes = await handleMessageOnce(phone, "yes");
+  assert.doesNotMatch(repeatedYes, /already logged, nothing added/i,
+    "a repeated non-logging message is NOT suppressed");
+  assert.strictEqual(called("parseMeal"), 1, "it is processed again, as it must be");
+
+  // 17. Consecutive TDEE answers are untouched — a user mid-collection can send
+  //     "3" for activity after "3" meant something else earlier.
+  phone = reset(midCollection());
+  const tdeeDone = await handleMessageOnce(phone, "3");
+  assert.match(tdeeDone, /Maintenance/, "TDEE completes");
+  calls.length = 0;
+  const tdeeAgain = await handleMessageOnce(phone, "3");
+  assert.doesNotMatch(tdeeAgain, /already logged, nothing added/i,
+    "a repeated TDEE answer is not treated as a duplicate log");
+
+  // 18. Two caption-less photos in a row are two real messages. Their bodies
+  //     are empty, and an empty body is never remembered, so they cannot
+  //     collide — no media special-case needed in the guard.
+  phone = reset({ tdee_profile: {}, conversation_state: {} });
+  const photo1 = await handleMessageOnce(phone, "", { media: true });
+  calls.length = 0;
+  const photo2 = await handleMessageOnce(phone, "", { media: true });
+  assert.doesNotMatch(String(photo2), /already logged, nothing added/i,
+    "a second photo is not a duplicate");
+  assert.strictEqual(photo1, photo2, "both get the same media reply, via the normal path");
+
+  // 18b. A *captioned* photo resent within the window IS a duplicate — the
+  //      caption is the body, and resending it would double-log like any text.
+  phone = reset({ tdee_profile: {}, conversation_state: {} },
+    { intent: "log", items: [{ food_name: "roti", quantity: 2, unit: "piece" }] });
+  await handleMessageOnce(phone, "2 roti and dal", { media: true });
+  calls.length = 0;
+  const capAgain = await handleMessageOnce(phone, "2 roti and dal", { media: true });
+  assert.match(capAgain, /already logged, nothing added/i, "resent captioned photo dedupes");
+  assert.strictEqual(called("logMeal"), 0, "and writes no second row");
+
+  // 19. The window actually expires. Driven through duplicateReplay/rememberBody
+  //     with an injected clock, because a test never waits 90 seconds — without
+  //     this, removing the expiry check passes everything above.
+  {
+    const t0 = 1_800_000_000_000;
+    const p = "+0000000199";
+    rememberBody(p, "2 roti and dal", "✅ Logged\n1. *Roti* ×2 — 178 kcal", t0);
+    assert.ok(duplicateReplay(p, "2 roti and dal", t0 + 1_000),
+      "still a duplicate 1s later");
+    assert.ok(duplicateReplay(p, "2 roti and dal", t0 + DUP_WINDOW_MS - 1),
+      "still a duplicate just inside the window");
+    assert.strictEqual(duplicateReplay(p, "2 roti and dal", t0 + DUP_WINDOW_MS), null,
+      "NOT a duplicate once the window elapses — the same meal later is a real second helping");
+    assert.strictEqual(duplicateReplay(p, "2 roti and dal", t0 + 6 * 60 * 60 * 1000), null,
+      "and certainly not hours later");
+
+    // A remembered non-logging reply never replays, whatever the timing.
+    rememberBody(p, "yes", "Sure — what did you have?", t0);
+    assert.strictEqual(duplicateReplay(p, "yes", t0 + 1_000), null,
+      "a non-logging reply is never replayed");
+  }
 
   console.log("server-routing-test: all passed");
 })().catch((err) => {

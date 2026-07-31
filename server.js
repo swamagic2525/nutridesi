@@ -130,6 +130,63 @@ const RATE = { perHour: 25, perDay: 60, maxLen: 300 };
 // Ranks 1..FOUNDING_SPOTS hold the free-for-life promise (made 2026-07-19).
 // Signups past it are still recorded — this only labels them.
 const FOUNDING_SPOTS = 50;
+
+// --- Duplicate-message guard -----------------------------------------------
+// A resend — Twilio webhook retry, a double-tap, impatience on a slow reply —
+// used to be logged a second time, silently doubling the day's total. Measured
+// 29 Jul: 12 duplicate rows across 12 users (~9% of the base), 2,326 phantom
+// kcal. The same identical text also tripped the correction path into
+// "couldn't safely connect" aborts. Nobody eats the same meal twice inside a
+// minute; an exact repeat that soon is a resend.
+//
+// Deliberately narrow, because repeats are legitimate in conversation — "yes",
+// "3", "kg" recur as answers to different prompts, and replaying a stale answer
+// would be its own bug. So this only short-circuits when the earlier identical
+// message produced a SUCCESSFUL LOG, which is the case that corrupts data.
+// Everything else falls through and is handled normally.
+const DUP_WINDOW_MS = 90 * 1000;
+const LOGGED_REPLY = /^✅\s*logged\b/i; // same marker repeatedMealCandidate uses
+const recentBodies = new Map(); // `${phone}|${normalised}` -> { at, reply }
+
+const dupKey = (phone, body) =>
+  `${phone}|${String(body || "").replace(/\s+/g, " ").trim().toLowerCase()}`;
+
+function duplicateReplay(phone, body, now = Date.now()) {
+  const key = dupKey(phone, body);
+  const seen = recentBodies.get(key);
+  if (!seen || now - seen.at >= DUP_WINDOW_MS) return null;
+  if (!LOGGED_REPLY.test(String(seen.reply || ""))) return null;
+  // Replay the original reply verbatim under a note. The unchanged day total
+  // inside it is the proof nothing was added.
+  return `\u{21A9}\u{FE0F} _Same message again — already logged, nothing added._\n\n${seen.reply}`;
+}
+
+function rememberBody(phone, body, reply, now = Date.now()) {
+  const text = String(body || "").trim();
+  if (!text) return;
+  recentBodies.set(dupKey(phone, body), { at: now, reply });
+  if (recentBodies.size > 500) {
+    for (const [k, v] of recentBodies) {
+      if (now - v.at >= DUP_WINDOW_MS) recentBodies.delete(k);
+    }
+  }
+}
+
+// Idempotent wrapper both transports call instead of handleMessage directly.
+// Media needs no special case: a caption-less photo has an empty body, which
+// rememberBody never stores, so two photos in a row can't collide. A *captioned*
+// photo resent within the window is a genuine duplicate and should be caught
+// like any other.
+async function handleMessageOnce(from, body, opts = {}) {
+  const replay = duplicateReplay(from, body);
+  if (replay) {
+    console.log(`dedup: replayed reply for ${maskPhone(from)} (identical within ${DUP_WINDOW_MS / 1000}s)`);
+    return replay;
+  }
+  const reply = await handleMessage(from, body, opts);
+  rememberBody(from, body, reply);
+  return reply;
+}
 const usage = new Map();
 function rateLimitCheck(phone) {
   const now = Date.now();
@@ -938,7 +995,7 @@ app.post("/whatsapp", async (req, res) => {
   res.on("finish", () => console.log(`${new Date().toISOString()} ${maskPhone(from)} "${body.slice(0, 40)}" ${Date.now() - t0}ms`));
 
   try {
-    const reply = await handleMessage(from, body, { media: hasMedia });
+    const reply = await handleMessageOnce(from, body, { media: hasMedia });
     twiml.message(reply);
     recordExchange(from, body, reply, hasMedia);
   } catch (err) {
@@ -982,7 +1039,7 @@ app.post("/meta-whatsapp", async (req, res) => {
     const t0 = Date.now();
     try {
       markRead(msgId);
-      const reply = await handleMessage(from, text, { media });
+      const reply = await handleMessageOnce(from, text, { media });
       await sendMessage(from, reply);
       recordExchange(from, text, reply, media);
     } catch (err) {
@@ -1101,4 +1158,9 @@ if (require.main === module) {
   app.listen(PORT, () => console.log(`NutriDesi listening on :${PORT}`));
 }
 
-module.exports = { app, handleMessage };
+module.exports = {
+  app, handleMessage, handleMessageOnce,
+  // Exported so the dedup window can be tested with an injected clock — the
+  // expiry is otherwise unreachable from a test, which never waits 90s.
+  duplicateReplay, rememberBody, DUP_WINDOW_MS,
+};
