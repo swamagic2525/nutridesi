@@ -964,7 +964,11 @@ async function claimSummarySend(phone, istDate) {
   const { data, error } = await supabase.from("users")
     .update({ daily_summary_last_sent: istDate })
     .eq("phone_number", phone)
-    .neq("daily_summary_last_sent", istDate)
+    // `neq` alone is wrong here: a fresh subscriber has last_sent = NULL, and
+    // in SQL `NULL <> '2026-07-31'` is NULL rather than TRUE, so the row is
+    // filtered out and the claim never succeeds. That silently meant nobody
+    // could ever receive a first summary. The null branch is required.
+    .or(`daily_summary_last_sent.is.null,daily_summary_last_sent.neq.${istDate}`)
     .select("phone_number");
   if (error) { console.error("claimSummarySend:", error.message); return false; }
   return !!(data && data.length);
