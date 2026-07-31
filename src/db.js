@@ -934,4 +934,50 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
-module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport };
+// --- Daily summary (opt-in reminder) ---------------------------------------
+
+// Everyone opted in. The list is small (opt-in only) so the scheduler filters
+// for who is actually due in code, where isDue can be unit-tested.
+async function summarySubscribers() {
+  const { data, error } = await supabase.from("users")
+    .select("phone_number, name, goal_kcal, goal_protein, daily_summary_time, daily_summary_last_sent")
+    .not("daily_summary_time", "is", null);
+  if (error) {
+    // Surfaced rather than swallowed: without daily_summary_last_sent there is
+    // no way to guarantee one send per day, and the scheduler must not run.
+    return { error: error.message, rows: [] };
+  }
+  return { error: null, rows: data || [] };
+}
+
+async function setSummaryTime(phone, time) {
+  const { error } = await supabase.from("users")
+    .upsert({ phone_number: phone, daily_summary_time: time }, { onConflict: "phone_number" });
+  if (error) { console.error("setSummaryTime:", error.message); return false; }
+  return true;
+}
+
+// Claim the send for today BEFORE dispatching. If the message then fails the
+// user simply misses one day — far better than a retry loop messaging them
+// repeatedly, which for an opt-in nudge is the unforgivable failure.
+async function claimSummarySend(phone, istDate) {
+  const { data, error } = await supabase.from("users")
+    .update({ daily_summary_last_sent: istDate })
+    .eq("phone_number", phone)
+    .neq("daily_summary_last_sent", istDate)
+    .select("phone_number");
+  if (error) { console.error("claimSummarySend:", error.message); return false; }
+  return !!(data && data.length);
+}
+
+// Timestamp of the user's last inbound message — decides whether WhatsApp's
+// 24h free-form window is still open.
+async function lastInboundAt(phone) {
+  const { data, error } = await supabase.from("message_log")
+    .select("at").eq("phone_number", phone)
+    .order("at", { ascending: false }).limit(1);
+  if (error) { console.error("lastInboundAt:", error.message); return null; }
+  return data && data[0] ? data[0].at : null;
+}
+
+module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport, summarySubscribers, setSummaryTime, claimSummarySend, lastInboundAt };

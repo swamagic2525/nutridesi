@@ -439,7 +439,10 @@ function goalOfferLine(result) {
 function goalSetReply(goal) {
   return `\u{1F3AF} Daily goal set: *${goal.goal_kcal.toLocaleString("en-IN")} kcal · `
     + `${goal.goal_protein}g protein* (${goal.label}).\n\n`
-    + "I'll show your progress with every meal. Change it anytime — just tell me a new target.";
+    + "I'll show your progress with every meal. Change it anytime — just tell me a new target.\n\n"
+    // Offered here too: someone who has just committed to a target is the most
+    // likely person to want a nightly nudge against it.
+    + "_Want a nightly nudge to stay on track? Say \"remind me at 9pm\"._";
 }
 
 function completedResult(state, now) {

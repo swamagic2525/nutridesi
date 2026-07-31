@@ -19,6 +19,7 @@
     "test:brand": "node test/brand-rerank-test.js",
     "test:tdee": "node test/tdee-test.js",
     "test:routing": "node test/server-routing-test.js",
+    "test:reminders": "node test/reminders-test.js",
     "test:undoall": "node test/undo-all-test.js",
     "test:memory": "node test/conversation-memory-test.js"
   },

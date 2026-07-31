@@ -65,6 +65,7 @@ against recent exchanges). Both persist state on the `users` row — see §4.
 | File | What it does |
 |---|---|
 | `src/tdee.js` | **Deterministic TDEE calculator** (~520 lines). Mifflin-St Jeor. `isTdeeRequest()` classifies intent, `advanceTdee()` is the state machine driving the multi-turn collection, `calculateTdee()` does the math, `suspiciousReasons()` gates implausible inputs. **No LLM in the math path** — the LLM only routes intent. Unit conversion helpers (`lbToKg`, `feetToCm`) are pure. |
+| `src/reminders.js` | **Opt-in daily summary** — the product's only outbound message and only return trigger. Pure logic: `parseReminderRequest()` (opt-in/out, deterministic), `isDue()` (one per IST day, inside a 90-min grace window), `withinSessionWindow()` (WhatsApp's 24h free-form limit), `summaryBody()`. Sending lives in `scripts/daily-summary.js`, run by its own launchd job every 5 min. |
 | `src/conversationMemory.js` | **6-hour bounded conversation memory** (~410 lines). Keeps up to `MAX_EXCHANGES` (10) recent exchanges within `WINDOW_MS` (6h) so short follow-ups resolve. `formatConversationContext()` wraps history in a quoted `BEGIN/END APP-PROVIDED RECENT CONVERSATION` envelope so the LLM treats it as **data, not instructions** (prompt-injection boundary). `claimConversationState`/`clearConversationStateIfUnchanged` in db.js give it optimistic concurrency. |
 
 ### Supporting modules
@@ -83,10 +84,11 @@ against recent exchanges). Both persist state on the `users` row — see §4.
 |---|---|
 | `evals/run.js` | Eval suite runner — 160 golden cases through the real LLM |
 | `evals/cases.jsonl` | The eval cases themselves (one JSON per line) |
-| `test/*.js` | 17 unit/integration test files |
+| `test/*.js` | 18 unit/integration test files |
 | `test/server-routing-test.js` | Requires the real `server.js` with `src/db.js` and `src/parser.js` swapped in `require.cache`, then asserts routing **order** by behaviour. `server.js` exports `handleMessage` and guards `app.listen` behind `require.main === module` to make this possible — keep both. |
 | `scripts/ingest-foods/` | Bulk ingestion pipeline for reference tier (markdown → Supabase rows) |
-| `scripts/healthcheck.js` | Watchdog that alerts if the server goes down |
+| `scripts/healthcheck.js` | Watchdog (own launchd job, 5 min). Alerts via WhatsApp, falling back to a local desktop notification + `~/Library/Logs/nutridesi-alerts.log` when the network is the thing that died. |
+| `scripts/daily-summary.js` | Sends the opt-in daily summary (own launchd job, 5 min). The only outbound message in the product. Aborts if `daily-summary.sql` has not been applied, rather than risk repeat sends. |
 | `*.sql` (repo root) | Schema migrations, applied by hand in the Supabase SQL editor. `supabase-schema.sql` is the consolidated current schema; the others are incremental. |
 
 ---
@@ -224,6 +226,7 @@ npm run test:ref           # acceptableRef fuzzy floor
 npm run test:undoall       # undo behavior
 npm run test:tdee          # TDEE math, state machine, input guards
 npm run test:routing       # handleMessage routing ORDER (real server.js, stubbed I/O)
+npm run test:reminders     # daily-summary opt-in, due-window, 24h session guard
 npm run test:memory        # conversation memory window, envelope, concurrency
 npm run test:metrics       # metrics aggregation
 node test/pizza-slice-test.js
@@ -369,12 +372,27 @@ tunnel to localhost:3000, and the webhook URL set in Twilio console.
 ### What the churn report actually ranks highest
 | Priority | Item | Notes |
 |---|---|---|
-| 1 | **Reliability patch** | Honest outage copy + provider health alert + working fallback. Users blamed themselves when the bot was down (report §A). |
-| 2 | **Bad-outcome instrumentation** | Events table + recovery metrics. Currently there's no way to see a user hitting a wrong match and giving up. |
-| 3 | **One-action commitment loop** | Single CTA in the first-log reply + goal-setting flow. Goal adoption is the strongest retention signal found (20.3% today). |
-| 4 | **Opt-in reminder / daily summary** | The only sanctioned return trigger — product rules forbid unsolicited messages, so it must be opt-in. Not yet built. |
-| 5 | **Targeted trust fixes** | Generic-brand guard + duplicate-restatement protection, with **multi-turn** evals. Narrow, not a database sweep. |
-| 6 | **WABA migration** | `src/meta.js` has the Cloud API path. Gates trustworthy D3/D7 measurement, because Sandbox re-join breaks the window. Run in parallel. |
+| ~~1~~ | ~~Reliability patch~~ | Partly done 31 Jul: the healthcheck now has a local alert path that survives a network outage, and can't wedge. Honest outage copy for users is still unwritten. |
+| 2 | **Bad-outcome instrumentation** | Events table + recovery metrics. Currently there's no way to see a user hitting a wrong match and giving up. **Now the top unbuilt item.** |
+| ~~3~~ | ~~One-action commitment loop~~ | Done 31 Jul: the TDEE result sets the goal, and the first-log ask is one word (`goal`). |
+| ~~4~~ | ~~Opt-in reminder~~ | Built 31 Jul (`src/reminders.js`). **Needs `daily-summary.sql` applied before it does anything.** |
+| 5 | **Targeted trust fixes** | Generic-brand guard is done; duplicate-restatement is done (dedup, 29 Jul). What remains is **multi-turn evals** — the suite only covers single-turn parsing, so the stateful flows have no golden cases. |
+| 6 | **WABA migration** | `src/meta.js` has the Cloud API path. Gates trustworthy D3/D7 measurement, and gates reminders reaching anyone outside the 24h window. Run in parallel. |
+
+### The #1 retention finding (31 Jul)
+
+74.5% of all returns happen the **next day**, 87.6% within two. 137 of 202
+activated users logged on exactly one day. The habit is decided inside a ~48h
+window, and until 31 Jul nothing in the product acted inside it — there was no
+scheduler and no outbound message of any kind.
+
+This was tested against the competing explanation: Sandbox's 72h re-join is a
+friction, not a wall (12.4% of returns come after a 3+ day gap, with a bump at
+day 5). So the gap was motivational, not mechanical.
+
+The daily summary is the fix. Note it can only reach people inside WhatsApp's
+24h window — it reinforces a forming habit and **cannot win back the lapsed**.
+That needs WABA templates.
 
 ### Parked (deliberately)
 | Item | Why |

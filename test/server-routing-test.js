@@ -67,6 +67,10 @@ stubModule("../src/db.js", {
   lastLogBatch: recordAsync("lastLogBatch", []),
   dayReport: recordAsync("dayReport", { meals: [], total: {} }),
   bumpNudge: recordAsync("bumpNudge", 0),
+  setSummaryTime: recordAsync("setSummaryTime", true),
+  summarySubscribers: recordAsync("summarySubscribers", { error: null, rows: [] }),
+  claimSummarySend: recordAsync("claimSummarySend", true),
+  lastInboundAt: recordAsync("lastInboundAt", null),
   recentConversation: async (...args) => { calls.push({ name: "recentConversation", args }); return historyFixture; },
   saveConversationState: recordAsync("saveConversationState", true),
   claimConversationState: recordAsync("claimConversationState", true),
@@ -373,6 +377,31 @@ const midCollection = () => ({
   assert.strictEqual(called("parseMeal"), 1, "the meal reaches the parser");
   assert.strictEqual(called("saveProfile"), 0, "and sets no goal");
   assert.match(r, /Logged/, "and is logged");
+
+  // 18f. The reminder opt-in routes before the parser — "remind me at 9pm"
+  //      must never be read as a meal — and persists the time.
+  phone = reset({ tdee_profile: {}, conversation_state: {} });
+  r = await handleMessageOnce(phone, "remind me at 9pm");
+  assert.match(r, /Daily summary set/, "opt-in is confirmed");
+  assert.match(r, /9pm/);
+  assert.strictEqual(called("parseMeal"), 0, "and never reaches the parser");
+  const setTime = calls.find(c => c.name === "setSummaryTime");
+  assert.ok(setTime, "the time is persisted");
+  assert.strictEqual(setTime.args[1], "21:00");
+
+  // 18g. Opting out clears it.
+  phone = reset({ tdee_profile: {}, conversation_state: {} });
+  r = await handleMessageOnce(phone, "stop reminders");
+  assert.match(r, /off/i);
+  const cleared = calls.find(c => c.name === "setSummaryTime");
+  assert.ok(cleared && cleared.args[1] === null, "the time is cleared, not left set");
+
+  // 18h. A meal that merely mentions a time is still a meal.
+  phone = reset({ tdee_profile: {}, conversation_state: {} },
+    { intent: "log", items: [{ food_name: "eggs", quantity: 2, unit: "piece" }] });
+  r = await handleMessageOnce(phone, "i had 2 eggs at 9pm");
+  assert.strictEqual(called("setSummaryTime"), 0, "no reminder is set");
+  assert.strictEqual(called("parseMeal"), 1, "it is parsed as food");
 
   // 19. The window actually expires. Driven through duplicateReplay/rememberBody
   //     with an injected clock, because a test never waits 90 seconds — without

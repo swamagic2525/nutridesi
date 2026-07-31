@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.nutridesi.dailysummary</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/node</string>
+    <string>scripts/daily-summary.js</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/swapnil/Documents/Whatsapp calorie bot/Swapnils first App</string>
+  <!-- Every 5 minutes. The script decides who is actually due, and only fires
+       inside a 90-minute grace window after each user's chosen time, so a tick
+       that lands late is harmless and one that lands overnight sends nothing. -->
+  <key>StartInterval</key>
+  <integer>300</integer>
+  <!-- Deliberately NOT RunAtLoad: a send should be driven by the clock, never
+       by a deploy or a reboot. -->
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/Users/swapnil/Library/Logs/nutridesi-dailysummary.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/swapnil/Library/Logs/nutridesi-dailysummary.log</string>
+</dict>
+</plist>

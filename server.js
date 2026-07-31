@@ -11,7 +11,7 @@ const { parseMeal } = require("./src/parser.js");
 const { advanceTdee, tdeeRouteAction, shouldRouteSemanticTdee } = require("./src/tdee.js");
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
-const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport } = require("./src/db.js");
+const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport, setSummaryTime } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
 const {
   WINDOW_MS,
@@ -36,6 +36,7 @@ const {
 } = require("./src/conversationMemory.js");
 const { validateSignature, extractMessages, sendMessage, markRead } = require("./src/meta.js");
 const { logCorrectionEvent } = require("./src/correctionLogger.js");
+const { parseReminderRequest, confirmSetReply, CONFIRM_OFF_REPLY } = require("./src/reminders.js");
 
 const app = express();
 app.use(express.urlencoded({ extended: false })); // Twilio sends form-encoded
@@ -299,9 +300,15 @@ const RECENT_MEDIA_REPLY =
 const REPEAT_CHOICE_PROMPT =
   "That looks like your recent meal. Reply correction or new meal.";
 
+// The reminder line sits here, on the first log, because that is where the
+// retention window opens: 74.5% of returns happen the next day and 87.6%
+// within two, and most users never reach a second day at all. An opt-in
+// feature nobody is told about has an opt-in rate of zero. It goes ahead of
+// the feedback ask because it is worth more to the user than to us.
 const FIRST_LOG_FOOTER =
   "\n\n\u{1F64F} _First log — thanks for testing NutriDesi early! Reply \"undo\" to remove a mistake, " +
-  "or correct me anytime (\"that dosa was 120 calories\"). Feedback? DM @swapnilgore2525 on Instagram — " +
+  "or correct me anytime (\"that dosa was 120 calories\"). Want a nightly recap? Say \"remind me at 9pm\". " +
+  "Feedback? DM @swapnilgore2525 on Instagram — " +
   "I read everything. — Swapnil (PM & ex-fitness coach)_";
 
 function dayLine(t, profile) {
@@ -418,6 +425,18 @@ async function handleMessage(from, body, opts = {}) {
   }
   if (tdeeRoute.action === "clear") {
     await saveTdeeProfile(from, tdeeRoute.state);
+  }
+
+  // Opt-in / opt-out for the daily summary. Deterministic, and ahead of the
+  // parser so "remind me at 9pm" is never read as a meal.
+  const reminderReq = parseReminderRequest(trimmed);
+  if (reminderReq) {
+    if (reminderReq.action === "off") {
+      await setSummaryTime(from, null);
+      return CONFIRM_OFF_REPLY;
+    }
+    await setSummaryTime(from, reminderReq.time);
+    return confirmSetReply(reminderReq.time);
   }
 
   const now = Date.now();
