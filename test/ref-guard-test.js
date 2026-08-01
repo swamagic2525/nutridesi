@@ -93,5 +93,25 @@ assert.strictEqual(acceptableRef("", "Anything"), false);
   ] });
   assert.strictEqual(rows[0].assumed, false, "a specific dish needs no confession");
 
+  // --- User-stated macros survive suspect arbitration ---
+  // 2026-08-01, real user: they logged Yogabar oats and replied "Oats have 26g
+  // protein, not 15". The bot answered "🔄 Corrected:" and showed 15g — the
+  // unchanged value — so they had to send "you did not correct it" to be
+  // believed, three days running.
+  //
+  // resolveItem applied the stated 26 correctly. Suspect arbitration then ran
+  // afterwards (contextGuard flags this name compound_suspect) and
+  // applyReference overwrote the macros wholesale, restoring 15. The primary
+  // reference path and the gap trail both skip `r.stated` rows; arbitration was
+  // the outlier. CLAUDE.md: user-stated macros override everything.
+  for (const id of [null, 134]) {
+    const stated = await resolveRows({ items: [{
+      food_name: "Yogabar High Protein Oats (Dark Chocolate)",
+      stated_protein: 26, stated_kcal: 202, quantity: 1, matched_db_id: id,
+    }] });
+    assert.strictEqual(stated[0].protein, 26,
+      `stated protein must survive arbitration (matched_db_id=${id})`);
+  }
+
   console.log("ref-guard-test: grams + generic-term guards passed");
 })().catch(e => { console.error(e); process.exit(1); });

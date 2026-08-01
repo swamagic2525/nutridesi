@@ -570,7 +570,15 @@ async function resolveRows(parsed, opts = {}) {
   // INDB recipe name - overrides the curated value; otherwise curated stands.
   await Promise.all(rows.map(async (r, i) => {
     const it = items[i];
-    if (!it || !r.matched_db_id || !(it.compound_suspect || it.coverage_suspect)) return;
+    // `r.stated` means the user gave us the number themselves. Arbitration runs
+    // AFTER resolveItem has already applied it, and applyReference below
+    // overwrites macros wholesale — so without this the user's own figure was
+    // silently replaced by the database's. That produced the worst failure in
+    // the logs: the bot answering "🔄 Corrected:" while showing the unchanged
+    // value, so the user had to send "you did not correct it" to be believed.
+    // The primary reference path (above) and the gap trail already skip stated
+    // rows; this one was the outlier. User-stated macros override everything.
+    if (!it || !r.matched_db_id || r.stated || !(it.compound_suspect || it.coverage_suspect)) return;
     const ref = await refLookup(it.food_name);
     if (!ref) return;
     const refName = String(ref.food_name || "").toLowerCase();
