@@ -1,8 +1,7 @@
 # AI Handoff — NutriDesi
 
 **For any AI model picking up build work in this repo.** Read this top-to-bottom
-before touching code. Reflects the codebase as of **24 July 2026** (live private beta,
-155 real users).
+before touching code. Reflects the codebase as of **1 August 2026** (live private beta).
 
 ---
 
@@ -13,6 +12,7 @@ before touching code. Reflects the codebase as of **24 July 2026** (live private
 | `CLAUDE.md` | Accurate | Product rules, stack, schema. **Authoritative.** Rewritten 23 Jul to match the real architecture. |
 | `README.md` | Accurate | Product overview + architecture. |
 | `docs/ai-onboarding.md` | **This file** | You're reading it. |
+| `docs/claude-handoff-2026-08-01.md` | **Latest handoff** | Production log-integrity incident, correction-memory rollout, `…0419` repair, verification, and remaining transactional risk. Read this next. |
 | `docs/correction-incidents.md` | Accurate | Real incident writeups — read for context on why certain guardrails exist. |
 | `docs/churn-reduction-report-2026-07-23.md` | Accurate | **Read this before picking retention work.** Real metrics: D7 is 5.3% vs a 40% target. Says database coverage is NOT the main lever. |
 | `docs/product-experience-backlog.md` | Living backlog | **Read this before planning onboarding, retention, images, or user-feedback features.** Approved ideas, constraints, priority candidates, and success metrics live here. Items are not necessarily shipped. |
