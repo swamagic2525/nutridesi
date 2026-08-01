@@ -6,6 +6,7 @@ const { guardItems } = require("./proteinGuard.js");
 const { contextGuard, contentTokens } = require("./contextGuard.js");
 const { logGapEvent } = require("./gapLogger.js");
 const { rerankReference, rerankTarget } = require("./rerank.js");
+const { foodKey: memFoodKey, worthRemembering, toMemoryRow, applyMemory } = require("./correctionMemory.js");
 const { WINDOW_MS, MAX_EXCHANGES } = require("./conversationMemory.js");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -593,6 +594,22 @@ async function resolveRows(parsed, opts = {}) {
     r.assumed = true;
     applyReference(r, ref, { trusted: true });
   }));
+  // Per-user correction memory, applied LAST so it wins over every resolution
+  // tier. If this user has told us their oats are 26g protein, that is the
+  // answer for them — repeating the question daily is the bug this fixes.
+  // applyMemory marks the row `stated`, which is also what stops suspect
+  // arbitration from overwriting it further up the pipeline.
+  if (opts.phone) {
+    const memories = await correctionMemories(opts.phone);
+    if (memories.length) {
+      const byKey = new Map(memories.map(m => [m.food_key, m]));
+      for (const r of rows) {
+        if (!r || !r.food_name || r.stated) continue; // a fresh statement outranks the memory
+        const mem = byKey.get(memFoodKey(r.food_name));
+        if (mem) applyMemory(r, mem);
+      }
+    }
+  }
   // Gap trail: only when actually logging (not query previews). rows[i] maps
   // 1:1 to items[i]. Silent alias rematches are correct outcomes - not logged.
   if (opts.trackGaps) {
@@ -620,10 +637,20 @@ async function logMeal(phone, parsed, options = {}) {
   // Previous total fetched in parallel with the user upsert (before the insert,
   // so no double-count); new items are added locally. Saves one DB round-trip.
   const [prevTotal, isNewUser, rows, seqStart] = await Promise.all([
-    todayTotal(phone, date), ensureUser(phone), resolveRows(parsed, { trackGaps: true }), nextDaySeq(phone, date),
+    todayTotal(phone, date), ensureUser(phone), resolveRows(parsed, { trackGaps: true, phone }), nextDaySeq(phone, date),
   ]);
   const mealTime = parsed.meal_time_inferred || "snack";
   rows.forEach(r => Object.assign(r, { phone_number: phone, meal_time: mealTime, date }));
+
+  // Remember any figure the user stated themselves, so tomorrow's identical
+  // meal doesn't ask them again. Fire-and-forget: a memory write must never
+  // delay or fail the log itself. Rows that only got their value FROM a memory
+  // are skipped, or applying one would rewrite it every day.
+  for (const r of rows) {
+    if (r.memoryApplied || !worthRemembering(r)) continue;
+    rememberCorrection(phone, toMemoryRow(phone, r))
+      .catch(e => console.error("rememberCorrection:", e.message));
+  }
 
   // If nothing parsed, log a single 300 kcal placeholder (Tier 4).
   if (rows.length === 0) {
@@ -942,6 +969,51 @@ async function deleteLastLog(phone, foodHint) {
   return batch;
 }
 
+// --- Per-user correction memory --------------------------------------------
+// Missing table is not an error: the feature stays dormant until
+// correction-memory.sql is applied, and logging must never break because an
+// optional memory lookup failed.
+let memoryTableMissing = false;
+const isMissingMemoryTable = e =>
+  !!e && /correction_memory/i.test(String(e.message || "")) && /does not exist|schema cache/i.test(String(e.message || ""));
+
+async function correctionMemories(phone) {
+  if (memoryTableMissing || !phone) return [];
+  const { data, error } = await supabase.from("correction_memory")
+    .select("food_key, food_name, protein_per_unit, kcal_per_unit, unit")
+    .eq("phone_number", phone);
+  if (error) {
+    if (isMissingMemoryTable(error)) { memoryTableMissing = true; return []; }
+    console.error("correctionMemories:", error.message);
+    return [];
+  }
+  return data || [];
+}
+
+async function rememberCorrection(phone, memRow) {
+  if (memoryTableMissing || !phone || !memRow || !memRow.food_key) return false;
+  const { error } = await supabase.from("correction_memory")
+    .upsert({ ...memRow, updated_at: new Date().toISOString() }, { onConflict: "phone_number,food_key" });
+  if (error) {
+    if (isMissingMemoryTable(error)) { memoryTableMissing = true; return false; }
+    console.error("rememberCorrection:", error.message);
+    return false;
+  }
+  return true;
+}
+
+async function forgetCorrection(phone, foodKey) {
+  if (memoryTableMissing || !phone || !foodKey) return false;
+  const { data, error } = await supabase.from("correction_memory")
+    .delete().eq("phone_number", phone).eq("food_key", foodKey).select("food_name");
+  if (error) {
+    if (isMissingMemoryTable(error)) { memoryTableMissing = true; return false; }
+    console.error("forgetCorrection:", error.message);
+    return false;
+  }
+  return !!(data && data.length);
+}
+
 // --- Daily summary (opt-in reminder) ---------------------------------------
 
 // Everyone opted in. The list is small (opt-in only) so the scheduler filters
@@ -992,4 +1064,4 @@ async function lastInboundAt(phone) {
   return data && data[0] ? data[0].at : null;
 }
 
-module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport, summarySubscribers, setSummaryTime, claimSummarySend, lastInboundAt };
+module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport, correctionMemories, rememberCorrection, forgetCorrection, summarySubscribers, setSummaryTime, claimSummarySend, lastInboundAt };

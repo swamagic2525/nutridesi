@@ -11,7 +11,7 @@ const { parseMeal } = require("./src/parser.js");
 const { advanceTdee, tdeeRouteAction, shouldRouteSemanticTdee } = require("./src/tdee.js");
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
-const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport, setSummaryTime } = require("./src/db.js");
+const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport, setSummaryTime, correctionMemories, forgetCorrection } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
 const {
   WINDOW_MS,
@@ -37,6 +37,7 @@ const {
 const { validateSignature, extractMessages, sendMessage, markRead } = require("./src/meta.js");
 const { logCorrectionEvent } = require("./src/correctionLogger.js");
 const { parseReminderRequest, confirmSetReply, CONFIRM_OFF_REPLY } = require("./src/reminders.js");
+const { parseForgetRequest, findForgetTarget, memoryNote } = require("./src/correctionMemory.js");
 
 const app = express();
 app.use(express.urlencoded({ extended: false })); // Twilio sends form-encoded
@@ -429,6 +430,29 @@ async function handleMessage(from, body, opts = {}) {
 
   // Opt-in / opt-out for the daily summary. Deterministic, and ahead of the
   // parser so "remind me at 9pm" is never read as a meal.
+  // "forget yogabar oats" — remove a remembered correction. Ahead of the parser
+  // so it is never read as a meal, and a memory the user cannot remove would be
+  // worse than the repetition it fixes.
+  const forgetReq = parseForgetRequest(trimmed);
+  if (forgetReq) {
+    const mems = await correctionMemories(from);
+    const { match, ambiguous, candidates } = findForgetTarget(mems, forgetReq.key);
+    if (match) {
+      await forgetCorrection(from, match.food_key);
+      return `\u{1F9E0} Forgotten — I'll use my own numbers for *${match.food_name}* again.`;
+    }
+    if (ambiguous) {
+      return `Which one? ${candidates.slice(0, 3).map(c => `*${c.food_name}*`).join(", ")}`;
+    }
+    if (mems.length) {
+      return `I don't have a saved correction for that. Saved: ${mems.slice(0, 3).map(m => `*${m.food_name}*`).join(", ")}.`;
+    }
+    // No saved corrections at all: "forget the dal" means delete the entry, so
+    // fall through to the undo path. Safe because the `forget X` instruction is
+    // only ever shown alongside a memory that exists — if the user was told to
+    // type it, the branch above will have caught it.
+  }
+
   const reminderReq = parseReminderRequest(trimmed);
   if (reminderReq) {
     if (reminderReq.action === "off") {
@@ -990,7 +1014,11 @@ async function handleMessage(from, body, opts = {}) {
     return "That pending meal couldn't be saved, so nothing was logged. Please retry from the start.";
   }
   const { rows, totals } = result;
-  const ass = assumptionLines(rows);
+  // A memory silently changing someone's numbers would be worse than the
+  // repetition it fixes — a single mistaken correction would then be invisible
+  // forever. Show it once per affected food, with the way out.
+  const memNotes = rows.map(memoryNote).filter(Boolean);
+  const ass = assumptionLines(rows).concat([...new Set(memNotes)].slice(0, 2));
   let goalAsk = "";
   if (!profile.hasGoal) {
     // The old ask demanded three things at once — name, calorie target and
