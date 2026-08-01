@@ -26,6 +26,10 @@ Statuses:
 | Nutrition-label photos | Approved direction; needs technical design | P2 |
 | Simple meal photos | Approved direction; needs technical design | P2 |
 | Complex meal and thali photos | Approved direction; needs evidence from simpler photos | P3 |
+| On-demand food-decision assistant | Approved strategic direction; needs validation | P2 |
+| Opt-in personalised smart swaps | Approved strategic direction; needs validation | P3 |
+| Curated products from verified labels | Approved strategic direction; needs design | P3 |
+| Authorised live pricing/availability | Approved strategic direction; blocked on partnership | P4 |
 
 Before building an item:
 
@@ -225,6 +229,96 @@ This feedback will be biased toward retained users. Use it to improve depth and
 delight, but continue collecting separate evidence from users who encounter poor
 estimates or abandon early.
 
+## Grocery and food-decision assistance
+
+**Status: Approved strategic direction; needs validation and design**
+
+The long-term shift is from **retrospective calorie tracking** to a **personalised
+food-decision assistant**. Tracking answers "what did I eat?" after the fact.
+The larger opportunity is answering "what should I eat *now*?" at the moment the
+decision is actually being made.
+
+### Sequence
+
+Build strictly in this order. Each stage must earn the next.
+
+1. **On-demand decision assistant.** The user asks; NutriDesi answers.
+   - "What should I eat now?"
+   - "What fits my remaining calories?"
+   - "Which of these two products is better for me?"
+2. **Opt-in personalised smart swaps.** Suggestions grounded in the user's own
+   logs, tastes, budget and repeated habits — not generic advice.
+3. **Curated products using verified nutrition labels.** Accuracy first; a
+   recommendation is only as good as the label behind it.
+4. **Authorised live commerce.** Real availability and pricing, via an authorised
+   retailer feed, a partnership, or ONDC.
+
+### Non-negotiables
+
+- **Behaviour and retention first, not affiliate revenue.** The moment a
+  recommendation optimises for commission rather than fit, the advice becomes
+  untrustworthy and the product loses the only thing it has.
+- **Rank independently, and say why.** Phrase it as *"better fit for your goal"*,
+  never as universally *"healthy"*. A product that suits a cut may be wrong for a
+  bulk, and NutriDesi does not adjudicate what is healthy in the abstract.
+- **Do not scrape Blinkit.** Their terms are understood to prohibit automated
+  collection of listings and prices. Treated here as a hard constraint. *(Sourced
+  from the strategy brief, not independently verified — confirm before any work
+  that depends on it, and assume the restriction applies to comparable
+  quick-commerce platforms too.)*
+- **No proactive deal alerts yet.** Validate that people want recommendations at
+  all through the on-demand path first. Building alerts before demand exists is
+  how a useful assistant becomes a spam channel.
+- **Any proactive recommendation requires explicit opt-in** and must respect
+  WhatsApp's 24-hour session and template rules — the same constraints documented
+  for the daily summary in `docs/ai-onboarding.md`.
+
+### Competitive context
+
+**Reported in the strategy brief; not independently verified by this repo.**
+Confirm current capabilities before treating any of it as a planning input.
+
+| Player | Reported capability |
+|---|---|
+| Nutrimate, WhatFit | Indian WhatsApp calorie/photo tracking |
+| HealthifyMe | Photo tracking plus proactive coaching |
+| TruthIn, Goodbite | Scoring packaged Indian products, suggesting alternatives |
+| GoodFor, Haul | Tracking combined with shopping/pantry intelligence |
+
+The claimed opening is the **intersection**: actual eating history, plus personal
+preferences, plus a timely and actionable choice. Each capability exists
+somewhere; the combination reportedly does not.
+
+### Validation gate — read before starting
+
+This direction is an **expansion of scope while the core retention loop is still
+unproven**, and that tension should be resolved with data rather than assumed
+away. As of 31 July: D7 is 5.3% against a 40% target, 68% of activated users
+logged on exactly one day, and the two retention levers (goal loop, daily
+summary) shipped the same day and have produced no data yet.
+
+A food-decision assistant is a strong idea. It is also a reason for people to
+*return*, which is precisely the gap — so it may well help. But building it
+before the shipped levers report back risks a larger product with the same
+one-day drop-off, and a second unvalidated bet layered on the first.
+
+Before stage 1, establish:
+
+- Do users actually ask decision questions today? Current evidence is thin:
+  only 4.1% of messages are questions, and they are overwhelmingly status
+  queries ("what's my total"), not "what should I eat". The few decision-shaped
+  ones asked about calorie *targets*, which the TDEE flow now answers.
+- Would a recommendation be trusted? A wrong suggestion costs more than a wrong
+  calorie estimate, because the user acts on it prospectively.
+- What is the nutrition source of truth for packaged products, and who is
+  accountable when a label is wrong?
+- Does the first shipped retention work move D1/D7 at all? If it does not, the
+  problem is not the feature set.
+
+Cheapest validation: answer decision questions **manually** for a handful of
+engaged users over a week and count whether anyone asks unprompted a second
+time. No build required.
+
 ## Candidate priority order
 
 This is a starting point for the next prioritisation session, not an automatic
@@ -239,6 +333,10 @@ build order.
 | P2 | Nutrition-label image preview | More bounded and verifiable than meal-photo estimation. |
 | P2 | Simple meal-photo preview | Major convenience improvement, but requires strong confirmation and evaluation. |
 | P3 | Complex meal and thali photos | High ambiguity; expand only after simpler images perform well. |
+| P2 | On-demand food-decision assistant | The strategic shift from "what did I eat" to "what should I eat now". Gated on evidence that users ask, and on the shipped retention levers reporting back. |
+| P3 | Opt-in personalised smart swaps | Needs enough logging history per user to be personal rather than generic. Most users currently log one day. |
+| P3 | Curated products from verified labels | Prerequisite for trustworthy recommendations; accuracy burden is higher than for tracking. |
+| P4 | Authorised live pricing/availability | Blocked on a retailer feed, partnership or ONDC. Scraping quick-commerce listings is out of bounds. |
 
 ## Success metrics
 
@@ -251,6 +349,10 @@ build order.
 - Voice-note delivery and feedback response rates.
 - For images: processing success, confirmation-without-edit, food correction,
   portion correction, preview abandonment, latency, and cost per confirmed log.
+- For food decisions: share of users who ask an unprompted decision question,
+  repeat-ask rate (the real demand signal), acted-on rate, and whether asking
+  users show different D1/D7 than matched non-askers. Track recommendation
+  reversals — a user overriding a suggestion is the trust metric that matters.
 
 ## Decision log
 
@@ -260,3 +362,9 @@ build order.
 | 2026-07-31 | Photo estimates must be previewed and confirmed before logging. |
 | 2026-07-31 | Offer permanent-access opt-in once after five successful logs when the user is not already listed. |
 | 2026-07-31 | Explore a one-time founder voice note after 30 inbound messages and five successful logs, subject to the 24-hour WhatsApp window. |
+| 2026-07-31 | Approved strategic direction: evolve from retrospective tracking into a personalised food-decision assistant, sequenced on-demand answers → opt-in smart swaps → curated verified-label products → authorised live commerce. |
+| 2026-07-31 | Recommendations are ranked independently and framed as "better fit for your goal", never as universally "healthy". Behaviour and retention come before affiliate revenue. |
+| 2026-07-31 | Blinkit will not be scraped; their terms are understood to prohibit automated collection of listings and prices. Live pricing must come from an authorised feed, partnership or ONDC. Legal basis to be confirmed before any dependent work. |
+| 2026-07-31 | No proactive deal alerts until on-demand recommendations demonstrate demand. Any proactive recommendation needs explicit opt-in and must respect WhatsApp's 24-hour/template rules. |
+| 2026-07-31 | Competitive claims (Nutrimate, WhatFit, HealthifyMe, TruthIn, Goodbite, GoodFor, Haul) recorded as **unverified** input from the strategy brief. Confirm before using them to justify a build. |
+| 2026-07-31 | Documentation only — no product behaviour implemented for this direction. |
