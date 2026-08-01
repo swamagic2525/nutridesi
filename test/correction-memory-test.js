@@ -64,10 +64,20 @@ const two = applyMemory({ food_name: "Yogabar Oats", protein: 30, kcal: 404, qua
 assert.strictEqual(two.protein, 52, "26 per unit x 2");
 assert.strictEqual(two.kcal, 404);
 
-// A memory set per serving must not be applied to a row measured in grams.
-const grams = applyMemory({ food_name: "Yogabar Oats", protein: 15, kcal: 202, quantity: 100, unit: "g" }, mem);
-assert.ok(!grams.memoryApplied, "unit mismatch is not applied");
-assert.strictEqual(grams.protein, 15);
+// The unit LABEL is unstable for the same food: "105 gm yogabar oats" and
+// "yogabar oats 105g" resolved to unit "bowl" and unit "serving", identical
+// 202 kcal portions, and a strict unit check silently stopped the memory
+// applying — the exact repetition it exists to prevent. Matching is on the
+// energy basis instead.
+const relabelled = applyMemory({ food_name: "Yogabar Oats", protein: 15, kcal: 202, quantity: 1, unit: "serving" }, mem);
+assert.strictEqual(relabelled.protein, 26, "same portion, different unit label, still applies");
+
+// A genuinely different portion must NOT inherit the figure.
+const bigger = applyMemory({ food_name: "Yogabar Oats", protein: 5, kcal: 400, quantity: 1, unit: "g" }, mem);
+assert.ok(!bigger.memoryApplied, "a 400 kcal portion is not the remembered 202 kcal one");
+assert.strictEqual(bigger.protein, 5);
+const scoop = applyMemory({ food_name: "Yogabar Oats", protein: 20, kcal: 120, quantity: 1, unit: "scoop" }, mem);
+assert.ok(!scoop.memoryApplied, "a 120 kcal scoop is not the remembered serving");
 
 // Already correct -> no-op, so the note isn't shown for nothing.
 const same = applyMemory({ food_name: "Yogabar Oats", protein: 26, kcal: 202, quantity: 1, unit: "serving" }, mem);
@@ -81,6 +91,10 @@ const note = memoryNote(one);
 assert.match(note, /Yogabar Oats/);
 assert.match(note, /26g protein/);
 assert.match(note, /forget/i, "every applied memory shows the way out");
+// The handle offered must be typeable — nobody sends "forget Yogabar High
+// Protein Oats (Dark Chocolate)". Subset matching makes the short form resolve.
+assert.doesNotMatch(note, /forget Yogabar High Protein Oats \(Dark/,
+  "the full resolved name is not what we ask them to type");
 assert.strictEqual(memoryNote({ memoryApplied: false }), null, "no note when nothing changed");
 
 // --- forgetting ---

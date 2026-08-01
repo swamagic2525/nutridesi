@@ -66,6 +66,29 @@ function toMemoryRow(phone, row) {
   };
 }
 
+// Do the memory and the row describe the same portion?
+//
+// Unit equality alone is too strict: the same food logged as "105 gm yogabar
+// oats" and "yogabar oats 105g" resolved to unit "bowl" and unit "serving"
+// respectively — identical 202 kcal portions with different labels — and the
+// memory silently stopped applying, which is the whole bug it exists to fix.
+//
+// The kcal basis is the honest signal. If one unit of each carries about the
+// same energy, they are the same portion whatever it is called; if they differ
+// (a 120 kcal scoop vs a 400 kcal 100g serving) they are not, and applying the
+// memory would corrupt the row. Falls back to the unit label only when there
+// is no energy to compare.
+const BASIS_TOLERANCE = 0.15;
+function sameBasis(row, mem, q) {
+  const memK = Number(mem.kcal_per_unit);
+  const rowK = Number(row.kcal) / q;
+  if (Number.isFinite(memK) && memK > 0 && Number.isFinite(rowK) && rowK > 0) {
+    return Math.abs(memK - rowK) / Math.max(memK, rowK) <= BASIS_TOLERANCE;
+  }
+  if (mem.unit && row.unit) return String(mem.unit) === String(row.unit);
+  return true;
+}
+
 // Apply a remembered figure to a freshly resolved row. Mutates and returns it.
 //
 // Sets `stated` so the rest of the pipeline treats it exactly like a value the
@@ -75,9 +98,7 @@ function toMemoryRow(phone, row) {
 function applyMemory(row, mem) {
   if (!row || !mem) return row;
   const q = Number(row.quantity) > 0 ? Number(row.quantity) : 1;
-  // Only apply when the unit still matches. A memory set per scoop must not be
-  // applied to a row measured in grams.
-  if (mem.unit && row.unit && String(mem.unit) !== String(row.unit)) return row;
+  if (!sameBasis(row, mem, q)) return row;
 
   const p = Number(mem.protein_per_unit);
   if (Number.isFinite(p) && p >= 0) {
@@ -110,8 +131,15 @@ function applyMemory(row, mem) {
 // forever.
 function memoryNote(row) {
   if (!row || !row.memoryApplied) return null;
+  // Suggest a SHORT handle rather than echoing the full resolved name — nobody
+  // is going to type "forget Yogabar High Protein Oats (Dark Chocolate)". The
+  // forget lookup matches on a subset of the stored words, so the first couple
+  // of distinctive ones resolve to the same memory.
+  const short = String(row.memoryName || "")
+    .replace(/\([^)]*\)/g, " ")
+    .split(/\s+/).filter(w => w.length > 2).slice(0, 2).join(" ") || row.memoryName;
   return `\u{1F9E0} _Using your correction for *${row.memoryName}* `
-    + `(${Math.round(Number(row.protein) || 0)}g protein). Reply "forget ${row.memoryName}" to reset._`;
+    + `(${Math.round(Number(row.protein) || 0)}g protein). Reply "forget ${short}" to reset._`;
 }
 
 // "forget yogabar oats" / "reset yogabar oats"
@@ -143,5 +171,5 @@ function findForgetTarget(memories, key) {
 
 module.exports = {
   foodKey, perUnit, worthRemembering, toMemoryRow,
-  applyMemory, memoryNote, parseForgetRequest, findForgetTarget,
+  applyMemory, memoryNote, parseForgetRequest, findForgetTarget, sameBasis,
 };
