@@ -32,6 +32,9 @@ const called = (name) => calls.filter(c => c.name === name).length;
 let profileFixture = {};
 let parseFixture = { intent: "chitchat", chitchat_reply: "hi" };
 let historyFixture = [];
+let logMealError = null;
+let todaySeqsFixture = [];
+let deleteBySeqFixture = [];
 
 stubModule("../src/db.js", {
   supabase: {},
@@ -50,15 +53,19 @@ stubModule("../src/db.js", {
     return true;
   },
   ensureUser: recordAsync("ensureUser", false),
-  logMeal: recordAsync("logMeal", {
-    rows: [], totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, fibre: 0 }, isNewUser: false,
-  }),
+  logMeal: async (...args) => {
+    calls.push({ name: "logMeal", args });
+    if (logMealError) throw logMealError;
+    return {
+      rows: [], totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, fibre: 0 }, isNewUser: false,
+    };
+  },
   resolveRows: recordAsync("resolveRows", []),
   todayTotal: recordAsync("todayTotal", { kcal: 0, protein: 0, carbs: 0, fat: 0, fibre: 0, meals: [] }),
   todayItems: recordAsync("todayItems", []),
-  todaySeqs: recordAsync("todaySeqs", []),
+  todaySeqs: async (...args) => { calls.push({ name: "todaySeqs", args }); return todaySeqsFixture; },
   itemsBySeq: recordAsync("itemsBySeq", []),
-  deleteBySeq: recordAsync("deleteBySeq", []),
+  deleteBySeq: async (...args) => { calls.push({ name: "deleteBySeq", args }); return deleteBySeqFixture; },
   deleteLastLog: recordAsync("deleteLastLog", []),
   deleteAllToday: recordAsync("deleteAllToday", []),
   deleteMatchingLastLog: recordAsync("deleteMatchingLastLog", { deleted: [] }),
@@ -97,6 +104,9 @@ function reset(profile, parsed, history) {
   profileFixture = profile || {};
   parseFixture = parsed || { intent: "chitchat", chitchat_reply: "hi" };
   historyFixture = history || [];
+  logMealError = null;
+  todaySeqsFixture = [];
+  deleteBySeqFixture = [];
   return `+00000001${String(phoneSeq++).padStart(2, "0")}`;
 }
 
@@ -158,6 +168,69 @@ const midCollection = () => ({
   await handleMessage(phone, "2 roti and dal");
   assert.ok(called("saveTdeeProfile") > 0, "abandoned TDEE state is persisted");
   assert.strictEqual(called("parseMeal"), 1, "and the message continues to the parser");
+
+  // 4b. A normal log is not successful until Supabase accepts it. The old
+  //     fire-and-forget path could reply "Logged" while the insert failed.
+  phone = reset({ tdee_profile: {}, conversation_state: {} },
+    { intent: "log", items: [{ food_name: "roti", quantity: 2, unit: "piece" }] });
+  logMealError = new Error("insert rejected");
+  reply = await handleMessage(phone, "2 roti");
+  assert.match(reply, /nothing was logged/i, "a rejected insert is reported truthfully");
+  assert.doesNotMatch(reply, /^✅\s*logged/i, "a rejected insert never claims success");
+  const failedLog = calls.find(c => c.name === "logMeal");
+  assert.strictEqual(failedLog.args[2].awaitInsert, true,
+    "ordinary logs must await Supabase before replying");
+
+  // Numbered replacement is another user-facing success path: it must await
+  // the replacement insert after deleting the selected item.
+  phone = reset({ tdee_profile: {}, conversation_state: {} },
+    { intent: "log", items: [{ food_name: "rice", quantity: 1, unit: "bowl" }] });
+  todaySeqsFixture = [2];
+  deleteBySeqFixture = [{ id: 22, day_seq: 2, food_name: "Roti", kcal: 90 }];
+  await handleMessage(phone, "replace 2 with rice");
+  const numberedReplacement = calls.find(c => c.name === "logMeal");
+  assert.strictEqual(numberedReplacement.args[2].awaitInsert, true,
+    "numbered replacements must await Supabase before replying");
+
+  // 4c. Explicit recovery language outranks a mistaken LLM correction intent.
+  //     The user said the earlier meal was correct and they were ADDING a
+  //     shake; treating this as replace_last compounds the original error.
+  phone = reset({ tdee_profile: {}, conversation_state: {} }, {
+    intent: "replace_last",
+    items: [{ food_name: "Protein Shake", quantity: 1, unit: "scoop", stated_protein: 20 }],
+  });
+  reply = await handleMessage(
+    phone,
+    "No no, you did not have to change the earlier one, it was correct, I was adding protein shake",
+  );
+  const recoveredLog = calls.find(c => c.name === "logMeal");
+  assert.ok(recoveredLog, "the shake is logged as an addition");
+  assert.strictEqual(recoveredLog.args[1].intent, "log");
+  assert.strictEqual(called("deleteMatchingLastLog"), 0, "the earlier meal is untouched");
+
+  // 4d. Pasting NutriDesi's own receipt is context, never a second meal. The
+  //     old 300-character guard scolded the user before recognizing it.
+  phone = reset({ tdee_profile: {}, conversation_state: {} });
+  const pastedReceipt = "✅ Logged\n1. *Whole masoor* — 185 kcal\n2. *Tofu* — 122 kcal\n"
+    + "🔥 1,355 kcal · 124g protein\n".padEnd(360, "context ");
+  reply = await handleMessage(phone, pastedReceipt);
+  assert.match(reply, /I can see the earlier log/i);
+  assert.strictEqual(called("parseMeal"), 0, "our own receipt is never parsed as food");
+  assert.strictEqual(called("logMeal"), 0, "our own receipt is never logged again");
+
+  // A detailed but bounded meal remains usable instead of being rejected at
+  // the old 300-character ceiling.
+  phone = reset({ tdee_profile: {}, conversation_state: {} },
+    { intent: "log", items: [{ food_name: "mixed meal", quantity: 1, unit: "meal" }] });
+  const detailedMeal = ("2 roti, dal, rice, paneer, salad and curd. ").repeat(12).slice(0, 500);
+  await handleMessage(phone, detailedMeal);
+  assert.strictEqual(called("parseMeal"), 1, "a bounded detailed meal reaches the parser");
+
+  phone = reset({ tdee_profile: {}, conversation_state: {} });
+  reply = await handleMessage(phone, "food ".repeat(241));
+  assert.match(reply, /last instruction|food and portion/i);
+  assert.strictEqual(called("parseMeal"), 0, "over-limit input performs no parse or write");
+  assert.strictEqual(called("logMeal"), 0);
 
   // 5. The semantic branch is reachable: when the parser classifies a message
   //    as calculate_tdee, it must produce the TDEE prompt rather than falling

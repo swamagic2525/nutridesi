@@ -233,6 +233,7 @@ npm run test:reminders     # daily-summary opt-in, due-window, 24h session guard
 npm run test:outcomes      # bad-outcome classifier + cohort banding
 npm run test:memory        # conversation memory window, envelope, concurrency
 npm run test:metrics       # metrics aggregation
+npm run test:dbshape       # transient resolution flags never reach user_logs
 node test/pizza-slice-test.js
 node test/audit-fixes-test.js
 node test/ingest-foods-test.js
@@ -312,6 +313,20 @@ these is in the open work items below.
     wrapped in an explicit envelope and declared non-instructional. If you add a new
     source of recalled text, envelope it the same way — don't concatenate raw user
     text into the system prompt.
+
+11. **A “Logged” reply requires a successful Supabase insert.** Normal logs use
+    `awaitInsert: true`; never restore fire-and-forget persistence on a user-facing
+    success path. The old path confirmed 18 meals that Supabase had rejected.
+
+12. **`user_logs` inserts use an explicit column allowlist.** Resolution flags such
+    as `rerankMatched` and `memoryApplied` are application metadata, not database
+    columns. Add real schema columns to `USER_LOG_COLUMNS`; never spread resolved row
+    objects directly into an insert.
+
+13. **Generic nutrition words cannot identify a correction target.** “Protein” in
+    both a new shake and earlier protein oats is not food-name overlap. Explicit
+    preserve-and-add wording (“don't change the earlier one, I was adding…”) always
+    stays a log.
 
 ---
 

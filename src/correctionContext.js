@@ -15,18 +15,35 @@ function words(value) {
   return String(value || "").toLowerCase().split(/[^a-z]+/).filter(w => w.length > 2);
 }
 
+const NON_IDENTITY_WORDS = new Set([
+  "high", "low", "protein", "calorie", "calories", "kcal", "fat",
+  "gram", "grams", "with", "and", "the",
+]);
+
+function identityWords(value) {
+  return words(value).filter(word => !NON_IDENTITY_WORDS.has(word));
+}
+
 function namesOverlap(items, batch) {
   return (items || []).some(item => {
-    const hint = words(item.food_name);
+    const hint = identityWords(item.food_name);
     return hint.length > 0 && (batch || []).some(row => {
-      const name = String(row.food_name || "").toLowerCase();
-      return hint.some(word => name.includes(word));
+      const name = new Set(identityWords(row.food_name));
+      return hint.some(word => name.has(word));
     });
   });
 }
 
 function hasPronounCorrection(text) {
   return /\b(it|that|this|them|these)\b/i.test(String(text || ""));
+}
+
+function isExplicitAddition(text) {
+  const value = String(text || "").toLowerCase();
+  const adding = /\b(add|adding|log|logging)\b/.test(value);
+  const preserve = /\b(?:don'?t|do not|did not)\s+(?:change|replace|remove)\b/.test(value)
+    || /\b(?:earlier|previous)\b[^.]{0,40}\bcorrect\b/.test(value);
+  return adding && preserve;
 }
 
 // A model can occasionally return `log` for a statement such as "cake was
@@ -131,4 +148,4 @@ function matchRows(rows, foodHints, rawMessage = "") {
   });
 }
 
-module.exports = { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext, matchRows };
+module.exports = { looksLikeCorrection, shouldPromoteToReplace, isExplicitAddition, formatLastLogContext, matchRows };
