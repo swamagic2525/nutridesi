@@ -23,6 +23,7 @@
     "test:outcomes": "node test/outcomes-test.js",
     "test:claim": "node test/summary-claim-test.js",
     "test:memcorr": "node test/correction-memory-test.js",
+    "test:dbshape": "node test/db-insert-shape-test.js",
     "test:undoall": "node test/undo-all-test.js",
     "test:memory": "node test/conversation-memory-test.js",
     "outcomes": "node scripts/outcome-report.js"

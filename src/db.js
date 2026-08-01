@@ -13,6 +13,25 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 const MEAL_GAP_MS = 45 * 60 * 1000; // PRD: messages within 45 min = same meal
 
+// Every real column of user_logs. Resolution attaches transient flags to the
+// same row objects (stated, assumed, rerankMatched, memoryApplied, …), and
+// anything not listed here is dropped before the insert rather than sent to
+// Postgres as a column that does not exist. `id` and `logged_at` are omitted
+// deliberately so the database assigns them.
+const USER_LOG_COLUMNS = Object.freeze([
+  "phone_number", "food_name", "matched_db_id", "quantity", "unit",
+  "kcal", "protein", "carbs", "fat", "fiber",
+  "meal_time", "is_estimate", "date", "day_seq",
+]);
+
+function toUserLogInsertRow(row) {
+  const out = {};
+  for (const col of USER_LOG_COLUMNS) {
+    if (row[col] !== undefined) out[col] = row[col];
+  }
+  return out;
+}
+
 // Logs are plain files on disk (~/Library/Logs) and the repo is public — a raw
 // phone number in a log line is user PII sitting in cleartext. Same masking the
 // metrics dashboard uses: +91••••••1234.
@@ -665,8 +684,21 @@ async function logMeal(phone, parsed, options = {}) {
 
   // Fire-and-forget: the reply's totals are computed locally (below), so it need
   // not wait for the write. Saves ~0.7s of India<->Supabase latency per message.
+  // ALLOWLIST, not a denylist. This used to strip a hardcoded set of transient
+  // fields and pass everything else through, so any new flag added to a row
+  // became a column Postgres does not have — and the whole insert failed.
+  //
+  // It failed silently, which is what made it costly: the reply's totals are
+  // computed locally, so the user was told "✅ Logged … you're at 1355 kcal"
+  // while nothing was written. `rerankMatched` (added 22 Jul) destroyed 18
+  // meals across 17 users before anyone noticed, and `memoryApplied` (added
+  // today) began doing the same within hours. Both were introduced by changes
+  // that had nothing to do with persistence and passed every test.
+  //
+  // With an allowlist a stray flag is simply dropped, and the failure mode of
+  // forgetting to update this list is a missing value rather than a lost meal.
   const insert = supabase.from("user_logs")
-    .insert(rows.map(({ stated, userSaid, assumed, portionNote, refVerified, ...r }) => r));
+    .insert(rows.map(toUserLogInsertRow));
   if (options.awaitInsert) {
     const { error } = await insert;
     if (error) {
@@ -1064,4 +1096,4 @@ async function lastInboundAt(phone) {
   return data && data[0] ? data[0].at : null;
 }
 
-module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport, correctionMemories, rememberCorrection, forgetCorrection, summarySubscribers, setSummaryTime, claimSummarySend, lastInboundAt };
+module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, toUserLogInsertRow, dayReport, correctionMemories, rememberCorrection, forgetCorrection, summarySubscribers, setSummaryTime, claimSummarySend, lastInboundAt };

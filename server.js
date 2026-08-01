@@ -12,7 +12,7 @@ const { advanceTdee, tdeeRouteAction, shouldRouteSemanticTdee } = require("./src
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
 const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport, setSummaryTime, correctionMemories, forgetCorrection } = require("./src/db.js");
-const { looksLikeCorrection, shouldPromoteToReplace, formatLastLogContext } = require("./src/correctionContext.js");
+const { looksLikeCorrection, shouldPromoteToReplace, isExplicitAddition, formatLastLogContext } = require("./src/correctionContext.js");
 const {
   WINDOW_MS,
   normaliseConversationState,
@@ -128,7 +128,7 @@ a,button{color:#72dc9a;background:none;border:1px solid #72dc9a;border-radius:6p
 // Shared state & helpers
 // ---------------------------------------------------------------------------
 
-const RATE = { perHour: 25, perDay: 60, maxLen: 300 };
+const RATE = { perHour: 25, perDay: 60, maxLen: 1200 };
 // Ranks 1..FOUNDING_SPOTS hold the free-for-life promise (made 2026-07-19).
 // Signups past it are still recorded — this only labels them.
 const FOUNDING_SPOTS = 50;
@@ -371,8 +371,13 @@ async function handleMessage(from, body, opts = {}) {
   if (opts.media && !String(body || "").trim()) {
     return MEDIA_REPLY;
   }
+  // A copied NutriDesi receipt is conversation context, not another meal. Do
+  // not feed its listed foods back through the parser and duplicate the day.
+  if (/^\s*✅\s*Logged\b/i.test(String(body || ""))) {
+    return "I can see the earlier log. Send only what you want me to add or change — for example, ‘add one 20g protein shake’. Nothing was changed.";
+  }
   if (body.length > RATE.maxLen) {
-    return "That's a long one \u{1F605} Keep it short — just the foods and portions, e.g. \"2 roti and dal\".";
+    return "I couldn't safely read the full pasted message. Send just your last instruction — for example, ‘add one 20g protein shake’. Nothing was changed.";
   }
   const limited = rateLimitCheck(from);
   if (limited) {
@@ -545,7 +550,12 @@ async function handleMessage(from, body, opts = {}) {
     const deleted = await deleteBySeq(from, [seq]);
     if (!deleted || !deleted.length) return "Couldn't change that — nothing removed.";
     logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed: newParsed, batch: [], deleted, outcome: "replaced_by_number" });
-    const { rows, totals } = await logMeal(from, newParsed);
+    let rows, totals;
+    try {
+      ({ rows, totals } = await logMeal(from, newParsed, { awaitInsert: true }));
+    } catch (_) {
+      return "The replacement couldn't be saved safely. Please send the full meal again.";
+    }
     const removedLines = deleted.map(r => `\u{274C} ${r.food_name} — ${r.kcal} kcal`).join("\n");
     const addedLines = fmtItems(rows).map(l => `\u{2705} ${l}`);
     return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
@@ -624,7 +634,6 @@ async function handleMessage(from, body, opts = {}) {
 
   let effectiveBody = body;
   let forcedIntent = null;
-  let pendingActionClaimed = false;
   let boundCorrectionTarget = null;
   let boundTargetRows = [];
   const pendingChoice = resolvePendingChoice(trimmed, conversationState, now);
@@ -640,7 +649,6 @@ async function handleMessage(from, body, opts = {}) {
     if (!claimResult.claimed) {
       return "That meal choice expired or was already handled, so nothing changed. Please start again.";
     }
-    pendingActionClaimed = true;
     if (!candidateBody) {
       return "I couldn't find that recent meal, so nothing changed. Send the meal again if you'd like to log it.";
     }
@@ -768,6 +776,15 @@ async function handleMessage(from, body, opts = {}) {
     } else if (parsed.intent !== "query") {
       return "Send the corrected meal with its food name and amount. Your recent log is unchanged.";
     }
+  }
+
+  // A user explicitly saying the earlier meal was correct and this food is an
+  // addition outranks a model-level replace_last classification. This recovery
+  // language exists precisely because a prior turn felt destructive, so never
+  // compound it by deleting again.
+  if (!forcedIntent && !expectedCorrectedMeal && isExplicitAddition(effectiveBody)) {
+    parsed.intent = "log";
+    parsed.replace_target = null;
   }
 
   // Must precede the generic query branch below.
@@ -1007,11 +1024,9 @@ async function handleMessage(from, body, opts = {}) {
 
   let result;
   try {
-    result = pendingActionClaimed
-      ? await logMeal(from, parsed, { awaitInsert: true })
-      : await logMeal(from, parsed);
+    result = await logMeal(from, parsed, { awaitInsert: true });
   } catch (_) {
-    return "That pending meal couldn't be saved, so nothing was logged. Please retry from the start.";
+    return "I couldn't save that meal, so nothing was logged. Please send it again.";
   }
   const { rows, totals } = result;
   // A memory silently changing someone's numbers would be worse than the
