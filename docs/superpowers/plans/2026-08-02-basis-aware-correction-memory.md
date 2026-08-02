@@ -114,13 +114,13 @@
 - Modify: `docs/ai-onboarding.md`
 - Modify: `docs/claude-handoff-2026-08-01.md`
 
-- [ ] Apply `correction-memory-basis.sql` in Supabase before restarting Node.
-- [ ] Read back the three memory rows without printing phone numbers and verify
+- [x] Apply `correction-memory-basis.sql` in Supabase before restarting Node.
+- [x] Read back the three memory rows without printing phone numbers and verify
   their exact keys, basis, values, and provenance.
 - [x] Run all relevant unit suites, `npm run test:brand`, and
   `node evals/run.js` with 162/162 required.
 - [x] Scan `git diff` and tracked files for real names, phone numbers, ngrok
   URLs, and secrets.
-- [ ] Restart with `launchctl kickstart -k gui/501/com.nutridesi.server`, check
+- [x] Restart with `launchctl kickstart -k gui/501/com.nutridesi.server`, check
   HTTP health and the masked production log, and manually exercise the 75g →
   50g scaling sequence.

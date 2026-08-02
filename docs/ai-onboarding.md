@@ -12,7 +12,7 @@ before touching code. Reflects the codebase as of **2 August 2026** (live privat
 | `CLAUDE.md` | Accurate | Product rules, stack, schema. **Authoritative.** Rewritten 23 Jul to match the real architecture. |
 | `README.md` | Accurate | Product overview + architecture. |
 | `docs/ai-onboarding.md` | **This file** | You're reading it. |
-| `docs/claude-handoff-2026-08-02.md` | **Latest handoff** | Basis-aware correction-memory implementation, migration-first rollout, tests, and remaining deployment gate. Read this next. |
+| `docs/claude-handoff-2026-08-02.md` | **Latest handoff** | Basis-aware correction-memory implementation, completed production rollout, and verification. Read this next. |
 | `docs/claude-handoff-2026-08-01.md` | Previous handoff | Production log-integrity incident, original correction-memory rollout, and repair. Its per-serving memory description is superseded by the 2 August note. |
 | `docs/correction-incidents.md` | Accurate | Real incident writeups — read for context on why certain guardrails exist. |
 | `docs/churn-reduction-report-2026-07-23.md` | Accurate | **Read this before picking retention work.** Real metrics: D7 is 5.3% vs a 40% target. Says database coverage is NOT the main lever. |

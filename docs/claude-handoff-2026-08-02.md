@@ -22,10 +22,10 @@ for whichever serving happened to be logged that day.
 - The visible memory note shows the stored basis, for example
   `26g protein per 100g`, rather than only the consumed total.
 
-## Migration-first rollout
+## Production rollout completed
 
-`correction-memory-basis.sql` must be applied manually in the Supabase SQL editor
-before the Node changes are deployed. It:
+`correction-memory-basis.sql` was applied manually in the Supabase SQL editor
+before the Node changes were deployed. It:
 
 - adds basis, field provenance, structured source, and status columns;
 - keeps legacy per-unit columns for rollback;
@@ -34,13 +34,18 @@ before the Node changes are deployed. It:
   the repository. The Yogabar key is rewritten to retain `Dark Chocolate` in the
   same transaction as its `26g protein per 100g` basis.
 
-Do not restart the live service before that migration succeeds. After applying it,
-read the three rows back without selecting `phone_number`, then run the full checks
-and restart with:
+The three rows were read back without selecting `phone_number`; their exact keys,
+bases, values, provenance, sources, and active statuses matched the migration. The
+live service was restarted with:
 
 ```bash
 launchctl kickstart -k gui/501/com.nutridesi.server
 ```
+
+The local health endpoint returned `NutriDesi is running`, launchd reported the
+service running, and the filtered post-restart log contained zero errors. A read-only
+production resolution using the migrated memory returned 50g Yogabar oats as
+202 kcal / 13g protein, with `memoryApplied: true` and a 100g basis.
 
 ## Required verification
 
@@ -52,6 +57,8 @@ launchctl kickstart -k gui/501/com.nutridesi.server
 - `npm run test:brand`
 - `node evals/run.js` — must be **162/162**
 - public-repo PII/secrets scan
+
+All checks above passed for the deployed build.
 
 The regression that matters is a sequence: correct a 75g serving with a label value
 of 26g protein per 100g, persist the memory, then log 50g and receive 13g protein.
