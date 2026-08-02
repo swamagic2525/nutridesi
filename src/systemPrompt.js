@@ -27,8 +27,9 @@ PORTION foods (served in a bowl/katori/plate/glass: dal, rice, sabzi, curry, las
 HINDI COUNT WORDS are numbers, never English verbs: "do" before a food/unit = 2 (Hindi two), NOT the
 English verb "do". "do bowl chole" -> Chole qty 2.0. "do roti" -> Roti qty 2. Same for ek=1, teen=3, char=4.
 quantity is a positive number: whole counts for countable foods, 0.5 steps for portions.
-GRAMS/ML: if the user gives a weight ("100g", "200g", "250ml"), put that NUMBER in the "grams" field
-and set quantity to 1. The backend converts grams to calories precisely. Do NOT guess a fraction.
+GRAMS/ML: if the user gives a weight ("100g", "200g", "250ml"), put that NUMBER in the "grams" field,
+put "g" or "ml" in "portion_unit", and set quantity to 1. The backend converts the amount precisely.
+Do NOT guess a fraction.
 For counts/portions (no weight given), set grams to null and use quantity.
 A weight belongs ONLY to the food it is attached to, never to a neighbour: "1 scoop whey with 30 ml milk"
 -> Whey qty 1 grams null AND Milk grams 30. The scoop food never inherits the milk's ml.
@@ -172,14 +173,24 @@ portion_clarity:
   "inferred"  = assumed from context
   "unknown"   = no portion info; treat as 1 medium serving
 
-# USER-STATED CALORIES
-If the user STATES a calorie value for a food ("X has 230 calories", "that was 150 kcal", "label says 90 cal
-each"), put it in "stated_kcal" as the PER-SERVING value — divide a stated total by the count: "4 fish sticks
-have 230 calories" -> quantity 4, stated_kcal 57.5. Their number is ground truth and overrides the database.
-Same for PROTEIN: "yogurt was 22g protein", "my whey has 30g protein per scoop" -> put the PER-SERVING
-number in "stated_protein" (calories may stay null if not stated — the backend keeps its own kcal).
+# USER-STATED CALORIES / MACROS AND THEIR BASIS
+If the user STATES a calorie or protein value, copy the value they stated into "stated_kcal" or
+"stated_protein" and ALWAYS preserve what that value applies to in "stated_basis_amount" and
+"stated_basis_unit". The backend does all scaling deterministically; never pre-scale the stated value.
+Examples:
+- "26g protein per 100g oats; adjust for my 75g" -> grams 75, portion_unit "g", stated_protein 26,
+  stated_basis_amount 100, stated_basis_unit "g". Do NOT return 19.5; backend computes it.
+- "350ml milk has 12g protein and 217 calories" -> grams 350, portion_unit "ml", stated_protein 12,
+  stated_kcal 217, stated_basis_amount 350, stated_basis_unit "ml".
+- "my whey has 30g protein per scoop" -> stated_protein 30, stated_basis_amount 1,
+  stated_basis_unit "scoop".
+- "4 fish sticks have 230 calories total" -> quantity 4, stated_kcal 230,
+  stated_basis_amount 4, stated_basis_unit "piece".
+When no explicit basis is stated ("yogurt was 22g protein"), use amount 1 and the food's normal unit,
+or "serving" when unknown. Their stated field is ground truth and overrides that field only.
 Combined example: "Bun is 150 cal each with 2g protein" -> intent "replace_last",
-items: [{food_name: "bun", quantity: 1, stated_kcal: 150, stated_protein: 2}] — "is/was N cal" about an
+items: [{food_name: "bun", quantity: 1, stated_kcal: 150, stated_protein: 2,
+stated_basis_amount: 1, stated_basis_unit: "piece"}] — "is/was N cal" about an
 already-logged food is ALWAYS a correction, never a new log, even with "each"/"with Xg protein" attached.
 Intent for stated nutrition facts: a bare "«food» has/is N calories/N g protein" with no "I ate/had" is the
 user CORRECTING your estimate of a food they already logged -> intent "replace_last". With "I ate/had" it is
@@ -234,12 +245,15 @@ was assumed ("palak sabji" -> logged the closest match, Palak Paneer).
       "food_name": "Dal Tadka",
       "quantity": 1.0,
       "grams": null,
+      "portion_unit": null,
       "raw": false,
       "matched_db_id": 17,
       "est_kcal": null,
       "est_kcal_100g": null,
       "stated_kcal": null,
       "stated_protein": null,
+      "stated_basis_amount": null,
+      "stated_basis_unit": null,
       "match_type": "direct",
       "portion_clarity": "specified"
     }

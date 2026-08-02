@@ -1,7 +1,7 @@
 # AI Handoff — NutriDesi
 
 **For any AI model picking up build work in this repo.** Read this top-to-bottom
-before touching code. Reflects the codebase as of **1 August 2026** (live private beta).
+before touching code. Reflects the codebase as of **2 August 2026** (live private beta).
 
 ---
 
@@ -12,7 +12,8 @@ before touching code. Reflects the codebase as of **1 August 2026** (live privat
 | `CLAUDE.md` | Accurate | Product rules, stack, schema. **Authoritative.** Rewritten 23 Jul to match the real architecture. |
 | `README.md` | Accurate | Product overview + architecture. |
 | `docs/ai-onboarding.md` | **This file** | You're reading it. |
-| `docs/claude-handoff-2026-08-01.md` | **Latest handoff** | Production log-integrity incident, correction-memory rollout, `…0419` repair, verification, and remaining transactional risk. Read this next. |
+| `docs/claude-handoff-2026-08-02.md` | **Latest handoff** | Basis-aware correction-memory implementation, migration-first rollout, tests, and remaining deployment gate. Read this next. |
+| `docs/claude-handoff-2026-08-01.md` | Previous handoff | Production log-integrity incident, original correction-memory rollout, and repair. Its per-serving memory description is superseded by the 2 August note. |
 | `docs/correction-incidents.md` | Accurate | Real incident writeups — read for context on why certain guardrails exist. |
 | `docs/churn-reduction-report-2026-07-23.md` | Accurate | **Read this before picking retention work.** Real metrics: D7 is 5.3% vs a 40% target. Says database coverage is NOT the main lever. |
 | `docs/product-experience-backlog.md` | Living backlog | **Read this before planning onboarding, retention, images, or user-feedback features.** Approved ideas, constraints, priority candidates, and success metrics live here. Items are not necessarily shipped. |
@@ -60,6 +61,7 @@ against recent exchanges). Both persist state on the `users` row — see §4.
 | `src/rerank.js` | LLM-based semantic matching. `rerankReference()` picks a food_code from reference candidates. `rerankTarget()` picks which logged item a correction refers to. Both validate against the candidate set (anti-hallucination). |
 | `src/contextGuard.js` | Re-verifies every LLM-returned food ID against the curated alias map. Catches hallucinated IDs. |
 | `src/correctionContext.js` | Pure helpers for correction detection + scoping corrections to the last log batch. |
+| `src/correctionMemory.js` | Per-user nutrition corrections. Exact variant keys, basis-aware scaling, field provenance, visible/resettable memory notes, and the deterministic `my corrections` surface. |
 
 ### Stateful flows (added 23-24 Jul 2026 — not in older docs)
 
@@ -84,7 +86,7 @@ against recent exchanges). Both persist state on the `users` row — see §4.
 
 | Path | What it does |
 |---|---|
-| `evals/run.js` | Eval suite runner — 160 golden cases through the real LLM |
+| `evals/run.js` | Eval suite runner — 162 golden cases through the real LLM |
 | `evals/cases.jsonl` | The eval cases themselves (one JSON per line) |
 | `test/*.js` | 19 unit/integration test files |
 | `test/server-routing-test.js` | Requires the real `server.js` with `src/db.js` and `src/parser.js` swapped in `require.cache`, then asserts routing **order** by behaviour. `server.js` exports `handleMessage` and guards `app.listen` behind `require.main === module` to make this possible — keep both. |
@@ -211,7 +213,7 @@ Keeps the last 10 exchanges within a 6-hour window so short follow-ups resolve.
 
 ### Before ANY change to prompt / foods / parser / db resolution:
 ```bash
-node evals/run.js          # must stay 160/160 green (~4 min, real LLM calls)
+node evals/run.js          # must stay 162/162 green (~4 min, real LLM calls)
 ```
 The eval suite hits the **real LLM**, not mocks. A prompt tweak or new food entry can
 silently break existing routing — the evals catch it. **When you add a food, add a
@@ -234,6 +236,7 @@ npm run test:outcomes      # bad-outcome classifier + cohort banding
 npm run test:memory        # conversation memory window, envelope, concurrency
 npm run test:metrics       # metrics aggregation
 npm run test:dbshape       # transient resolution flags never reach user_logs
+npm run test:memcorr       # per-user correction basis, variants, visibility
 node test/pizza-slice-test.js
 node test/audit-fixes-test.js
 node test/ingest-foods-test.js
@@ -328,6 +331,12 @@ these is in the open work items below.
     preserve-and-add wording (“don't change the earlier one, I was adding…”) always
     stays a log.
 
+14. **Nutrition corrections retain their basis.** Store `26g protein per 100g`,
+    never the scaled `19.5g` as an opaque serving. Resolve catalog/reference data
+    first, then overlay only user-confirmed fields. Exact memory keys retain branded
+    variants; a Chocolate correction must never reach Mango. New correction-memory
+    code is migration-first: apply `correction-memory-basis.sql` before restart.
+
 ---
 
 ## 8. Supabase schema
@@ -342,6 +351,7 @@ both a new `*.sql` file and `supabase-schema.sql`.
 |---|---|
 | `users` | `phone_number` (PK), `name`, `goal_kcal`, `goal_protein`, `katori_size`, `roti_size`, `created_at`, `daily_summary_time`, `nudge_count`, **`tdee_profile` (jsonb)**, **`conversation_state` (jsonb)** |
 | `user_logs` | Per-item nutrition log. `id`, `phone_number`, `food_name`, `matched_db_id`, `quantity`, `unit`, `kcal`, `protein`, `carbs`, `fat`, `meal_time`, `is_estimate`, `logged_at`, `date`, `day_seq` |
+| `correction_memory` | Per-user nutrition overrides keyed by exact product variant. Stores explicit basis, per-field values/provenance, bounded structured source assertion, status, and legacy per-unit columns for rollback. |
 | `foods_reference` | Branded/recipe reference DB. `food_code`, `food_name`, `serving_kcal`, `serving_protein`, `serving_carbs`, `serving_fat`, ... (2,825 rows) |
 | `message_log` | Raw inbound/outbound message record, indexed on `(phone_number, at desc)`. Feeds the metrics dashboard and incident analysis. **Contains real user text — never export it into a committed file.** |
 | `founding_members` | Waitlist signups with real names. Same rule: never commit its contents. |

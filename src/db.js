@@ -32,6 +32,21 @@ function toUserLogInsertRow(row) {
   return out;
 }
 
+const CORRECTION_MEMORY_COLUMNS = Object.freeze([
+  "phone_number", "food_key", "food_name", "protein_per_unit", "kcal_per_unit", "unit",
+  "basis_amount", "basis_unit", "protein_per_basis", "protein_provenance",
+  "kcal_per_basis", "kcal_provenance", "source_assertion", "source_kind",
+  "source_ref", "status",
+]);
+
+function toCorrectionMemoryInsertRow(row) {
+  const out = {};
+  for (const col of CORRECTION_MEMORY_COLUMNS) {
+    if (row[col] !== undefined) out[col] = row[col];
+  }
+  return out;
+}
+
 // Logs are plain files on disk (~/Library/Logs) and the repo is public — a raw
 // phone number in a log line is user PII sitting in cleartext. Same masking the
 // metrics dashboard uses: +91••••••1234.
@@ -246,12 +261,67 @@ const PIECE_UNITS = new Set(["piece", "stick", "slice", "fillet"]);
 // Convert a parsed item into a log row with resolved nutrition + 4-tier fallback.
 // Wrapper applies user-stated PROTEIN ("yogurt was 22g protein") on top of any
 // resolution path — the user's number replaces ours, kcal and the rest stay.
+function statedBasisScale(item, row) {
+  const basisAmount = Number(item.stated_basis_amount);
+  const basisUnit = String(item.stated_basis_unit || "").toLowerCase();
+  const quantity = Number(row.quantity) > 0 ? Number(row.quantity) : 1;
+  if (!(basisAmount > 0) || !basisUnit) {
+    return { scale: /\d\s*(g|ml)$/.test(String(row.unit || "")) ? 1 : quantity,
+      basisAmount: 1, basisUnit: row.unit || "serving" };
+  }
+  if (["g", "ml"].includes(basisUnit)) {
+    const portionAmount = Number(row.portionAmount || item.grams);
+    const portionUnit = String(row.portionUnit || item.portion_unit || "g").toLowerCase();
+    if (!(portionAmount > 0) || portionUnit !== basisUnit) return { scale: null, basisAmount, basisUnit };
+    return { scale: portionAmount / basisAmount, basisAmount, basisUnit };
+  }
+  const compatible = basisUnit === String(row.unit || "").toLowerCase()
+    || (basisUnit === "piece" && ["egg", "white", "slice"].includes(String(row.unit || "").toLowerCase()));
+  return { scale: compatible ? quantity / basisAmount : null, basisAmount, basisUnit };
+}
+
 function resolveItem(item) {
-  const row = resolveItemBase(item);
+  // Resolve the catalog/estimate first. User statements are overlaid per field
+  // afterwards so an explicit protein correction does not turn catalog kcal
+  // into a user-confirmed calorie fact.
+  const row = resolveItemBase({ ...item, stated_kcal: null, stated_protein: null });
+  return applyStatedNutrition(item, row);
+}
+
+function applyStatedNutrition(item, row) {
+  const basis = statedBasisScale(item, row);
+  const inheritedK = Number(item.inherited_total_kcal);
+  // Carry the old total only when this remains an estimate. If a catalog row
+  // resolved, its calories are the catalog field we want to retain and label;
+  // copying an old estimate over it would give guessed data false provenance.
+  if (inheritedK > 0 && !["curated", "reference"].includes(row.sourceKind)) {
+    const ratio = Number(row.kcal) > 0 ? inheritedK / Number(row.kcal) : 0;
+    if (ratio > 0) {
+      row.protein = +(Number(row.protein || 0) * ratio).toFixed(1);
+      row.carbs = +(Number(row.carbs || 0) * ratio).toFixed(1);
+      row.fat = +(Number(row.fat || 0) * ratio).toFixed(1);
+      row.fiber = +(Number(row.fiber || 0) * ratio).toFixed(1);
+    }
+    row.kcal = Math.round(inheritedK);
+  }
+  const inheritedP = Number(item.inherited_total_protein);
+  if (inheritedP > 0) row.protein = +inheritedP.toFixed(1);
+  const statedK = Number(item.stated_kcal);
+  if (statedK > 0 && statedK <= 2000 && basis.scale > 0) {
+    const newK = Math.round(statedK * basis.scale);
+    const ratio = Number(row.kcal) > 0 ? newK / Number(row.kcal) : 0;
+    if (ratio > 0) {
+      row.protein = +(Number(row.protein || 0) * ratio).toFixed(1);
+      row.carbs = +(Number(row.carbs || 0) * ratio).toFixed(1);
+      row.fat = +(Number(row.fat || 0) * ratio).toFixed(1);
+      row.fiber = +(Number(row.fiber || 0) * ratio).toFixed(1);
+    }
+    row.kcal = newK;
+    row.userConfirmedKcalPerBasis = statedK;
+  }
   const statedP = Number(item.stated_protein);
-  if (statedP > 0 && statedP <= 200) {
-    const q = /\d\s*(g|ml)$/.test(String(row.unit || "")) ? 1 : (Number(row.quantity) || 1);
-    const newP = +(statedP * q).toFixed(1);
+  if (statedP > 0 && statedP <= 200 && basis.scale > 0) {
+    const newP = +(statedP * basis.scale).toFixed(1);
     // Keep the 4/4/9 energy identity honest: protein energy changed, so carbs
     // and fat absorb the remaining calories in their existing ratio. If the
     // stated protein alone exceeds the calories, the calories were the wrong
@@ -271,9 +341,14 @@ function resolveItem(item) {
       row.kcal = Math.round(4 * newP + curCF);
     }
     row.protein = newP;
+    row.userConfirmedProteinPerBasis = statedP;
+  }
+  if (row.userConfirmedKcalPerBasis != null || row.userConfirmedProteinPerBasis != null) {
     row.stated = true;
     row.assumed = false;
     row.is_estimate = false;
+    row.nutritionBasisAmount = basis.basisAmount;
+    row.nutritionBasisUnit = basis.basisUnit;
   }
   return row;
 }
@@ -281,6 +356,7 @@ function resolveItem(item) {
 function resolveItemBase(item) {
   const food = item.matched_db_id ? FOOD_BY_ID[item.matched_db_id] : null;
   let grams = Number(item.grams);
+  const portionUnit = String(item.portion_unit || "g").toLowerCase() === "ml" ? "ml" : "g";
 
   // User-stated calories ("4 fish sticks have 230 cal") are ground truth: they
   // override the DB value and skip the INDB cross-reference (`stated` flag).
@@ -316,11 +392,12 @@ function resolveItemBase(item) {
     const servingG = food.g || UNIT_GRAMS[food.unit] || 150;
     const s = (grams / servingG) * rw;
     return {
-      food_name: `${grams}g ${dName}${rawTag}`, matched_db_id: food.id, quantity: 1, unit: `${grams}g`,
+      food_name: `${grams}${portionUnit} ${dName}${rawTag}`, matched_db_id: food.id, quantity: 1, unit: `${grams}${portionUnit}`,
       kcal: Math.round(food.kcal * s), protein: +(food.p * s).toFixed(1),
       carbs: +(food.c * s).toFixed(1), fat: +(food.f * s).toFixed(1),
       fiber: +((food.fb || 0) * s).toFixed(1), is_estimate: true,
       userSaid: item.food_name, assumed: item.match_type !== "direct",
+      portionAmount: grams, portionUnit, sourceKind: "curated", sourceRef: String(food.id),
     };
   }
 
@@ -352,6 +429,7 @@ function resolveItemBase(item) {
       fiber: +((food.fb || 0) * m).toFixed(1),
       is_estimate: platter || item.match_type !== "direct" || item.portion_clarity !== "specified",
       userSaid: item.food_name, assumed: item.match_type !== "direct",
+      sourceKind: "curated", sourceRef: String(food.id),
       portionNote: platter ? `assumed ${qty} ${food.unit}s for the platter — reply a count to fix`
         : item.portion_clarity !== "specified" ? `${qty} ${food.unit}` : null,
     };
@@ -368,22 +446,24 @@ function resolveItemBase(item) {
     if (Number.isFinite(per100) && per100 > 0 && per100 <= 900) {
       const kcal = Math.round(per100 * grams / 100);
       return {
-        food_name: `${grams}g ${item.food_name || "meal"}`, matched_db_id: null, quantity: 1,
-        unit: `${grams}g`, kcal, ...splitMacros(kcal, item.food_name), fiber: 0,
+        food_name: `${grams}${portionUnit} ${item.food_name || "meal"}`, matched_db_id: null, quantity: 1,
+        unit: `${grams}${portionUnit}`, kcal, ...splitMacros(kcal, item.food_name), fiber: 0,
         is_estimate: true, userSaid: item.food_name, assumed: true,
+        portionAmount: grams, portionUnit, sourceKind: "estimate", sourceRef: null,
       };
     }
     const s = grams / 150;
     return {
-      food_name: `${grams}g ${item.food_name || "meal"}`, matched_db_id: null, quantity: 1,
-      unit: `${grams}g`, kcal: Math.round(perServing * s), ...splitMacros(perServing * s, item.food_name), fiber: 0,
+      food_name: `${grams}${portionUnit} ${item.food_name || "meal"}`, matched_db_id: null, quantity: 1,
+      unit: `${grams}${portionUnit}`, kcal: Math.round(perServing * s), ...splitMacros(perServing * s, item.food_name), fiber: 0,
       is_estimate: true, userSaid: item.food_name, assumed: true,
+      portionAmount: grams, portionUnit, sourceKind: "estimate", sourceRef: null,
     };
   }
   return {
     food_name: item.food_name || "meal", matched_db_id: null, quantity: qty, unit: "serving",
     kcal: Math.round(perServing * qty), ...splitMacros(perServing * qty, item.food_name), fiber: 0, is_estimate: true,
-    userSaid: item.food_name, assumed: true,
+    userSaid: item.food_name, assumed: true, sourceKind: "estimate", sourceRef: null,
   };
 }
 
@@ -507,6 +587,26 @@ function applyReference(row, ref, opts = {}) {
   const qty = row.quantity;
   const inRange = (k) => Number.isFinite(Number(k)) && k >= 20 && k <= 800;
 
+  // Reference rows carry both a convenient serving and a canonical per-100g
+  // profile. An explicit consumed weight must use the latter; replacing 75g
+  // with one opaque "serving" discards the very basis correction memory needs.
+  const portionAmount = Number(row.portionAmount);
+  const portionUnit = String(row.portionUnit || "").toLowerCase();
+  if (portionAmount > 0 && ["g", "ml"].includes(portionUnit) && Number(ref.kcal_100g) > 0) {
+    const scale = portionAmount / 100;
+    row.kcal = Math.round(Number(ref.kcal_100g) * scale);
+    row.protein = +(Number(ref.protein_100g || 0) * scale).toFixed(1);
+    row.carbs = +(Number(ref.carbs_100g || 0) * scale).toFixed(1);
+    row.fat = +(Number(ref.fat_100g || 0) * scale).toFixed(1);
+    row.fiber = +(Number(ref.fibre_100g || 0) * scale).toFixed(1);
+    row.unit = `${portionAmount}${portionUnit}`;
+    row.food_name = `${portionAmount}${portionUnit} ${ref.food_name}`;
+    row.refVerified = true;
+    row.sourceKind = "reference";
+    row.sourceRef = ref.food_code || null;
+    return;
+  }
+
   // Build the INDB candidate at a per-serving (1x) basis first.
   let perServing, p = 0, c = 0, f = 0, fb = 0, unit = row.unit;
   if (inRange(Number(ref.serving_kcal))) {
@@ -540,6 +640,8 @@ function applyReference(row, ref, opts = {}) {
   row.unit = unit;
   row.food_name = ref.food_name;
   row.refVerified = true;
+  row.sourceKind = "reference";
+  row.sourceRef = ref.food_code || null;
 }
 
 // Resolve parsed items to nutrition rows (curated -> INDB -> estimate) without
@@ -564,10 +666,13 @@ async function resolveRows(parsed, opts = {}) {
       it.match_type = "category";
     }
   }
-  const rows = items.map(it => resolveItem(it));
+  // Build the catalog/estimate candidate without applying user figures yet.
+  // Reference lookup must happen before the overlay so a protein-only
+  // correction keeps catalog calories and source provenance.
+  const rows = items.map(it => resolveItemBase({ ...it, stated_kcal: null, stated_protein: null }));
   // Cross-reference unmatched foods against INDB (parallel, misses only).
   await Promise.all(rows
-    .filter(r => !r.matched_db_id && !r.stated && r.food_name && r.food_name !== "meal")
+    .filter(r => !r.matched_db_id && r.food_name && r.food_name !== "meal")
     .map(async r => {
       const query = r.userSaid || r.food_name;
       const ref = await refLookup(r.food_name);
@@ -585,6 +690,7 @@ async function resolveRows(parsed, opts = {}) {
       const picked = await refRerank(query);
       if (picked) { applyReference(r, picked, { trusted: true }); r.rerankMatched = true; }
     }));
+  rows.forEach((row, i) => applyStatedNutrition(items[i], row));
   // Suspect arbitration: a still-matched compound/coverage suspect asks INDB for
   // the full phrase. Only positive evidence - every content word present in the
   // INDB recipe name - overrides the curated value; otherwise curated stands.
@@ -1124,8 +1230,9 @@ const isMissingMemoryTable = e =>
 async function correctionMemories(phone) {
   if (memoryTableMissing || !phone) return [];
   const { data, error } = await supabase.from("correction_memory")
-    .select("food_key, food_name, protein_per_unit, kcal_per_unit, unit")
-    .eq("phone_number", phone);
+    .select("food_key, food_name, protein_per_unit, kcal_per_unit, unit, basis_amount, basis_unit, protein_per_basis, protein_provenance, kcal_per_basis, kcal_provenance, source_assertion, source_kind, source_ref, status, updated_at")
+    .eq("phone_number", phone)
+    .order("updated_at", { ascending: false });
   if (error) {
     if (isMissingMemoryTable(error)) { memoryTableMissing = true; return []; }
     console.error("correctionMemories:", error.message);
@@ -1137,7 +1244,7 @@ async function correctionMemories(phone) {
 async function rememberCorrection(phone, memRow) {
   if (memoryTableMissing || !phone || !memRow || !memRow.food_key) return false;
   const { error } = await supabase.from("correction_memory")
-    .upsert({ ...memRow, updated_at: new Date().toISOString() }, { onConflict: "phone_number,food_key" });
+    .upsert({ ...toCorrectionMemoryInsertRow(memRow), updated_at: new Date().toISOString() }, { onConflict: "phone_number,food_key" });
   if (error) {
     if (isMissingMemoryTable(error)) { memoryTableMissing = true; return false; }
     console.error("rememberCorrection:", error.message);
@@ -1208,4 +1315,4 @@ async function lastInboundAt(phone) {
   return data && data[0] ? data[0].at : null;
 }
 
-module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, toUserLogInsertRow, prepareMealRows, replaceMealAtomic, rowsBySeq, matchLastLogTargets, lastLogTargets, dayReport, correctionMemories, rememberCorrection, forgetCorrection, summarySubscribers, setSummaryTime, claimSummarySend, lastInboundAt };
+module.exports = { supabase, acceptableRef, refCandidates, refRerank, resolveItem, applyStatedNutrition, applyReference, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, toUserLogInsertRow, toCorrectionMemoryInsertRow, prepareMealRows, replaceMealAtomic, rowsBySeq, matchLastLogTargets, lastLogTargets, dayReport, correctionMemories, rememberCorrection, forgetCorrection, summarySubscribers, setSummaryTime, claimSummarySend, lastInboundAt };

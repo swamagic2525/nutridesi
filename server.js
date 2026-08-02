@@ -37,7 +37,10 @@ const {
 const { validateSignature, extractMessages, sendMessage, markRead } = require("./src/meta.js");
 const { logCorrectionEvent } = require("./src/correctionLogger.js");
 const { parseReminderRequest, confirmSetReply, CONFIRM_OFF_REPLY } = require("./src/reminders.js");
-const { parseForgetRequest, findForgetTarget, memoryNote } = require("./src/correctionMemory.js");
+const {
+  parseForgetRequest, findForgetTarget, memoryNote,
+  parseMemoryListRequest, formatMemories,
+} = require("./src/correctionMemory.js");
 
 const app = express();
 app.use(express.urlencoded({ extended: false })); // Twilio sends form-encoded
@@ -438,10 +441,18 @@ async function handleMessage(from, body, opts = {}) {
   // "forget yogabar oats" — remove a remembered correction. Ahead of the parser
   // so it is never read as a meal, and a memory the user cannot remove would be
   // worse than the repetition it fixes.
+  if (parseMemoryListRequest(trimmed)) {
+    return formatMemories(await correctionMemories(from));
+  }
   const forgetReq = parseForgetRequest(trimmed);
   if (forgetReq) {
     const mems = await correctionMemories(from);
-    const { match, ambiguous, candidates } = findForgetTarget(mems, forgetReq.key);
+    const active = mems.filter(m => !m.status || m.status === "active");
+    const indexed = forgetReq.index ? active[forgetReq.index - 1] || null : null;
+    const { match: named, ambiguous, candidates } = indexed
+      ? { match: indexed, ambiguous: false, candidates: [] }
+      : findForgetTarget(active, forgetReq.key);
+    const match = indexed || named;
     if (match) {
       await forgetCorrection(from, match.food_key);
       return `\u{1F9E0} Forgotten — I'll use my own numbers for *${match.food_name}* again.`;
@@ -949,25 +960,34 @@ async function handleMessage(from, body, opts = {}) {
     // new items. No confident single match -> change nothing.
     if (parsed.replace_target) {
       const target = resolveTargetByName(await todayItems(from), parsed.replace_target);
-      if (!target) {
+      const hasStatedNutrition = (parsed.items || []).some(it =>
+        Number(it.stated_kcal) > 0 || Number(it.stated_protein) > 0
+      );
+      if (!target && !hasStatedNutrition) {
         logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted: [], outcome: "dead_end" });
         return `Couldn't pin down "${parsed.replace_target}" in today's log — nothing changed. Try the item number, like "replace 2 with …".`;
       }
-      // Find, do not delete — the removal is part of the replacement transaction.
-      const removed = await rowsBySeq(from, [target.day_seq]);
-      if (!removed || !removed.length) {
-        return `Couldn't pin down "${parsed.replace_target}" in today's log — nothing changed.`;
+      if (target) {
+        // Find, do not delete — the removal is part of the replacement transaction.
+        const removed = await rowsBySeq(from, [target.day_seq]);
+        if (!removed || !removed.length) {
+          return `Couldn't pin down "${parsed.replace_target}" in today's log — nothing changed.`;
+        }
+        try {
+          const { rows, totals } = await replaceMealAtomic(from, parsed, removed.map(r => r.id));
+          logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted: removed, outcome: "replaced_by_name" });
+          const removedLines = (removed || []).map(r => `\u{274C} ${r.food_name} — ${r.kcal} kcal`).join("\n");
+          const addedLines = fmtItems(rows).map(l => `\u{2705} ${l}`);
+          return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
+            `${dayLine(totals, profile)}\n${cfLine(totals)}`;
+        } catch (_) {
+          return "Couldn't save that correction, so your original entry is unchanged. Please try the correction again.";
+        }
       }
-      try {
-        const { rows, totals } = await replaceMealAtomic(from, parsed, removed.map(r => r.id));
-        logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted: removed, outcome: "replaced_by_name" });
-        const removedLines = (removed || []).map(r => `\u{274C} ${r.food_name} — ${r.kcal} kcal`).join("\n");
-        const addedLines = fmtItems(rows).map(l => `\u{2705} ${l}`);
-        return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
-          `${dayLine(totals, profile)}\n${cfLine(totals)}`;
-      } catch (_) {
-        return "Couldn't save that correction, so your original entry is unchanged. Please try the correction again.";
-      }
+      // Some providers put a nutrition phrase ("26g protein") in
+      // replace_target even though the parsed food is correct. The strict swap
+      // lookup cannot resolve that phrase; continue into the scoped matcher.
+      parsed.replace_target = null;
     }
     // Find, do not delete. This is the route that lost user …0419 a full lunch
     // on 1 Aug: the delete committed, the insert failed, and the food was gone.
@@ -992,13 +1012,27 @@ async function handleMessage(from, body, opts = {}) {
         if (!words.length || hit / words.length < 0.6) return;
       }
       const protOnly = Number(it.stated_protein) > 0 && !Number(it.stated_kcal);
-      if (protOnly) { it.quantity = oq; it.grams = null; }
+      const hasExplicitBasis = Number(it.stated_basis_amount) > 0 && !!it.stated_basis_unit;
+      const inheritConsumedWeight = () => {
+        if (Number(it.grams)) return;
+        const consumed = /^\s*(\d+(?:\.\d+)?)\s*(g|ml)\s*$/i.exec(String(old.unit || ""));
+        if (!consumed) return;
+        it.grams = Number(consumed[1]);
+        it.portion_unit = consumed[2].toLowerCase();
+      };
+      if (protOnly && !hasExplicitBasis) { it.quantity = oq; it.grams = null; }
       if (!Number(it.stated_kcal) && !Number(it.grams) && (!it.matched_db_id || protOnly)) {
         it.food_name = old.food_name;
         it.matched_db_id = old.matched_db_id || null;
-        it.stated_kcal = Math.round(Number(old.kcal) / oq);
+        it.inherited_total_kcal = Number(old.kcal);
         if (!Number(it.stated_protein) && Number(old.protein) > 0)
-          it.stated_protein = +(Number(old.protein) / oq).toFixed(1);
+          it.inherited_total_protein = Number(old.protein);
+        if (protOnly && hasExplicitBasis) inheritConsumedWeight();
+      } else if (protOnly && hasExplicitBasis) {
+        it.food_name = old.food_name;
+        it.matched_db_id = old.matched_db_id || null;
+        it.inherited_total_kcal = Number(old.kcal);
+        inheritConsumedWeight();
       }
     };
     if (aligned) parsed.items.forEach((it, i) => inheritFromOld(it, aligned[i]));

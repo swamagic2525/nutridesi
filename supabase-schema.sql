@@ -104,6 +104,58 @@ create table if not exists user_logs (
 
 create index if not exists idx_logs_phone_date on user_logs (phone_number, date);
 
+-- Per-user nutrition corrections. Values are stored against an explicit basis
+-- (for example 26g protein per 100g), with provenance per field. Legacy
+-- per-unit columns remain for rows created before the basis-aware migration.
+create table if not exists correction_memory (
+  id bigint generated always as identity primary key,
+  phone_number text not null,
+  food_key text not null,
+  food_name text not null,
+  protein_per_unit numeric,
+  kcal_per_unit numeric,
+  unit text,
+  basis_amount numeric,
+  basis_unit text,
+  protein_per_basis numeric,
+  protein_provenance text,
+  kcal_per_basis numeric,
+  kcal_provenance text,
+  source_assertion text,
+  source_kind text,
+  source_ref text,
+  status text not null default 'active',
+  times_applied int not null default 0,
+  set_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (phone_number, food_key),
+  constraint correction_memory_basis_pair_check check (
+    (basis_amount is null and basis_unit is null)
+    or (basis_amount > 0 and length(btrim(basis_unit)) between 1 and 20)
+  ),
+  constraint correction_memory_protein_value_check
+    check (protein_per_basis is null or protein_per_basis between 0 and 500),
+  constraint correction_memory_kcal_value_check
+    check (kcal_per_basis is null or kcal_per_basis between 0 and 10000),
+  constraint correction_memory_protein_provenance_check check (
+    protein_provenance is null
+    or protein_provenance in ('user_confirmed', 'catalog', 'parser_inferred')
+  ),
+  constraint correction_memory_kcal_provenance_check check (
+    kcal_provenance is null
+    or kcal_provenance in ('user_confirmed', 'catalog', 'parser_inferred')
+  ),
+  constraint correction_memory_source_assertion_check
+    check (source_assertion is null or length(source_assertion) <= 200),
+  constraint correction_memory_status_check
+    check (status in ('active', 'needs_reconfirmation'))
+);
+
+create index if not exists idx_correction_memory_phone
+  on correction_memory (phone_number);
+
+alter table correction_memory enable row level security;
+
 create or replace function public.delete_user_logs_exact(p_phone text, p_ids bigint[])
 returns setof public.user_logs
 language plpgsql

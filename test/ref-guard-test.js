@@ -1,7 +1,70 @@
 require("dotenv").config();
 const assert = require("assert");
 const { extractGroups } = require("../src/proteinGuard.js");
-const { resolveRows, acceptableRef } = require("../src/db.js");
+const { resolveRows, resolveItem, applyStatedNutrition, acceptableRef, applyReference } = require("../src/db.js");
+
+assert.strictEqual(typeof resolveItem, "function", "stated-basis scaling is testable as pure logic");
+const corrected75g = resolveItem({
+  food_name: "Yogabar High Protein Oats (Dark Chocolate)", matched_db_id: 134,
+  grams: 75, portion_unit: "g", quantity: 1,
+  stated_protein: 26, stated_basis_amount: 100, stated_basis_unit: "g",
+});
+assert.strictEqual(corrected75g.protein, 19.5, "26g/100g deterministically becomes 19.5g at 75g");
+assert.strictEqual(corrected75g.portionAmount, 75);
+assert.strictEqual(corrected75g.portionUnit, "g");
+
+const correctedMilk = resolveItem({
+  food_name: "Milk (Full Fat)", matched_db_id: 34,
+  grams: 350, portion_unit: "ml", quantity: 1,
+  stated_kcal: 217, stated_protein: 12,
+  stated_basis_amount: 350, stated_basis_unit: "ml",
+});
+assert.strictEqual(correctedMilk.kcal, 217);
+assert.strictEqual(correctedMilk.protein, 12);
+assert.strictEqual(correctedMilk.unit, "350ml");
+
+const correctedScoops = resolveItem({
+  food_name: "Protein Shake", matched_db_id: 58, quantity: 2,
+  stated_protein: 30, stated_basis_amount: 1, stated_basis_unit: "scoop",
+});
+assert.strictEqual(correctedScoops.protein, 60, "30g per scoop scales to two scoops");
+
+// A weighed branded item must keep its consumed amount when the reference tier
+// supplies per-100g nutrition. The old path replaced 75g with one opaque
+// serving, which made later correction memories impossible to scale.
+assert.strictEqual(typeof applyReference, "function", "applyReference is testable as pure resolution logic");
+const weightedReference = {
+  food_code: "AIS0129",
+  food_name: "Yogabar High Protein Oats (Dark Chocolate)",
+  serving_unit: "serving", serving_kcal: 202, serving_protein: 15,
+  serving_carbs: 30, serving_fat: 5, serving_fibre: 4,
+  kcal_100g: 404, protein_100g: 30, carbs_100g: 60, fat_100g: 10, fibre_100g: 8,
+};
+const weightedRow = {
+  food_name: "75g yogabar oats", quantity: 1, unit: "75g",
+  portionAmount: 75, portionUnit: "g", kcal: 250, protein: 10,
+  carbs: 20, fat: 5, fiber: 2,
+};
+applyReference(weightedRow, weightedReference, { trusted: true });
+assert.strictEqual(weightedRow.unit, "75g");
+assert.strictEqual(weightedRow.food_name, "75g Yogabar High Protein Oats (Dark Chocolate)");
+assert.strictEqual(weightedRow.kcal, 303);
+assert.strictEqual(weightedRow.protein, 22.5);
+
+// Resolution order matters: catalog/reference first, user correction second.
+// Otherwise a stated protein skips the branded catalog and its remaining fields
+// are permanently labelled as an LLM estimate.
+assert.strictEqual(typeof applyStatedNutrition, "function");
+applyStatedNutrition({
+  stated_protein: 26, stated_basis_amount: 100, stated_basis_unit: "g",
+  grams: 75, portion_unit: "g", inherited_total_kcal: 999,
+}, weightedRow);
+assert.strictEqual(weightedRow.protein, 19.5);
+assert.strictEqual(weightedRow.kcal, 303);
+assert.notStrictEqual(weightedRow.kcal, 999,
+  "an old estimate never replaces a catalog calorie value while being labelled catalog");
+assert.strictEqual(weightedRow.sourceKind, "reference");
+assert.strictEqual(weightedRow.sourceRef, "AIS0129");
 
 // --- Negation blindness (2026-07-20: "2 eggs" -> 988 kcal of mayonnaise) ---
 assert.deepStrictEqual([...extractGroups("Mayonnaise without eggs")], [],

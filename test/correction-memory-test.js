@@ -12,13 +12,20 @@ const assert = require("assert");
 const {
   foodKey, perUnit, worthRemembering, toMemoryRow,
   applyMemory, memoryNote, parseForgetRequest, findForgetTarget,
+  parseMemoryListRequest, formatMemories,
 } = require("../src/correctionMemory.js");
 
 // --- keying: the same food typed differently is one memory ---
 const KEY = foodKey("Yogabar High Protein Oats (Dark Chocolate)");
-assert.strictEqual(foodKey("yogabar high protein oats"), KEY, "flavour parenthetical is ignored");
-assert.strictEqual(foodKey("Yogabar  High-Protein  Oats"), KEY, "punctuation and spacing ignored");
-assert.strictEqual(foodKey("High Protein Oats Yogabar"), KEY, "word order ignored");
+assert.notStrictEqual(foodKey("yogabar high protein oats"), KEY,
+  "an exact memory key retains the branded variant");
+assert.notStrictEqual(foodKey("Yogabar High Protein Oats (Mango)"), KEY,
+  "one flavour must never inherit another flavour's confirmed label");
+assert.strictEqual(
+  foodKey("High Protein Oats Yogabar (Chocolate Dark)"),
+  KEY,
+  "punctuation and word order remain stable without dropping variant words",
+);
 assert.notStrictEqual(foodKey("Yogabar Wholegrain Rolled Oats"), KEY,
   "a different product must not share a memory");
 assert.strictEqual(foodKey(""), "");
@@ -47,6 +54,43 @@ assert.deepStrictEqual(toMemoryRow("+0000000001", stated), {
   kcal_per_unit: 202,
   unit: "serving",
 });
+
+const basisMemoryRow = toMemoryRow("+0000000001", {
+  food_name: "75g Yogabar High Protein Oats (Dark Chocolate)",
+  kcal: 303, protein: 19.5, quantity: 1, unit: "75g",
+  portionAmount: 75, portionUnit: "g",
+  nutritionBasisAmount: 100, nutritionBasisUnit: "g",
+  userConfirmedProteinPerBasis: 26,
+  sourceKind: "reference", sourceRef: "AIS0129", stated: true,
+});
+assert.deepStrictEqual(basisMemoryRow, {
+  phone_number: "+0000000001",
+  food_key: foodKey("Yogabar High Protein Oats (Dark Chocolate)"),
+  food_name: "Yogabar High Protein Oats (Dark Chocolate)",
+  protein_per_unit: 19.5,
+  kcal_per_unit: 303,
+  unit: "75g",
+  basis_amount: 100,
+  basis_unit: "g",
+  protein_per_basis: 26,
+  protein_provenance: "user_confirmed",
+  kcal_per_basis: 404,
+  kcal_provenance: "catalog",
+  source_assertion: "26g protein per 100g",
+  source_kind: "reference",
+  source_ref: "AIS0129",
+  status: "active",
+});
+
+const inferredSnapshot = toMemoryRow("+0000000001", {
+  food_name: "75g Local Protein Oats", kcal: 285, protein: 19.5,
+  quantity: 1, unit: "75g", portionAmount: 75, portionUnit: "g",
+  nutritionBasisAmount: 100, nutritionBasisUnit: "g",
+  userConfirmedProteinPerBasis: 26, sourceKind: "estimate", stated: true,
+});
+assert.strictEqual(inferredSnapshot.kcal_per_basis, 380);
+assert.strictEqual(inferredSnapshot.kcal_provenance, "parser_inferred",
+  "a no-catalog estimate is pinned but never presented as confirmed");
 
 // --- applying ---
 const mem = { protein_per_unit: 26, kcal_per_unit: 202, unit: "serving", food_name: "Yogabar Oats" };
@@ -86,6 +130,48 @@ assert.ok(!same.memoryApplied);
 assert.strictEqual(applyMemory(null, mem), null);
 assert.deepStrictEqual(applyMemory({ protein: 1 }, null), { protein: 1 });
 
+// --- basis-aware scaling -------------------------------------------------
+// Production incident, 2 Aug: "26g protein is for 100g; adjust for 75g" was
+// eventually saved as 19.5g per opaque serving. The next quantity therefore
+// inherited a total instead of the label density.
+// Full loop: the persisted row produced by a 75g correction is what must scale
+// tomorrow's 50g log. A hand-written memory fixture would miss serialization
+// bugs between correction and reuse.
+const weightMemory = basisMemoryRow;
+const grams75 = applyMemory({
+  food_name: "Yogabar High Protein Oats (Dark Chocolate)",
+  protein: 22.5, kcal: 303, quantity: 1, unit: "75g",
+  portionAmount: 75, portionUnit: "g",
+}, weightMemory);
+assert.strictEqual(grams75.protein, 19.5, "26g/100g scales to 19.5g at 75g");
+assert.strictEqual(grams75.kcal, 303, "catalog calories are not frozen by memory");
+
+const grams50 = applyMemory({
+  food_name: "Yogabar High Protein Oats (Dark Chocolate)",
+  protein: 15, kcal: 202, quantity: 1, unit: "50g",
+  portionAmount: 50, portionUnit: "g",
+}, weightMemory);
+assert.strictEqual(grams50.protein, 13, "26g/100g scales to 13g at 50g");
+assert.match(memoryNote(grams50), /26g protein per 100g/i,
+  "the applied note exposes the remembered label basis, not only the scaled total");
+
+const mango = applyMemory({
+  food_name: "Yogabar High Protein Oats (Mango)",
+  protein: 12, kcal: 210, quantity: 1, unit: "50g",
+  portionAmount: 50, portionUnit: "g",
+}, weightMemory);
+assert.strictEqual(mango.protein, 12, "a different exact variant is untouched");
+assert.ok(!mango.memoryApplied);
+
+const quarantined = applyMemory({
+  food_name: "Yogabar High Protein Oats (Dark Chocolate)",
+  protein: 15, kcal: 202, quantity: 1, unit: "50g",
+  portionAmount: 50, portionUnit: "g",
+}, { ...weightMemory, status: "needs_reconfirmation" });
+assert.strictEqual(quarantined.protein, 15,
+  "a quarantined memory is visible for review but never silently applied");
+assert.ok(!quarantined.memoryApplied);
+
 // --- visibility: the user must be able to see it and undo it ---
 const note = memoryNote(one);
 assert.match(note, /Yogabar Oats/);
@@ -124,5 +210,16 @@ assert.strictEqual(amb.candidates.length, 2);
 
 assert.deepStrictEqual(findForgetTarget([], foodKey("oats")), { match: null, ambiguous: false });
 assert.deepStrictEqual(findForgetTarget(null, ""), { match: null, ambiguous: false });
+
+// --- list/edit visibility ------------------------------------------------
+assert.ok(parseMemoryListRequest("my corrections"));
+assert.ok(parseMemoryListRequest("what do you remember about my food?"));
+assert.strictEqual(parseMemoryListRequest("2 roti and dal"), false);
+assert.match(formatMemories([]), /haven't saved any food corrections/i);
+const listed = formatMemories([weightMemory]);
+assert.match(listed, /Yogabar High Protein Oats \(Dark Chocolate\)/);
+assert.match(listed, /26g protein per 100g/);
+assert.match(listed, /confirmed by you/i);
+assert.match(listed, /forget 1/i);
 
 console.log("correction-memory-test: all passed");

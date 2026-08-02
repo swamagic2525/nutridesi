@@ -209,6 +209,16 @@ food_code (PK), food_name, serving_kcal, serving_protein, serving_carbs, serving
 ~2,825 rows of branded products, recipes, regional dishes, fitness supplements. Matched via retrieve-then-rerank
 (see `refCandidates` + `refRerank` in `src/db.js`).
 
+**`correction_memory` table (per-user override tier):**
+```
+phone_number, food_key, food_name, basis_amount, basis_unit,
+protein_per_basis, protein_provenance, kcal_per_basis, kcal_provenance,
+source_assertion, source_kind, source_ref, status
+```
+Keys retain product/flavour variants. Values scale from their explicit basis;
+each field records whether it was user-confirmed, catalog, or parser-inferred.
+Never promote a per-user correction into the shared food tables.
+
 **`food_preferences` table:**
 ```
 phone_number (FK), food_type (e.g. "dal"), preference (e.g. "makhani"), set_at
@@ -262,5 +272,5 @@ Do not add features. Validate retention first.
 - `docs/churn-reduction-report-2026-07-23.md` — Measured retention analysis. **Read before picking growth/retention work.**
 - `docs/correction-incidents.md` — Real incident writeups (context for guardrails)
 - `docs/superpowers/specs/` + `plans/` — Design docs for TDEE + conversation memory
-- `evals/cases.jsonl` — 160 golden eval cases (the regression net)
+- `evals/cases.jsonl` — 162 golden eval cases (the regression net)
 - `.env.example` — All env vars with placeholder values

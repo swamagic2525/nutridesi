@@ -19,7 +19,7 @@
 function foodKey(resolvedName) {
   return String(resolvedName || "")
     .toLowerCase()
-    .replace(/\([^)]*\)/g, " ")   // drop "(Dark Chocolate)" — flavour is not nutrition
+    .replace(/^\s*\d+(?:\.\d+)?\s*(?:g|ml)\b\s*/, "")
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .split(/\s+/)
@@ -56,13 +56,49 @@ function worthRemembering(row) {
 
 function toMemoryRow(phone, row) {
   const { protein_per_unit, kcal_per_unit, unit } = perUnit(row);
-  return {
+  const displayName = String(row && row.food_name || "")
+    .replace(/^\s*\d+(?:\.\d+)?\s*(?:g|ml)\b\s*/i, "");
+  const base = {
     phone_number: phone,
-    food_key: foodKey(row.food_name),
-    food_name: row.food_name,
+    food_key: foodKey(displayName),
+    food_name: displayName,
     protein_per_unit,
     kcal_per_unit,
     unit,
+  };
+  const basisAmount = Number(row && row.nutritionBasisAmount);
+  const basisUnit = String(row && row.nutritionBasisUnit || "").toLowerCase();
+  if (!(basisAmount > 0) || !basisUnit) return base;
+
+  const portionAmount = Number(row.portionAmount);
+  const portionScale = portionAmount > 0 && ["g", "ml"].includes(basisUnit)
+    ? portionAmount / basisAmount
+    : (Number(row.quantity) > 0 ? Number(row.quantity) : 1) / basisAmount;
+  const confirmedProtein = Number(row.userConfirmedProteinPerBasis);
+  const confirmedKcal = Number(row.userConfirmedKcalPerBasis);
+  const kcalFromResolved = portionScale > 0 && Number.isFinite(Number(row.kcal))
+    ? +(Number(row.kcal) / portionScale).toFixed(1) : null;
+  const proteinPerBasis = Number.isFinite(confirmedProtein) && confirmedProtein > 0
+    ? confirmedProtein : null;
+  const kcalPerBasis = Number.isFinite(confirmedKcal) && confirmedKcal > 0
+    ? confirmedKcal : kcalFromResolved;
+  const assertions = [];
+  if (proteinPerBasis != null) assertions.push(`${proteinPerBasis}g protein`);
+  if (Number.isFinite(confirmedKcal) && confirmedKcal > 0) assertions.push(`${confirmedKcal} kcal`);
+  return {
+    ...base,
+    basis_amount: basisAmount,
+    basis_unit: basisUnit,
+    protein_per_basis: proteinPerBasis,
+    protein_provenance: proteinPerBasis != null ? "user_confirmed" : null,
+    kcal_per_basis: kcalPerBasis,
+    kcal_provenance: Number.isFinite(confirmedKcal) && confirmedKcal > 0
+      ? "user_confirmed" : row.sourceKind === "estimate" ? "parser_inferred" : "catalog",
+    source_assertion: assertions.length
+      ? `${assertions.join(", ")} per ${basisAmount}${basisUnit}` : null,
+    source_kind: row.sourceKind || null,
+    source_ref: row.sourceRef || null,
+    status: "active",
   };
 }
 
@@ -97,6 +133,48 @@ function sameBasis(row, mem, q) {
 // silently fail; a memory that is not stated-marked would reproduce it.
 function applyMemory(row, mem) {
   if (!row || !mem) return row;
+  if (mem.status && mem.status !== "active") return row;
+  // New basis-aware rows are exact by product variant. The caller already
+  // indexes memories by key; checking again here keeps the pure function safe
+  // when used directly and prevents a Chocolate label reaching Mango oats.
+  if (Number(mem.basis_amount) > 0 && mem.basis_unit) {
+    if (mem.food_key && mem.food_key !== foodKey(row.food_name)) return row;
+    const basisAmount = Number(mem.basis_amount);
+    const basisUnit = String(mem.basis_unit).toLowerCase();
+    const portionAmount = Number(row.portionAmount);
+    const portionUnit = String(row.portionUnit || "").toLowerCase();
+    let scale = null;
+    if (["g", "ml"].includes(basisUnit)) {
+      if (portionAmount > 0 && portionUnit === basisUnit) scale = portionAmount / basisAmount;
+    } else if (String(row.unit || "").toLowerCase() === basisUnit) {
+      scale = (Number(row.quantity) > 0 ? Number(row.quantity) : 1) / basisAmount;
+    }
+    if (!(scale > 0)) return row;
+
+    const applyField = (field, valueKey, provenanceKey, round) => {
+      const provenance = mem[provenanceKey];
+      if (!['user_confirmed', 'parser_inferred'].includes(provenance)) return;
+      const value = Number(mem[valueKey]);
+      if (!Number.isFinite(value) || value < 0) return;
+      const next = round(value * scale);
+      if (Math.abs(next - Number(row[field] || 0)) < (field === "protein" ? 0.05 : 0.5)) return;
+      row[field] = next;
+      row.memoryApplied = true;
+      row[`${field}Provenance`] = provenance;
+    };
+    applyField("protein", "protein_per_basis", "protein_provenance", n => +n.toFixed(1));
+    applyField("kcal", "kcal_per_basis", "kcal_provenance", Math.round);
+    if (row.memoryApplied) {
+      row.stated = true;
+      row.is_estimate = false;
+      row.assumed = false;
+      row.memoryName = mem.food_name;
+      row.memoryBasisAmount = basisAmount;
+      row.memoryBasisUnit = basisUnit;
+      row.memoryProteinPerBasis = Number(mem.protein_per_basis);
+    }
+    return row;
+  }
   const q = Number(row.quantity) > 0 ? Number(row.quantity) : 1;
   if (!sameBasis(row, mem, q)) return row;
 
@@ -138,8 +216,13 @@ function memoryNote(row) {
   const short = String(row.memoryName || "")
     .replace(/\([^)]*\)/g, " ")
     .split(/\s+/).filter(w => w.length > 2).slice(0, 2).join(" ") || row.memoryName;
+  const basisProtein = Number(row.memoryProteinPerBasis);
+  const basisAmount = Number(row.memoryBasisAmount);
+  const proteinLabel = Number.isFinite(basisProtein) && basisAmount > 0 && row.memoryBasisUnit
+    ? `${fmtNumber(basisProtein)}g protein per ${fmtNumber(basisAmount)}${row.memoryBasisUnit}`
+    : `${Math.round(Number(row.protein) || 0)}g protein`;
   return `\u{1F9E0} _Using your correction for *${row.memoryName}* `
-    + `(${Math.round(Number(row.protein) || 0)}g protein). Reply "forget ${short}" to reset._`;
+    + `(${proteinLabel}). Reply "forget ${short}" to reset._`;
 }
 
 // "forget yogabar oats" / "reset yogabar oats"
@@ -148,8 +231,42 @@ function parseForgetRequest(text) {
   const m = /^(?:forget|reset|unlearn)\s+(?:my\s+)?(?:correction\s+for\s+)?(.+)$/.exec(s);
   if (!m || !m[1]) return null;
   const target = m[1].trim();
+  if (/^\d+$/.test(target)) return { action: "forget", target, index: Number(target) };
   if (!target || target.length < 3) return null;
   return { action: "forget", target, key: foodKey(target) };
+}
+
+function parseMemoryListRequest(text) {
+  const s = String(text || "").toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  return /^(?:my|show|list|saved|show my|list my) (?:food )?(?:corrections|memories)$/.test(s)
+    || /^(?:what|which) do you remember(?: about my food)?$/.test(s);
+}
+
+const fmtNumber = value => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  return Number.isInteger(n) ? String(n) : String(+n.toFixed(2));
+};
+
+function formatMemories(memories) {
+  const active = (memories || []).filter(m => !m.status || m.status === "active");
+  if (!active.length) return "🧠 I haven't saved any food corrections yet.";
+  const lines = ["🧠 *Your saved food corrections*"];
+  active.forEach((m, i) => {
+    lines.push("", `${i + 1}. *${m.food_name}*`);
+    const amount = fmtNumber(m.basis_amount);
+    const basis = amount && m.basis_unit ? `${amount}${m.basis_unit}` : "serving";
+    const protein = fmtNumber(m.protein_per_basis);
+    const kcal = fmtNumber(m.kcal_per_basis);
+    if (protein != null) lines.push(`   Protein: *${protein}g protein per ${basis}* — ${m.protein_provenance === "user_confirmed" ? "confirmed by you" : "estimated"}`);
+    if (kcal != null) {
+      const label = m.kcal_provenance === "user_confirmed" ? "confirmed by you"
+        : m.kcal_provenance === "catalog" ? "catalog" : "estimated";
+      lines.push(`   Calories: *${kcal} kcal per ${basis}* — ${label}`);
+    }
+  });
+  lines.push("", 'Reply *“forget 1”* to remove one. To change it, send the food and corrected label value.');
+  return lines.join("\n");
 }
 
 // Applying a memory needs an exact key — precision matters when silently
@@ -172,4 +289,5 @@ function findForgetTarget(memories, key) {
 module.exports = {
   foodKey, perUnit, worthRemembering, toMemoryRow,
   applyMemory, memoryNote, parseForgetRequest, findForgetTarget, sameBasis,
+  parseMemoryListRequest, formatMemories,
 };

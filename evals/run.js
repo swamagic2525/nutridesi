@@ -12,7 +12,8 @@
 // Expected-case schema (evals/cases.jsonl, one JSON object per line):
 //   input, context?, tags[], expected:{ intent (string or any-of array),
 //   items:[{ db_id (number|null|any-of array), qty?, qty_any_of?, grams?,
-//            raw?, stated_kcal?, stated_protein?, name_like?, name_null? }],
+//            raw?, stated_kcal?, stated_protein?, stated_basis_amount?,
+//            stated_basis_unit?, portion_unit?, name_like?, name_null? }],
 //   report_day?, name?, goal_kcal?, goal_protein?, query_reply_no_digits? }
 
 const path = require("path");
@@ -60,6 +61,9 @@ function checkItem(exp, p) {
   if (exp.raw !== undefined && !!p.raw !== exp.raw) errs.push(`raw ${!!p.raw} != ${exp.raw}`);
   if (exp.stated_kcal !== undefined && !eq(p.stated_kcal, exp.stated_kcal)) errs.push(`stated_kcal ${p.stated_kcal} != ${exp.stated_kcal}`);
   if (exp.stated_protein !== undefined && !eq(p.stated_protein, exp.stated_protein)) errs.push(`stated_protein ${p.stated_protein} != ${exp.stated_protein}`);
+  if (exp.stated_basis_amount !== undefined && !eq(p.stated_basis_amount, exp.stated_basis_amount)) errs.push(`stated_basis_amount ${p.stated_basis_amount} != ${exp.stated_basis_amount}`);
+  if (exp.stated_basis_unit !== undefined && String(p.stated_basis_unit || "") !== exp.stated_basis_unit) errs.push(`stated_basis_unit ${p.stated_basis_unit} != ${exp.stated_basis_unit}`);
+  if (exp.portion_unit !== undefined && String(p.portion_unit || "") !== exp.portion_unit) errs.push(`portion_unit ${p.portion_unit} != ${exp.portion_unit}`);
   if (exp.name_null && p.food_name != null) errs.push(`food_name "${p.food_name}" expected null`);
   return errs;
 }

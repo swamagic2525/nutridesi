@@ -36,6 +36,10 @@ let logMealError = null;
 let todaySeqsFixture = [];
 let deleteBySeqFixture = [];
 let rowsBySeqFixture = [];
+let todayItemsFixture = [];
+let lastLogBatchFixture = [];
+let matchLastLogTargetsFixture = null;
+let correctionMemoriesFixture = [];
 
 stubModule("../src/db.js", {
   supabase: {},
@@ -63,7 +67,7 @@ stubModule("../src/db.js", {
   },
   resolveRows: recordAsync("resolveRows", []),
   todayTotal: recordAsync("todayTotal", { kcal: 0, protein: 0, carbs: 0, fat: 0, fibre: 0, meals: [] }),
-  todayItems: recordAsync("todayItems", []),
+  todayItems: async (...args) => { calls.push({ name: "todayItems", args }); return todayItemsFixture; },
   todaySeqs: async (...args) => { calls.push({ name: "todaySeqs", args }); return todaySeqsFixture; },
   itemsBySeq: recordAsync("itemsBySeq", []),
   deleteBySeq: async (...args) => { calls.push({ name: "deleteBySeq", args }); return deleteBySeqFixture; },
@@ -72,12 +76,17 @@ stubModule("../src/db.js", {
   deleteMatchingLastLog: recordAsync("deleteMatchingLastLog", { deleted: [] }),
   deleteLogRowsByExactIds: recordAsync("deleteLogRowsByExactIds", []),
   logRowsByExactIds: recordAsync("logRowsByExactIds", []),
-  lastLogBatch: recordAsync("lastLogBatch", []),
+  lastLogBatch: async (...args) => { calls.push({ name: "lastLogBatch", args }); return lastLogBatchFixture; },
   // Find-only target lookups + the atomic replacement, used by the four
   // correction routes since the delete moved inside the transaction.
   rowsBySeq: async (...args) => { calls.push({ name: "rowsBySeq", args }); return rowsBySeqFixture; },
-  matchLastLogTargets: recordAsync("matchLastLogTargets", null),
+  matchLastLogTargets: async (...args) => {
+    calls.push({ name: "matchLastLogTargets", args });
+    return matchLastLogTargetsFixture;
+  },
   lastLogTargets: recordAsync("lastLogTargets", null),
+  correctionMemories: async (...args) => { calls.push({ name: "correctionMemories", args }); return correctionMemoriesFixture; },
+  forgetCorrection: recordAsync("forgetCorrection", true),
   replaceMealAtomic: recordAsync("replaceMealAtomic", {
     rows: [], totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, fibre: 0, meals: [] },
   }),
@@ -118,6 +127,10 @@ function reset(profile, parsed, history) {
   todaySeqsFixture = [];
   deleteBySeqFixture = [];
   rowsBySeqFixture = [];
+  todayItemsFixture = [];
+  lastLogBatchFixture = [];
+  matchLastLogTargetsFixture = null;
+  correctionMemoriesFixture = [];
   return `+00000001${String(phoneSeq++).padStart(2, "0")}`;
 }
 
@@ -206,6 +219,59 @@ const midCollection = () => ({
   const numbered = calls.find(c => c.name === "replaceMealAtomic");
   assert.ok(numbered, "numbered replacement goes through the atomic path");
   assert.deepStrictEqual(numbered.args[2], [22], "and passes the located target id");
+
+  // A nutrition correction can arrive with a bogus replace_target even though
+  // its parsed food and scaled macro are correct. That target is not a reason
+  // to dead-end: fall through to the normal scoped correction matcher. A real
+  // food-for-food swap still keeps the strict target branch.
+  phone = reset({ tdee_profile: {}, conversation_state: {} }, {
+    intent: "replace_last",
+    replace_target: "26g protein",
+    items: [{
+      food_name: "Yogabar High Protein Oats (Dark Chocolate)",
+      stated_protein: 26, stated_basis_amount: 100, stated_basis_unit: "g",
+      grams: null, portion_unit: null, quantity: 1,
+    }],
+  });
+  const oatsTarget = {
+    id: 75, day_seq: 4, food_name: "Yogabar High Protein Oats (Dark Chocolate)",
+    quantity: 1, unit: "75g", kcal: 303, protein: 22.5, date: "2026-08-02",
+  };
+  lastLogBatchFixture = [oatsTarget];
+  matchLastLogTargetsFixture = [oatsTarget];
+  reply = await handleMessage(phone, "26g protein is for 100g oats");
+  assert.doesNotMatch(reply, /Couldn't pin down/i,
+    "a malformed macro target does not abort a valid nutrition correction");
+  const basisCorrection = calls.find(c => c.name === "replaceMealAtomic");
+  assert.ok(basisCorrection, "the correction reaches the atomic replacement path");
+  assert.deepStrictEqual(basisCorrection.args[2], [75]);
+  const correctedItem = basisCorrection.args[1].items[0];
+  assert.strictEqual(correctedItem.grams, 75,
+    "the consumed weight is recovered from the original log when the follow-up omits it");
+  assert.strictEqual(correctedItem.portion_unit, "g");
+  assert.strictEqual(correctedItem.inherited_total_kcal, 303,
+    "uncorrected calories are carried as the old total, not user-confirmed");
+  assert.ok(!Number(correctedItem.stated_kcal),
+    "a protein-only correction never promotes existing kcal to a user statement");
+
+  // Saved corrections are inspectable without spending an LLM call, and the
+  // numbered forget action removes the same deterministically ordered row.
+  phone = reset({ tdee_profile: {}, conversation_state: {} });
+  correctionMemoriesFixture = [{
+    food_key: "chocolate dark high oats protein yogabar",
+    food_name: "Yogabar High Protein Oats (Dark Chocolate)",
+    basis_amount: 100, basis_unit: "g", protein_per_basis: 26,
+    protein_provenance: "user_confirmed", kcal_per_basis: 404,
+    kcal_provenance: "catalog", status: "active",
+  }];
+  reply = await handleMessage(phone, "my corrections");
+  assert.match(reply, /26g protein per 100g/);
+  assert.strictEqual(called("parseMeal"), 0, "the list command is deterministic");
+  calls.length = 0;
+  reply = await handleMessage(phone, "forget 1");
+  const forgot = calls.find(c => c.name === "forgetCorrection");
+  assert.ok(forgot, "numbered forget deletes a saved correction");
+  assert.strictEqual(forgot.args[1], "chocolate dark high oats protein yogabar");
 
   // 4c. Explicit recovery language outranks a mistaken LLM correction intent.
   //     The user said the earlier meal was correct and they were ADDING a
