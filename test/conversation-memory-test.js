@@ -150,7 +150,12 @@ assert.match(serverSource, /pending && Date\.now\(\) - pending\.at < PENDING_TTL
 assert.match(serverSource, /if \(conversationState\.awaiting && !stateTargetsCurrentIstDate\(conversationState, now\)\) \{[\s\S]*claimConversationState\(from, conversationState\.nonce\)[\s\S]*nothing was changed/);
 assert.match(serverSource, /loggedExchangeMatchesBatch\(recentLoggedExchange, targetRows\)/);
 assert.match(serverSource, /const ephemeralTarget = correlatedTargetFromExchange\(recentLoggedExchange, targetRows\);[\s\S]*boundCorrectionTarget = ephemeralTarget;/);
-assert.match(serverSource, /logRowsByExactIds\(from, boundCorrectionTarget\.targetLogIds\)[\s\S]*row\.date !== boundCorrectionTarget\.targetDate[\s\S]*deleteLogRowsByExactIds\(from, boundCorrectionTarget\.targetLogIds\)/);
+// The bound correction must still validate the target's DATE between locating
+// the rows and acting on them. The action changed on 2 Aug: it used to be
+// deleteLogRowsByExactIds followed by a separate insert, which lost a user's
+// lunch when the insert failed. It is now replaceMealAtomic, which deletes and
+// inserts in one transaction — so the lookup is find-only.
+assert.match(serverSource, /logRowsByExactIds\(from, boundCorrectionTarget\.targetLogIds\)[\s\S]*row\.date !== boundCorrectionTarget\.targetDate[\s\S]*replaceMealAtomic\(from, parsed, deleted\.map/);
 assert.match(dbSource, /select\("id, food_name, kcal, protein, quantity, matched_db_id, is_estimate, logged_at, date"\)/);
 // Locates a marker, asserting it exists first. Used only to slice a region of
 // the source so the assertions below can be scoped to the replace_last block —
@@ -164,12 +169,25 @@ const replaceBlock = serverSource.slice(
   indexOfSource("// --- replace_last ---"),
   indexOfSource("// --- log (default) ---")
 );
-assert.doesNotMatch(replaceBlock, /await logMeal\(from, parsed\);/);
+// Superseded 2 Aug by a stronger property. The replacement path used to call
+// logMeal and the requirement was merely that the insert be AWAITED, so a
+// failure was at least honest. It is now transactional: the delete and the
+// insert happen inside one replace_user_logs call, so a failure leaves the
+// original entry untouched. logMeal must not appear in this block at all —
+// its presence would mean some route still deletes before it knows the
+// replacement saved, which is how user …0419 lost a lunch on 1 Aug.
+assert.doesNotMatch(replaceBlock, /logMeal\(/,
+  "the replacement path must not log separately from the transaction");
 assert.ok(
-  (replaceBlock.match(/logMeal\(from, parsed, \{ awaitInsert: true \}\)/g) || []).length >= 3,
-  "every replacement insert must be awaited"
+  (replaceBlock.match(/replaceMealAtomic\(from, parsed/g) || []).length >= 2,
+  "every replacement goes through the atomic transaction"
 );
-assert.match(replaceBlock, /correction couldn't finish safely/i);
+// Recovery copy changed 2 Aug. The old line told the user to "send the full
+// meal again from the start", which was wrong twice over: the originals were
+// already gone, and resending a whole meal after correcting ONE of its items
+// duplicated the rest. Now the transaction guarantees the original survives,
+// so the copy can say so truthfully.
+assert.match(replaceBlock, /your original entry is unchanged/i);
 
 process.env.SUPABASE_URL ||= "https://example.supabase.co";
 process.env.SUPABASE_SERVICE_KEY ||= "test-key";

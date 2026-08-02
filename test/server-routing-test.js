@@ -35,6 +35,7 @@ let historyFixture = [];
 let logMealError = null;
 let todaySeqsFixture = [];
 let deleteBySeqFixture = [];
+let rowsBySeqFixture = [];
 
 stubModule("../src/db.js", {
   supabase: {},
@@ -72,6 +73,15 @@ stubModule("../src/db.js", {
   deleteLogRowsByExactIds: recordAsync("deleteLogRowsByExactIds", []),
   logRowsByExactIds: recordAsync("logRowsByExactIds", []),
   lastLogBatch: recordAsync("lastLogBatch", []),
+  // Find-only target lookups + the atomic replacement, used by the four
+  // correction routes since the delete moved inside the transaction.
+  rowsBySeq: async (...args) => { calls.push({ name: "rowsBySeq", args }); return rowsBySeqFixture; },
+  matchLastLogTargets: recordAsync("matchLastLogTargets", null),
+  lastLogTargets: recordAsync("lastLogTargets", null),
+  replaceMealAtomic: recordAsync("replaceMealAtomic", {
+    rows: [], totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, fibre: 0, meals: [] },
+  }),
+  prepareMealRows: recordAsync("prepareMealRows", []),
   dayReport: recordAsync("dayReport", { meals: [], total: {} }),
   bumpNudge: recordAsync("bumpNudge", 0),
   setSummaryTime: recordAsync("setSummaryTime", true),
@@ -107,6 +117,7 @@ function reset(profile, parsed, history) {
   logMealError = null;
   todaySeqsFixture = [];
   deleteBySeqFixture = [];
+  rowsBySeqFixture = [];
   return `+00000001${String(phoneSeq++).padStart(2, "0")}`;
 }
 
@@ -181,16 +192,20 @@ const midCollection = () => ({
   assert.strictEqual(failedLog.args[2].awaitInsert, true,
     "ordinary logs must await Supabase before replying");
 
-  // Numbered replacement is another user-facing success path: it must await
-  // the replacement insert after deleting the selected item.
+  // Numbered replacement must not delete before it knows the replacement saved.
+  // It used to deleteBySeq and THEN insert, so a failure between the two erased
+  // the original; the removal now happens inside replaceMealAtomic's single
+  // transaction, and the route only LOOKS the target up beforehand.
   phone = reset({ tdee_profile: {}, conversation_state: {} },
     { intent: "log", items: [{ food_name: "rice", quantity: 1, unit: "bowl" }] });
   todaySeqsFixture = [2];
-  deleteBySeqFixture = [{ id: 22, day_seq: 2, food_name: "Roti", kcal: 90 }];
+  rowsBySeqFixture = [{ id: 22, day_seq: 2, food_name: "Roti", kcal: 90 }];
   await handleMessage(phone, "replace 2 with rice");
-  const numberedReplacement = calls.find(c => c.name === "logMeal");
-  assert.strictEqual(numberedReplacement.args[2].awaitInsert, true,
-    "numbered replacements must await Supabase before replying");
+  assert.strictEqual(called("deleteBySeq"), 0,
+    "the target must NOT be deleted outside the transaction");
+  const numbered = calls.find(c => c.name === "replaceMealAtomic");
+  assert.ok(numbered, "numbered replacement goes through the atomic path");
+  assert.deepStrictEqual(numbered.args[2], [22], "and passes the located target id");
 
   // 4c. Explicit recovery language outranks a mistaken LLM correction intent.
   //     The user said the earlier meal was correct and they were ADDING a

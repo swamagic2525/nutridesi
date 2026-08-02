@@ -647,6 +647,91 @@ async function resolveRows(parsed, opts = {}) {
   return rows;
 }
 
+// Resolve a parsed message into rows ready for user_logs, WITHOUT touching
+// user_logs itself. Not pure — resolution reads the reference tier, may call
+// the LLM reranker, and writes gap-trail events — but it makes no change to
+// anyone's food log, which is the property that lets the atomic replacement
+// prepare its payload before opening a transaction.
+//
+// Shared with logMeal so ordinary logging and correction replacement can never
+// resolve nutrition differently. Deliberately additive: logMeal's behaviour is
+// unchanged, because the normal path is working and a correction fix has no
+// business destabilising it.
+async function prepareMealRows(phone, parsed, date) {
+  const rows = await resolveRows(parsed, { trackGaps: true, phone });
+  const mealTime = parsed.meal_time_inferred || "snack";
+  rows.forEach(r => Object.assign(r, { phone_number: phone, meal_time: mealTime, date }));
+
+  // Tier 4: nothing parsed, log a single placeholder rather than a dead end.
+  if (rows.length === 0) {
+    rows.push({ phone_number: phone, meal_time: mealTime, date, food_name: "meal",
+      matched_db_id: null, quantity: 1, unit: "serving", kcal: 300,
+      ...splitMacros(300), fiber: 0, is_estimate: true });
+  }
+  return rows;
+}
+
+// Figures the user stated themselves, worth carrying to tomorrow. Returns the
+// memory rows rather than writing them: the caller decides WHEN, and for a
+// correction that must be only after the transaction has committed. Writing a
+// memory for a meal that then failed to save would teach the bot a fact about
+// an entry that does not exist.
+function pendingMemories(phone, rows) {
+  return (rows || [])
+    .filter(r => !r.memoryApplied && worthRemembering(r))
+    .map(r => toMemoryRow(phone, r));
+}
+
+function persistMemories(phone, memRows) {
+  for (const m of memRows || []) {
+    rememberCorrection(phone, m).catch(e => console.error("rememberCorrection:", e.message));
+  }
+}
+
+// Atomic correction: delete the targets and insert the replacements inside ONE
+// database transaction, or change nothing at all.
+//
+// Every correction route used to delete and then insert in separate round
+// trips. A failure between them left the original food deleted and the
+// replacement never written — user …0419 lost a full lunch that way on 1 Aug.
+// Awaiting the insert made that failure honest; it did not make it safe.
+//
+// Throws on any rejection. The caller must treat a throw as "nothing changed",
+// which is now literally true.
+async function replaceMealAtomic(phone, parsed, targetIds, options = {}) {
+  const ids = exactPositiveIds(targetIds);
+  if (!ids.length) throw new Error("replaceMealAtomic: no target rows");
+
+  // The user row must exist: user_logs.phone_number is a foreign key to users.
+  await ensureUser(phone);
+
+  // Date comes from the RPC, derived from the locked originals — a replacement
+  // belongs to the day it replaced, not to today. This date is only used for
+  // resolution bookkeeping; the RPC overrides whatever lands in the payload.
+  const rows = await prepareMealRows(phone, parsed, options.date || istToday());
+  const payload = rows.map(toUserLogInsertRow);
+
+  const { data, error } = await supabase.rpc("replace_user_logs", {
+    p_phone: phone,
+    p_delete_ids: ids,
+    p_rows: payload,
+  });
+  if (error) {
+    console.error("replace_user_logs:", error.message);
+    throw new Error(`correction replace failed: ${error.message}`);
+  }
+  const inserted = Array.isArray(data) ? data : [];
+  if (!inserted.length) throw new Error("correction replace returned no rows");
+
+  // Only now is the correction real, so only now is it safe to remember it.
+  persistMemories(phone, pendingMemories(phone, rows));
+
+  // Totals re-read AFTER the commit, so the reply reflects what is actually
+  // stored rather than what we hoped would be.
+  const totals = await todayTotal(phone, inserted[0].date);
+  return { rows: inserted, totals };
+}
+
 async function logMeal(phone, parsed, options = {}) {
   // Pin the IST date ONCE for this message. todayTotal reads a date, and the
   // insert is fire-and-forget seconds later — near midnight the DB's own
@@ -656,27 +741,14 @@ async function logMeal(phone, parsed, options = {}) {
   // Previous total fetched in parallel with the user upsert (before the insert,
   // so no double-count); new items are added locally. Saves one DB round-trip.
   const [prevTotal, isNewUser, rows, seqStart] = await Promise.all([
-    todayTotal(phone, date), ensureUser(phone), resolveRows(parsed, { trackGaps: true, phone }), nextDaySeq(phone, date),
+    todayTotal(phone, date), ensureUser(phone), prepareMealRows(phone, parsed, date), nextDaySeq(phone, date),
   ]);
-  const mealTime = parsed.meal_time_inferred || "snack";
-  rows.forEach(r => Object.assign(r, { phone_number: phone, meal_time: mealTime, date }));
 
-  // Remember any figure the user stated themselves, so tomorrow's identical
-  // meal doesn't ask them again. Fire-and-forget: a memory write must never
-  // delay or fail the log itself. Rows that only got their value FROM a memory
-  // are skipped, or applying one would rewrite it every day.
-  for (const r of rows) {
-    if (r.memoryApplied || !worthRemembering(r)) continue;
-    rememberCorrection(phone, toMemoryRow(phone, r))
-      .catch(e => console.error("rememberCorrection:", e.message));
-  }
+  // Collected now, written only once the insert has actually succeeded. It used
+  // to be written here, before the write — so a failed insert left a memory
+  // teaching the bot a figure about a meal that was never stored.
+  const memories = pendingMemories(phone, rows);
 
-  // If nothing parsed, log a single 300 kcal placeholder (Tier 4).
-  if (rows.length === 0) {
-    rows.push({ phone_number: phone, meal_time: mealTime, date, food_name: "meal",
-      matched_db_id: null, quantity: 1, unit: "serving", kcal: 300,
-      ...splitMacros(300), fiber: 0, is_estimate: true });
-  }
   // Numbers are assigned once, here, and never recomputed — deleting 14 leaves
   // a gap so numbers the user has already seen stay valid. Null seqStart means
   // the column isn't there yet, so items just log without numbers.
@@ -705,9 +777,11 @@ async function logMeal(phone, parsed, options = {}) {
       console.error("SUPABASE INSERT FAILED:", error.message, error.details || "", error.hint || "");
       throw new Error("meal insert failed");
     }
+    persistMemories(phone, memories);
   } else {
     insert.then(({ error }) => {
       if (error) console.error("SUPABASE INSERT FAILED:", error.message, error.details || "", error.hint || "");
+      else persistMemories(phone, memories);
     });
   }
   const sum = (k) => prevTotal[k] + rows.reduce((s, r) => s + Number(r[k] || 0), 0);
@@ -855,14 +929,17 @@ async function deleteRows(rows) {
 // Named correction targets must be in the immediately preceding message batch.
 // This intentionally does not scan the whole day: an implicit correction should
 // never surprise-delete a food from an earlier meal.
-async function deleteMatchingLastLog(phone, foodHints, batch = null, rawMessage = "") {
-  // [] is truthy in JavaScript. Treat an empty context as absent so a
-  // correction that was not pre-classified still looks up the latest batch.
+// Find-only counterpart of deleteMatchingLastLog: all the matching, none of
+// the deleting. Atomic replacement needs the targets identified before the
+// transaction opens, so the delete can happen alongside the insert rather than
+// before it. deleteMatchingLastLog now wraps this, so both paths resolve
+// targets by exactly the same rules.
+async function matchLastLogTargets(phone, foodHints, batch = null, rawMessage = "") {
   const latest = batch && batch.length ? batch : await lastLogBatch(phone);
   const matched = matchRows(latest, foodHints, rawMessage);
   // Deterministic word-overlap can't place a hint whose logged name shares no
   // words ("the whey" vs a row named "SuperYou PRO"). Before giving up, let the
-  // LLM pick the target by meaning — over rows not already claimed. Preserves
+  // LLM pick the target by meaning - over rows not already claimed. Preserves
   // atomicity: a still-unresolved hint below still aborts the whole correction.
   const hints = (foodHints || []);
   for (let i = 0; i < matched.length; i++) {
@@ -879,9 +956,17 @@ async function deleteMatchingLastLog(phone, foodHints, batch = null, rawMessage 
   // the most recent batch, leave everything untouched rather than half-editing
   // a meal and creating a worse trust failure.
   if (matched.some(row => !row)) return null;
-  const rows = matched.filter(Boolean);
-  if (rows.length === 0) return null;
-  await deleteRows(rows);
+  if (matched.filter(Boolean).length === 0) return null;
+  return matched;
+}
+
+async function deleteMatchingLastLog(phone, foodHints, batch = null, rawMessage = "") {
+  // Kept for the undo path, which genuinely only deletes. Correction routes use
+  // matchLastLogTargets + replaceMealAtomic so the delete lands inside the same
+  // transaction as the replacement.
+  const matched = await matchLastLogTargets(phone, foodHints, batch, rawMessage);
+  if (!matched) return null;
+  await deleteRows(matched.filter(Boolean));
   return matched;
 }
 
@@ -967,6 +1052,18 @@ async function itemsBySeq(phone, seqs) {
   return data || [];
 }
 
+// Find-only counterpart of deleteBySeq. Atomic replacement needs the target
+// ids WITHOUT removing them first — the whole point is that the delete happens
+// inside the same transaction as the insert.
+async function rowsBySeq(phone, seqs) {
+  const { data, error } = await supabase.from("user_logs")
+    .select("id, food_name, kcal, quantity, day_seq")
+    .eq("phone_number", phone).eq("date", istToday()).in("day_seq", seqs)
+    .order("day_seq");
+  if (error) { console.error("rowsBySeq:", error.message); return []; }
+  return data || [];
+}
+
 async function deleteBySeq(phone, seqs) {
   const { data, error } = await supabase.from("user_logs").delete()
     .eq("phone_number", phone).eq("date", istToday()).in("day_seq", seqs)
@@ -983,6 +1080,21 @@ async function deleteAllToday(phone) {
     .eq("phone_number", phone).eq("date", date).select("food_name, kcal");
   if (error) { console.error("deleteAllToday:", error.message); return null; }
   return data || [];
+}
+
+// Find-only counterpart of deleteLastLog: same name-overlap narrowing, no
+// delete. Used by the correction routes so the removal happens inside the
+// replacement transaction.
+async function lastLogTargets(phone, foodHint) {
+  let batch = await lastLogBatch(phone);
+  if (batch.length === 0) return null;
+  if (foodHint && batch.length > 1) {
+    const words = String(foodHint).toLowerCase().split(/[^a-z]+/).filter(w => w.length > 2);
+    const scored = batch.map(r => ({ r, s: words.filter(w => r.food_name.toLowerCase().includes(w)).length }));
+    const best = Math.max(...scored.map(x => x.s));
+    if (best > 0) batch = scored.filter(x => x.s === best).map(x => x.r);
+  }
+  return batch;
 }
 
 async function deleteLastLog(phone, foodHint) {
@@ -1096,4 +1208,4 @@ async function lastInboundAt(phone) {
   return data && data[0] ? data[0].at : null;
 }
 
-module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, toUserLogInsertRow, dayReport, correctionMemories, rememberCorrection, forgetCorrection, summarySubscribers, setSummaryTime, claimSummarySend, lastInboundAt };
+module.exports = { supabase, acceptableRef, refCandidates, refRerank, logMeal, deleteBySeq, itemsBySeq, todayItems, todaySeqs, todayTotal, deleteLastLog, deleteAllToday, deleteMatching, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, toUserLogInsertRow, prepareMealRows, replaceMealAtomic, rowsBySeq, matchLastLogTargets, lastLogTargets, dayReport, correctionMemories, rememberCorrection, forgetCorrection, summarySubscribers, setSummaryTime, claimSummarySend, lastInboundAt };

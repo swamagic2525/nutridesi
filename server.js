@@ -11,7 +11,7 @@ const { parseMeal } = require("./src/parser.js");
 const { advanceTdee, tdeeRouteAction, shouldRouteSemanticTdee } = require("./src/tdee.js");
 const { loadMetrics } = require("./src/metrics.js");
 const { metricsPage } = require("./src/metricsPage.js");
-const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport, setSummaryTime, correctionMemories, forgetCorrection } = require("./src/db.js");
+const { supabase, logMeal, deleteLastLog, deleteAllToday, deleteBySeq, itemsBySeq, todayItems, todaySeqs, deleteMatchingLastLog, lastLogTargets, lastLogBatch, logRowsByExactIds, deleteLogRowsByExactIds, todayTotal, ensureUser, getProfile, saveProfile, saveTdeeProfile, saveConversationState, claimConversationState, clearConversationStateIfUnchanged, recentConversation, bumpNudge, resolveRows, dayReport, setSummaryTime, correctionMemories, forgetCorrection, replaceMealAtomic, rowsBySeq, matchLastLogTargets } = require("./src/db.js");
 const { looksLikeCorrection, shouldPromoteToReplace, isExplicitAddition, formatLastLogContext } = require("./src/correctionContext.js");
 const {
   WINDOW_MS,
@@ -547,14 +547,16 @@ async function handleMessage(from, body, opts = {}) {
     if (!(newParsed.items || []).length) {
       return `Couldn't read the new food for item ${seq}. Try "replace ${seq} with 200g rice".`;
     }
-    const deleted = await deleteBySeq(from, [seq]);
+    // Find, do not delete: the removal happens inside the same transaction as
+    // the replacement, so a failure leaves the original entry untouched.
+    const deleted = await rowsBySeq(from, [seq]);
     if (!deleted || !deleted.length) return "Couldn't change that — nothing removed.";
-    logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed: newParsed, batch: [], deleted, outcome: "replaced_by_number" });
     let rows, totals;
     try {
-      ({ rows, totals } = await logMeal(from, newParsed, { awaitInsert: true }));
+      ({ rows, totals } = await replaceMealAtomic(from, newParsed, deleted.map(r => r.id)));
+      logCorrectionEvent({ intent: "replace_last", rawMessage: body, parsed: newParsed, batch: [], deleted, outcome: "replaced_by_number" });
     } catch (_) {
-      return "The replacement couldn't be saved safely. Please send the full meal again.";
+      return "Couldn't save that correction, so your original entry is unchanged. Please try the correction again.";
     }
     const removedLines = deleted.map(r => `\u{274C} ${r.food_name} — ${r.kcal} kcal`).join("\n");
     const addedLines = fmtItems(rows).map(l => `\u{2705} ${l}`);
@@ -913,26 +915,30 @@ async function handleMessage(from, body, opts = {}) {
       ) {
         return "That original meal changed or couldn't be updated, so nothing else was logged. Please retry from the start.";
       }
-      const deleted = await deleteLogRowsByExactIds(from, boundCorrectionTarget.targetLogIds);
+      // Find, do not delete — replaceMealAtomic removes these inside the
+      // same transaction that inserts the replacement.
+      const deleted = await logRowsByExactIds(from, boundCorrectionTarget.targetLogIds);
       if (!deleted || deleted.length !== boundCorrectionTarget.targetLogIds.length) {
         return "That original meal changed or couldn't be updated, so nothing else was logged. Please retry from the start.";
       }
-      logCorrectionEvent({
-        intent: "replace_last",
-        rawMessage: effectiveBody,
-        parsed,
-        batch: exactTargetRows,
-        deleted,
-        outcome: "corrected_bound_state",
-      });
       try {
-        const { rows, totals } = await logMeal(from, parsed, { awaitInsert: true });
+        const { rows, totals } = await replaceMealAtomic(from, parsed, deleted.map(r => r.id));
+        // Logged only after the transaction commits. Recording it earlier meant
+        // analytics counted corrections that never actually landed.
+        logCorrectionEvent({
+          intent: "replace_last",
+          rawMessage: effectiveBody,
+          parsed,
+          batch: exactTargetRows,
+          deleted,
+          outcome: "corrected_bound_state",
+        });
         const removedLines = deleted.map(r => `❌ ${r.food_name} — ${r.kcal} kcal`);
         const addedLines = fmtItems(rows).map(line => `✅ ${line}`);
         return `\u{1F504} Corrected:\n${removedLines.join("\n")}\n${addedLines.join("\n")}\n\n` +
           `${dayLine(totals, profile)}\n${cfLine(totals)}`;
       } catch (_) {
-        return "The correction couldn't finish safely. Please send the full meal again from the start.";
+        return "Couldn't save that correction, so your original entry is unchanged. Please try the correction again.";
       }
     }
 
@@ -947,22 +953,29 @@ async function handleMessage(from, body, opts = {}) {
         logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted: [], outcome: "dead_end" });
         return `Couldn't pin down "${parsed.replace_target}" in today's log — nothing changed. Try the item number, like "replace 2 with …".`;
       }
-      const removed = await deleteBySeq(from, [target.day_seq]);
-      logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted: removed, outcome: "replaced_by_name" });
+      // Find, do not delete — the removal is part of the replacement transaction.
+      const removed = await rowsBySeq(from, [target.day_seq]);
+      if (!removed || !removed.length) {
+        return `Couldn't pin down "${parsed.replace_target}" in today's log — nothing changed.`;
+      }
       try {
-        const { rows, totals } = await logMeal(from, parsed, { awaitInsert: true });
+        const { rows, totals } = await replaceMealAtomic(from, parsed, removed.map(r => r.id));
+        logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted: removed, outcome: "replaced_by_name" });
         const removedLines = (removed || []).map(r => `\u{274C} ${r.food_name} — ${r.kcal} kcal`).join("\n");
         const addedLines = fmtItems(rows).map(l => `\u{2705} ${l}`);
         return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
           `${dayLine(totals, profile)}\n${cfLine(totals)}`;
       } catch (_) {
-        return "The correction couldn't finish safely. Please send the full meal again from the start.";
+        return "Couldn't save that correction, so your original entry is unchanged. Please try the correction again.";
       }
     }
-    const aligned = await deleteMatchingLastLog(from, parsed.items, latest, effectiveBody);
+    // Find, do not delete. This is the route that lost user …0419 a full lunch
+    // on 1 Aug: the delete committed, the insert failed, and the food was gone.
+    // The removal now happens inside replaceMealAtomic's transaction.
+    const aligned = await matchLastLogTargets(from, parsed.items, latest, effectiveBody);
     let deleted = aligned ? aligned.filter(Boolean) : null;
     if (!deleted && latest.length === 1) {
-      deleted = await deleteLastLog(from, parsed.items.length === 1 ? parsed.items[0].food_name : null);
+      deleted = await lastLogTargets(from, parsed.items.length === 1 ? parsed.items[0].food_name : null);
     }
     if (!deleted || deleted.length === 0) {
       logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted: [], outcome: "dead_end" });
@@ -1002,15 +1015,15 @@ async function handleMessage(from, body, opts = {}) {
         Number(deleted[0].quantity) && Number(deleted[0].quantity) !== 1) {
       parsed.items[0].quantity = Number(deleted[0].quantity);
     }
-    logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted, outcome: "corrected" });
     try {
-      const { rows, totals } = await logMeal(from, parsed, { awaitInsert: true });
+      const { rows, totals } = await replaceMealAtomic(from, parsed, deleted.map(r => r.id));
+      logCorrectionEvent({ intent: "replace_last", rawMessage: effectiveBody, parsed, batch: latest, deleted, outcome: "corrected" });
       const removedLines = (deleted || []).map(r => `❌ ${r.food_name} — ${r.kcal} kcal`).join("\n");
       const addedLines = fmtItems(rows).map(l => `✅ ${l}`);
       return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
         `${dayLine(totals, profile)}\n${cfLine(totals)}`;
     } catch (_) {
-      return "The correction couldn't finish safely. Please send the full meal again from the start.";
+      return "Couldn't save that correction, so your original entry is unchanged. Please try the correction again.";
     }
   }
 
