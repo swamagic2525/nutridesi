@@ -21,6 +21,7 @@ Statuses:
 | Idea | Status | Suggested priority |
 |---|---|---|
 | Progressive first-log onboarding | Approved direction | P1 |
+| Deterministic Tomorrow Anchor | Approved direction; implementation queued | P1 |
 | Permanent-access waitlist checkpoint | Approved direction | P1 |
 | Founder voice-note feedback | Approved direction; needs technical design | P1 |
 | Nutrition-label photos | Approved direction; needs technical design | P2 |
@@ -113,6 +114,25 @@ Guardrails:
 - Ask once. Persist both acceptance and decline so a user is not nagged.
 - Record explicit consent and its timestamp.
 - Joining or declining must not change access to food tracking.
+
+## Deterministic Tomorrow Anchor
+
+**Status: Approved direction; implementation queued for later**
+
+The first retention agent should optimise for one outcome: a successful food log
+on the next IST date. After at least five successful food-log messages, eligible
+new users receive one small commitment prompt for breakfast, lunch, or their first
+meal tomorrow. An explicitly requested reminder is sent only when the WhatsApp
+24-hour window allows it.
+
+V1 is deterministic. It observes structured logs and flow state, selects only an
+approved intervention, remembers the commitment, and evaluates the next-day
+outcome. It never edits nutrition, invents advice, interrupts an active flow, or
+adds an LLM call to normal logging.
+
+The complete eligibility rules, state machine, conversation, experiment design,
+failure behaviour, and tests are in
+`docs/superpowers/specs/2026-08-02-tomorrow-anchor-retention-design.md`.
 
 ## Food and nutrition images
 
@@ -328,6 +348,7 @@ build order.
 |---|---|---|
 | P0 | Reliability, context continuity, and effortless corrections | These protect the core product contract and trust. |
 | P1 | Progressive first-log onboarding | Reduces time to value without adding new model risk. |
+| P1 | Deterministic Tomorrow Anchor | Converts early logging success into a specific next-day commitment; implementation is queued behind current production priorities. |
 | P1 | Permanent-access opt-in checkpoint | Helps retain contact while the Sandbox remains temporary. |
 | P1 | Founder voice-note feedback | Small, personal experiment for learning from engaged users. |
 | P2 | Nutrition-label image preview | More bounded and verifiable than meal-photo estimation. |
@@ -343,6 +364,8 @@ build order.
 - New user → first successful log conversion.
 - Median messages and time to first successful log.
 - Percentage of new users who make a second log and return on D1 and D7.
+- Tomorrow Anchor eligibility, offer, acceptance, reminder, next-day return, and
+  chosen-meal completion rates.
 - Correction, undo, retry, and abandonment rates after estimates.
 - Goal adoption and daily-summary opt-in after successful logs.
 - Permanent-access prompt acceptance and decline rates.
@@ -368,3 +391,4 @@ build order.
 | 2026-07-31 | No proactive deal alerts until on-demand recommendations demonstrate demand. Any proactive recommendation needs explicit opt-in and must respect WhatsApp's 24-hour/template rules. |
 | 2026-07-31 | Competitive claims (Nutrimate, WhatFit, HealthifyMe, TruthIn, Goodbite, GoodFor, Haul) recorded as **unverified** input from the strategy brief. Confirm before using them to justify a build. |
 | 2026-07-31 | Documentation only — no product behaviour implemented for this direction. |
+| 2026-08-02 | Approved deterministic Tomorrow Anchor V1 to improve next-day logging. Implementation is queued; an AI policy is gated on the deterministic baseline demonstrating retention lift. |
