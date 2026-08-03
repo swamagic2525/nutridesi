@@ -48,6 +48,8 @@ classified by an expanding list of phrases before the LLM sees context.
 - No weakening of correction scope, ownership checks or atomic writes.
 - No wholesale rewrite of `server.js` or the working nutrition resolver.
 - No new food data, image understanding or long-term free-form memory.
+- No new pre-parser regular expression for open-ended semantic intent. New wording
+  variants belong in the router fixtures and prompt, not another phrase gate.
 
 ## Routing Boundary
 
@@ -101,9 +103,7 @@ than wrapped in a second classifier:
 
 ```json
 {
-  "intent": "log | replace_last | undo | set_profile | calculate_goal | query | set_reminder | help | chitchat",
-  "speech_act": "food_report | information_request | command | response_to_prompt",
-  "mutation_signal": "explicit_consumption | explicit_log_request | bare_food_entry | none",
+  "intent": "log | replace_last | undo | set_profile | calculate_tdee | query | set_reminder | help | chitchat",
   "requested_goal_component": "calories | protein | both | null",
   "ambiguous_between": [],
   "needs_clarification": false,
@@ -114,10 +114,11 @@ than wrapped in a second classifier:
 ```
 
 The existing item schema, stated-nutrition fields and meal-time fields remain
-unchanged. `calculate_goal` replaces the overly narrow semantic name
-`calculate_tdee`; deterministic TDEE code still performs every calculation.
-`requested_goal_component` distinguishes a request for calorie, protein or both
-without multiplying top-level intents.
+unchanged. V1 retains the existing `calculate_tdee` intent name to avoid a
+behavior-free contract migration across the eval and TDEE suites. Deterministic
+TDEE code still performs every calculation. `requested_goal_component`
+distinguishes a request for calorie, protein or both without multiplying top-level
+intents.
 
 `needs_clarification` and `ambiguous_between` are instructions to ask, not safety
 licences. Model-reported confidence is not used to authorize any mutation.
@@ -150,39 +151,39 @@ broadens which database rows a correction may edit.
 ## Decision Validation
 
 A new pure validator checks the router result before `server.js` dispatches it.
-Malformed, unknown or internally inconsistent results do not mutate data.
+Malformed or unknown results do not mutate data. The validator is a schema and
+execution guard, not an independent judge of natural-language meaning.
 
 ### New meal writes
 
 A new meal may be written only when all of these agree:
 
 - `intent === "log"`;
-- `speech_act === "food_report"`;
-- `mutation_signal` is `explicit_consumption`, `explicit_log_request`, or
-  `bare_food_entry`;
 - `needs_clarification === false`; and
 - at least one usable food item exists, except for the existing explicit Tier-4
   food placeholder behavior.
 
-An LLM-routed `response_to_prompt` is handled separately: it may mutate only when
-there is an unexpired active structured state, the response is valid for that exact
-state, and the existing optimistic claim succeeds. Without matching state it asks
-for clarification and writes nothing.
+An LLM-routed response to a pending prompt may mutate only when there is an
+unexpired active structured state, the result is valid for that exact state, and
+the existing optimistic claim succeeds. Without matching state it asks for
+clarification and writes nothing.
 
 Examples:
 
 | Message | Route | Mutation |
 |---|---|---|
-| `I ate 2 roti` | log / explicit consumption | log |
-| `Log 2 roti` | log / explicit log request | log |
-| `2 roti` | log / bare food entry | log |
-| `Calories in 2 roti?` | query / information request | none |
-| `Should I eat 2 roti?` | query / information request | none |
-| router fields disagree | clarification | none |
+| `I ate 2 roti` | log | log |
+| `Log 2 roti` | log | log |
+| `2 roti` | log | log |
+| `Calories in 2 roti?` | query | none |
+| `Should I eat 2 roti?` | query | none |
+| router marks ambiguity | clarification | none |
 
-These fields come from one model and are not independent proof of intent. Their
-purpose is to make inconsistent output unexecutable and observable. The remaining
-risk is controlled through evaluation, shadowing, visible confirmation and undo.
+The model's fields are correlated and cannot cross-check the model's own semantic
+mistake. The real controls for log-versus-query are the routing corpus, shadow
+review, non-mutating query preview, visible `Logged` confirmation and immediate
+undo. The validator only prevents malformed or explicitly ambiguous output from
+writing.
 
 ### Corrections and undo
 
@@ -195,14 +196,15 @@ guards remain authoritative:
 - ambiguous or missing targets change nothing;
 - replacement uses `replaceMealAtomic()` so delete and insert commit together;
 - totals are reread after commit;
-- `isExplicitAddition()` remains as a production safety override until shadow data
-  proves the new router handles its recovery cases, and is removed last.
+- `isExplicitAddition()` remains as a transitional production safety override for
+  the entire V1 rollout. Removing this existing guard is deferred and is not a gate
+  for shipping the central router.
 
 ### Other mutations
 
 - `set_profile` writes only validated name/calorie/protein fields already supported
   by `saveProfile()`.
-- `calculate_goal` enters or advances the deterministic TDEE state machine; the LLM
+- `calculate_tdee` enters or advances the deterministic TDEE state machine; the LLM
   supplies no calculated number.
 - `set_reminder` must pass the existing time parser and WhatsApp policy checks.
 - `query`, `help` and `chitchat` never write food, profile or reminder data.
@@ -244,27 +246,33 @@ existing parser correctly returns `replace_last` with and without history.
   messages or phone numbers to logs or committed fixtures.
 - Review disagreements using the existing private `message_log` only when needed;
   never export raw production messages.
+- Measure history token size and route latency before any cutover. If p99 exceeds
+  12 seconds, a combined database call, bounded cache or smaller bounded history
+  payload becomes a prerequisite for Phase 2.
 
 ### Phase 2: non-mutating cutover
 
-Move `query`, `help`, `chitchat` and `calculate_goal` to the central router. Remove
-their competing semantic shortcuts after regression and shadow review. Exact commands
-and active finite-state responses remain deterministic. Move natural-language
-`set_reminder` only after the router result passes the existing deterministic time
-parser; exact opt-out and exact supported reminder commands may continue to bypass
-the model.
+Move only `query`, `help` and `chitchat` to the central router. Remove their competing
+semantic shortcuts after regression and shadow review. Exact commands and active
+finite-state responses remain deterministic.
 
 ### Phase 3: additive logging cutover
 
 Enable validated `log` decisions. Retain visible confirmation, pending query preview
 and exact undo. Review false-log signals before proceeding to destructive routes.
 
-### Phase 4: destructive cutover
+### Phase 4: structured-state mutations
+
+Move `calculate_tdee`, `set_profile` and natural-language `set_reminder` after their
+paired routing fixtures pass. TDEE math and field validation remain deterministic.
+Reminder results must pass the existing time parser. Exact opt-out and exact supported
+reminder commands may continue to bypass the model.
+
+### Phase 5: destructive cutover
 
 Move natural correction and replacement classification last. Keep all existing
-target validation and atomic database execution. Remove `isExplicitAddition()` only
-after every recovery fixture passes and reviewed shadow disagreements show equivalent
-or safer behavior.
+target validation and atomic database execution. Keep `isExplicitAddition()` as a
+transitional backstop; its eventual removal is separate evidence-based work.
 
 No phase requires a database migration.
 
@@ -292,6 +300,9 @@ Before additive logging cutover:
 - routing p99 remains below 12 seconds, leaving at least three seconds beneath
   Twilio's 15-second webhook ceiling for transport overhead.
 
+The latency measurement is the first required output of Phase 1, not a late release
+gate. A breach triggers the documented context-loading optimization before Phase 2.
+
 Before destructive cutover, every correction/addition regression must pass and every
 shadow disagreement involving `replace_last` or `undo` must be reviewed. A time-based
 or confidence-based model score cannot waive these gates.
@@ -301,9 +312,8 @@ or confidence-based model score cannot waive these gates.
 ### Pure contract tests
 
 - Every allowed intent and enum value validates.
-- Unknown values, missing required fields and inconsistent combinations fail closed.
-- `query` plus a mutation signal cannot write.
-- `log` plus `information_request` cannot write.
+- Unknown values and missing required fields fail closed.
+- `query` can never write a meal.
 - `needs_clarification` prevents every mutation.
 - Provider/schema failure produces no mutation.
 
@@ -314,6 +324,9 @@ or confidence-based model score cannot waive these gates.
   - `2 roti` / `calories in 2 roti?`;
   - `I had a protein shake` / `how much protein is in a shake?`;
   - `Kulfi was 60 calories and 10g protein` / `does kulfi have 10g protein?`.
+- Goal pairs distinguish supplied values from requested calculations:
+  - `Rahul 1600 calories 120g protein` -> `set_profile`;
+  - `How much protein should I target?` -> `calculate_tdee` with protein requested.
 - Explicit addition recovery never deletes the earlier item.
 - Ambiguous correction/new-meal wording asks and writes nothing.
 - Exact `undo N`, `delete N,M`, `forget N` and numbered replacement bypass the LLM.
