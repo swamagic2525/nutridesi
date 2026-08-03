@@ -334,15 +334,6 @@ function resolvePendingChoice(text, state, now = Date.now()) {
   return null;
 }
 
-function contextualProteinGoalReply(text, profile) {
-  const value = normaliseText(text).toLowerCase();
-  const kcal = finiteNumber(safeGet(profile, "goal_kcal") ?? safeGet(profile, "calorie_goal") ?? safeGet(profile, "calorieGoal"));
-  const protein = finiteNumber(safeGet(profile, "goal_protein") ?? safeGet(profile, "protein_goal") ?? safeGet(profile, "proteinGoal"));
-  if (!Number.isFinite(kcal) || kcal <= 0 || (Number.isFinite(protein) && protein > 0)) return null;
-  if (!/\bprotein\b/.test(value) || !/\b(this|that|goal|calories?|kcal)\b/.test(value)) return null;
-  return `For your ${Math.round(kcal).toLocaleString("en-IN")} kcal goal, tell me your weight in kg and whether you're aiming for fat loss or maintenance, and I'll set a protein target.`;
-}
-
 async function persistConversationState({
   phone,
   awaiting,
@@ -404,7 +395,6 @@ module.exports = {
   repeatedMealCandidate,
   repeatMealCandidateBody,
   resolvePendingChoice,
-  contextualProteinGoalReply,
   persistConversationState,
   executeClaimedAction,
 };

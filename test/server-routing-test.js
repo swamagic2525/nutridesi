@@ -409,15 +409,51 @@ const midCollection = () => ({
     "a follow-up to a caption-less photo gets the deterministic media reply");
   assert.strictEqual(called("parseMeal"), 0, "and never reaches the parser");
 
-  // 11. The contextual protein-goal reply short-circuits before parsing, for a
-  //     user who has a calorie goal but no protein goal.
+  // 11. Food macro corrections must reach the semantic parser even when the
+  //     user has a calorie goal but no protein goal. A former pre-parser
+  //     shortcut hijacked both messages and asked for body weight instead.
+  const kulfiTarget = {
+    id: 91, day_seq: 9, food_name: "Kulfi", quantity: 1, unit: "stick",
+    kcal: 150, protein: 4, is_estimate: true,
+  };
+  const kulfiCorrection = {
+    intent: "replace_last",
+    replace_target: null,
+    items: [{
+      food_name: "Kulfi", quantity: 1, unit: "stick",
+      stated_kcal: 60, stated_protein: 10,
+    }],
+  };
+  for (const message of [
+    "Kulfi was 60 calories and 10g protein",
+    "Please correct kulfi calories It is 60 Calories and 10g protein",
+  ]) {
+    phone = reset(
+      { tdee_profile: {}, conversation_state: {}, goal_kcal: 2000, goal_protein: null },
+      kulfiCorrection
+    );
+    lastLogBatchFixture = [kulfiTarget];
+    matchLastLogTargetsFixture = [kulfiTarget];
+    const correctionReply = await handleMessage(phone, message);
+    assert.strictEqual(called("parseMeal"), 1,
+      `macro correction must reach parseMeal: ${message}`);
+    assert.strictEqual(called("replaceMealAtomic"), 1,
+      `macro correction must reach atomic replacement: ${message}`);
+    assert.doesNotMatch(String(correctionReply), /tell me your weight/i,
+      `macro correction must not become a protein-goal prompt: ${message}`);
+  }
+
+  // A genuine protein-target request still reaches the deterministic goal
+  // calculator after the semantic parser classifies it.
   phone = reset(
     { tdee_profile: {}, conversation_state: {}, goal_kcal: 1800, goal_protein: null },
-    { intent: "chitchat", chitchat_reply: "hi" }
+    { intent: "calculate_tdee", items: [], requested_goal_component: "protein" }
   );
   const proteinReply = await handleMessage(phone, "what protein should i eat for this goal");
-  assert.match(String(proteinReply), /protein target/, "protein-goal reply is returned");
-  assert.strictEqual(called("parseMeal"), 0, "and it short-circuits before the parser");
+  assert.match(String(proteinReply), /Age.*Male\/Female.*Height.*Weight/s,
+    "a genuine protein-target request enters the deterministic goal calculator");
+  assert.strictEqual(called("parseMeal"), 1,
+    "the semantic protein-target request is classified by parseMeal");
 
   // --- Duplicate-message guard ------------------------------------------
   // Measured 29 Jul: 12 duplicate rows across 12 users silently doubled their

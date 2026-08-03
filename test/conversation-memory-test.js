@@ -20,7 +20,6 @@ const {
   repeatedMealCandidate,
   repeatMealCandidateBody,
   resolvePendingChoice,
-  contextualProteinGoalReply,
   persistConversationState,
   executeClaimedAction,
 } = require("../src/conversationMemory.js");
@@ -106,7 +105,6 @@ assert.match(serverSource, /stateTargetsCurrentIstDate/);
 assert.match(serverSource, /repeatedMealCandidate/);
 assert.match(serverSource, /repeatMealCandidateBody/);
 assert.match(serverSource, /resolvePendingChoice/);
-assert.match(serverSource, /contextualProteinGoalReply/);
 assert.match(serverSource, /WINDOW_MS/);
 assert.match(serverSource, /recentConversation/);
 assert.match(serverSource, /saveConversationState/);
@@ -127,7 +125,7 @@ assert.match(serverSource, /recordExchange\(from, body, reply, hasMedia\)/);
 //   - a pending corrected_meal always loads history
 //   - a state targeting another IST date is cancelled, not applied
 //   - loaded history reaches the parser inside the quoted envelope
-//   - media follow-ups and the protein-goal reply short-circuit before parsing
+//   - media follow-ups short-circuit before parsing
 //
 // The checks below stay as a cheap wiring smoke test: they assert the module
 // is actually referenced from server.js, not where.
@@ -773,12 +771,6 @@ assert.strictEqual(resolvePendingChoice("correct it and log a new meal", pending
 assert.strictEqual(resolvePendingChoice("yes", pending, now), null);
 assert.strictEqual(resolvePendingChoice("new meal", null, now), null);
 
-const proteinReply = contextualProteinGoalReply("protein for this calorie goal?", { calorie_goal: 1800 });
-assert.match(proteinReply, /1,800 kcal/);
-assert.match(proteinReply, /weight.*kg.*fat loss.*maintenance/i);
-assert.strictEqual(contextualProteinGoalReply("protein in dal?", { calorie_goal: 1800 }), null);
-assert.strictEqual(contextualProteinGoalReply("protein for this goal?", { calorie_goal: 1800, protein_goal: 100 }), null);
-assert.strictEqual(contextualProteinGoalReply(null, null), null);
 assert.doesNotThrow(() => {
   const throwing = { toString() { throw new Error("nope"); } };
   needsConversationContext(throwing, throwing, now);
@@ -794,7 +786,6 @@ assert.doesNotThrow(() => {
   stateTargetsCurrentIstDate(throwing, throwing);
   repeatedMealCandidate(throwing, [throwing]);
   resolvePendingChoice(throwing, throwing, now);
-  contextualProteinGoalReply(throwing, throwing);
 });
 
 dbHelperTests.then(() => console.log("conversation-memory-test: all passed"))

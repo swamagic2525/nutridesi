@@ -30,7 +30,6 @@ const {
   repeatedMealCandidate,
   repeatMealCandidateBody,
   resolvePendingChoice,
-  contextualProteinGoalReply,
   persistConversationState,
   executeClaimedAction,
 } = require("./src/conversationMemory.js");
@@ -496,9 +495,6 @@ async function handleMessage(from, body, opts = {}) {
       ? "That pending update was for a previous day, so nothing was changed. Please send today's request again."
       : "That pending update expired or was already handled, so nothing was changed. Please send your request again.";
   }
-  const proteinGoalReply = contextualProteinGoalReply(trimmed, profile);
-  if (proteinGoalReply) return proteinGoalReply;
-
   if (conversationState.awaiting && isExplicitIndependentMutation(trimmed)) {
     const cancelled = await claimConversationState(from, conversationState.nonce);
     if (!cancelled) {
