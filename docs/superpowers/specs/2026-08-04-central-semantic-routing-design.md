@@ -200,6 +200,23 @@ guards remain authoritative:
   the entire V1 rollout. Removing this existing guard is deferred and is not a gate
   for shipping the central router.
 
+#### Cross-midnight correction scope
+
+The immediately preceding log batch remains correctable for six hours even when IST
+midnight falls between the log and the correction. This is still the same narrow
+last-batch scope; the date boundary must not make a one-hour-old meal disappear.
+
+- `lastLogBatch()` uses a rolling six-hour `logged_at` window rather than filtering
+  to the current IST date.
+- `replaceMealAtomic()` keeps deriving the replacement date from the locked original
+  rows, so a correction after midnight stays in yesterday's log.
+- A cross-midnight correction reply labels the updated day as yesterday and does not
+  present yesterday's totals as today's progress.
+- Explicit item-number commands remain current-day scoped because `day_seq` resets
+  daily and the same number can refer to different rows on adjacent dates.
+- Pending structured state remains date-scoped; this change affects direct natural
+  corrections and narrow bare undo, not stale saved workflows.
+
 ### Other mutations
 
 - `set_profile` writes only validated name/calorie/protein fields already supported
@@ -320,6 +337,10 @@ or confidence-based model score cannot waive these gates.
 ### Behavioural routing tests
 
 - Both kulfi corrections reach `replace_last`, never the protein-goal response.
+- A Kulfi logged at 11:33 PM can be corrected at 12:33 AM; the replacement retains
+  yesterday's date and the reply identifies yesterday's log.
+- `item 9` remains current-day scoped after midnight and cannot collide with
+  yesterday's item 9.
 - Paired examples distinguish reports from questions:
   - `2 roti` / `calories in 2 roti?`;
   - `I had a protein shake` / `how much protein is in a shake?`;
