@@ -33,6 +33,7 @@ let profileFixture = {};
 let parseFixture = { intent: "chitchat", chitchat_reply: "hi" };
 let historyFixture = [];
 let logMealError = null;
+let deleteLastLogFixture = [];
 let todaySeqsFixture = [];
 let deleteBySeqFixture = [];
 let rowsBySeqFixture = [];
@@ -71,7 +72,10 @@ stubModule("../src/db.js", {
   todaySeqs: async (...args) => { calls.push({ name: "todaySeqs", args }); return todaySeqsFixture; },
   itemsBySeq: recordAsync("itemsBySeq", []),
   deleteBySeq: async (...args) => { calls.push({ name: "deleteBySeq", args }); return deleteBySeqFixture; },
-  deleteLastLog: recordAsync("deleteLastLog", []),
+  deleteLastLog: async (...args) => {
+    calls.push({ name: "deleteLastLog", args });
+    return deleteLastLogFixture;
+  },
   deleteAllToday: recordAsync("deleteAllToday", []),
   deleteMatchingLastLog: recordAsync("deleteMatchingLastLog", { deleted: [] }),
   deleteLogRowsByExactIds: recordAsync("deleteLogRowsByExactIds", []),
@@ -124,6 +128,7 @@ function reset(profile, parsed, history) {
   parseFixture = parsed || { intent: "chitchat", chitchat_reply: "hi" };
   historyFixture = history || [];
   logMealError = null;
+  deleteLastLogFixture = [];
   todaySeqsFixture = [];
   deleteBySeqFixture = [];
   rowsBySeqFixture = [];
@@ -412,9 +417,11 @@ const midCollection = () => ({
   // 11. Food macro corrections must reach the semantic parser even when the
   //     user has a calorie goal but no protein goal. A former pre-parser
   //     shortcut hijacked both messages and asked for body weight instead.
+  const previousIstDate = new Date(Date.now() - 86400000)
+    .toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const kulfiTarget = {
     id: 91, day_seq: 9, food_name: "Kulfi", quantity: 1, unit: "stick",
-    kcal: 150, protein: 4, is_estimate: true,
+    kcal: 150, protein: 4, is_estimate: true, date: previousIstDate,
   };
   const kulfiCorrection = {
     intent: "replace_last",
@@ -441,7 +448,30 @@ const midCollection = () => ({
       `macro correction must reach atomic replacement: ${message}`);
     assert.doesNotMatch(String(correctionReply), /tell me your weight/i,
       `macro correction must not become a protein-goal prompt: ${message}`);
+    assert.match(String(correctionReply), /Yesterday's updated total/i,
+      `a cross-midnight correction labels the original day: ${message}`);
   }
+
+  // Bare undo uses the same rolling latest-batch scope and must calculate the
+  // total for the row's original date rather than presenting it as today.
+  phone = reset({ tdee_profile: {}, conversation_state: {} });
+  deleteLastLogFixture = [{ ...kulfiTarget }];
+  const undoYesterdayReply = await handleMessage(phone, "undo");
+  assert.match(String(undoYesterdayReply), /Yesterday's updated total/i,
+    "cross-midnight undo labels the original day");
+  const undoTotalCall = calls.filter(call => call.name === "todayTotal").at(-1);
+  assert.strictEqual(undoTotalCall.args[1], previousIstDate,
+    "cross-midnight undo recalculates the original day's total");
+
+  // Item numbers reset daily, so a previous-day item 9 must never be selected
+  // by today's deterministic item-number route.
+  phone = reset({ tdee_profile: {}, conversation_state: {} });
+  lastLogBatchFixture = [{ ...kulfiTarget }];
+  const staleItemReply = await handleMessage(phone, "item 9");
+  assert.match(String(staleItemReply), /Nothing logged yet today/i,
+    "explicit item numbers remain current-day scoped");
+  assert.strictEqual(called("replaceMealAtomic"), 0);
+  assert.strictEqual(called("deleteBySeq"), 0);
 
   // A genuine protein-target request still reaches the deterministic goal
   // calculator after the semantic parser classifies it.

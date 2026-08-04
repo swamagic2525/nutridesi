@@ -333,6 +333,14 @@ function dayLine(t, profile) {
   return `\u{1F525} *${k} / ${gk} kcal · ${p} / ${gp}g protein*\n${tail}`;
 }
 
+const currentIstDate = () => new Date()
+  .toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+
+function mutationDayLine(t, profile, targetDate) {
+  if (!targetDate || targetDate === currentIstDate()) return dayLine(t, profile);
+  return `*Yesterday's updated total: ${Math.round(t.kcal)} kcal · ${Math.round(t.protein)}g protein*`;
+}
+
 function cfLine(t) {
   return `Carbs ${Math.round(t.carbs)}g · Fat ${Math.round(t.fat)}g · Fibre ${Math.round(t.fiber || 0)}g`;
 }
@@ -901,9 +909,10 @@ async function handleMessage(from, body, opts = {}) {
       return "Nothing to undo — no entries logged today.";
     }
     logCorrectionEvent({ intent: "undo", rawMessage: effectiveBody, parsed, batch: recentBatch, deleted, outcome: "removed" });
-    const total = await todayTotal(from);
+    const targetDate = deleted[0] && deleted[0].date;
+    const total = await todayTotal(from, targetDate);
     const removedLines = deleted.map(r => `${r.food_name} — ${r.kcal} kcal`).join("\n");
-    return `↩️ Removed:\n${removedLines}\n\n${dayLine(total, profile)}`;
+    return `↩️ Removed:\n${removedLines}\n\n${mutationDayLine(total, profile, targetDate)}`;
   }
 
   // --- replace_last ---
@@ -1051,7 +1060,7 @@ async function handleMessage(from, body, opts = {}) {
       const removedLines = (deleted || []).map(r => `❌ ${r.food_name} — ${r.kcal} kcal`).join("\n");
       const addedLines = fmtItems(rows).map(l => `✅ ${l}`);
       return `\u{1F504} Corrected:\n${removedLines}\n${addedLines.join("\n")}\n\n` +
-        `${dayLine(totals, profile)}\n${cfLine(totals)}`;
+        `${mutationDayLine(totals, profile, deleted[0] && deleted[0].date)}\n${cfLine(totals)}`;
     } catch (_) {
       return "Couldn't save that correction, so your original entry is unchanged. Please try the correction again.";
     }

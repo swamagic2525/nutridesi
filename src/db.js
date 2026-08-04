@@ -969,11 +969,16 @@ async function dayReport(phone, daysAgo = 0) {
 
 // The immediately preceding inbound log. This is intentionally narrower than a
 // 45-minute meal: implicit corrections may only affect this one message batch.
-async function lastLogBatch(phone) {
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-  const { data, error } = await supabase.from("user_logs")
+// Use the same six-hour window as conversation context so IST midnight cannot
+// make a one-hour-old meal impossible to correct.
+async function lastLogBatch(phone, now = new Date(), client = supabase) {
+  const at = now instanceof Date && Number.isFinite(now.getTime()) ? now : new Date();
+  const since = new Date(at.getTime() - WINDOW_MS).toISOString();
+  const { data, error } = await client.from("user_logs")
     .select("id, food_name, kcal, protein, quantity, matched_db_id, is_estimate, logged_at, date")
-    .eq("phone_number", phone).eq("date", today)
+    .eq("phone_number", phone)
+    .gte("logged_at", since)
+    .lte("logged_at", at.toISOString())
     .order("logged_at", { ascending: false })
     .limit(30);
   if (error) console.error("lastLogBatch select:", error.message);
