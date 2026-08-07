@@ -207,6 +207,10 @@ function buildContextualMessage(cleaned, trustedContext) {
   return [...blocks, CURRENT_BEGIN, currentRecord(cleaned), CURRENT_END].join("\n");
 }
 
+function annotateParserProvider(parsed, provider) {
+  return { ...(parsed || {}), parser_provider: provider || null };
+}
+
 async function parseMeal(rawMessage, recentLogContext = "") {
   const cleaned = preprocess(rawMessage);
   if (!cleaned) return { items: [], meal_time_inferred: "snack", parse_notes: "empty" };
@@ -217,7 +221,8 @@ async function parseMeal(rawMessage, recentLogContext = "") {
       const raw = await CALLERS[name](contextualMessage);
       const parsed = extractJson(raw);
       if (name !== CHAIN[0]) console.warn(`parser: ${CHAIN[0]} down, served by ${name}`);
-      return pinPizzaSlices(rawMessage, parsed);
+      const normalized = pinPizzaSlices(rawMessage, parsed);
+      return annotateParserProvider(normalized, name);
     } catch (e) {
       console.error(`LLM ${name} failed:`, String(e.message).slice(0, 300));
     }
@@ -225,4 +230,4 @@ async function parseMeal(rawMessage, recentLogContext = "") {
   return { items: [], meal_time_inferred: "snack", parse_notes: "llm_error" };
 }
 
-module.exports = { parseMeal, preprocess, pinPizzaSlices, buildContextualMessage, askLLM, PROVIDER, CHAIN };
+module.exports = { parseMeal, preprocess, pinPizzaSlices, buildContextualMessage, annotateParserProvider, askLLM, PROVIDER, CHAIN };
