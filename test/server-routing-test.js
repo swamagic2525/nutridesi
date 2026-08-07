@@ -12,6 +12,10 @@
 
 const assert = require("assert");
 
+process.env.SUPABASE_URL ||= "https://example.supabase.co";
+process.env.SUPABASE_SERVICE_KEY ||= "test-key";
+const { applyStatedNutrition: realApplyStatedNutrition } = require("../src/db.js");
+
 // --- Stub the I/O modules before server.js is loaded ---------------------
 // require.cache is keyed by resolved path, and "./src/db.js" from server.js
 // resolves to the same file as "../src/db.js" from here.
@@ -41,6 +45,7 @@ let todayItemsFixture = [];
 let lastLogBatchFixture = [];
 let matchLastLogTargetsFixture = null;
 let correctionMemoriesFixture = [];
+let replaceMealAtomicImpl = null;
 
 stubModule("../src/db.js", {
   supabase: {},
@@ -91,9 +96,13 @@ stubModule("../src/db.js", {
   lastLogTargets: recordAsync("lastLogTargets", null),
   correctionMemories: async (...args) => { calls.push({ name: "correctionMemories", args }); return correctionMemoriesFixture; },
   forgetCorrection: recordAsync("forgetCorrection", true),
-  replaceMealAtomic: recordAsync("replaceMealAtomic", {
-    rows: [], totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, fibre: 0, meals: [] },
-  }),
+  replaceMealAtomic: async (...args) => {
+    calls.push({ name: "replaceMealAtomic", args });
+    if (replaceMealAtomicImpl) return replaceMealAtomicImpl(...args);
+    return {
+      rows: [], totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, fibre: 0, meals: [] },
+    };
+  },
   prepareMealRows: recordAsync("prepareMealRows", []),
   dayReport: recordAsync("dayReport", { meals: [], total: {} }),
   bumpNudge: recordAsync("bumpNudge", 0),
@@ -136,6 +145,7 @@ function reset(profile, parsed, history) {
   lastLogBatchFixture = [];
   matchLastLogTargetsFixture = null;
   correctionMemoriesFixture = [];
+  replaceMealAtomicImpl = null;
   return `+00000001${String(phoneSeq++).padStart(2, "0")}`;
 }
 
@@ -258,6 +268,59 @@ const midCollection = () => ({
     "uncorrected calories are carried as the old total, not user-confirmed");
   assert.ok(!Number(correctedItem.stated_kcal),
     "a protein-only correction never promotes existing kcal to a user statement");
+
+  // A stated total without an explicit basis applies to the consumed portion.
+  // Production hit this route with 0.5 avocado and incorrectly scaled the
+  // user's 160 kcal by 0.5 again, returning the unchanged 80 kcal.
+  phone = reset({ tdee_profile: {}, conversation_state: {} }, {
+    intent: "replace_last",
+    replace_target: "avocado",
+    items: [{
+      food_name: "avocado", quantity: 0.5, unit: "piece",
+      stated_kcal: 160, stated_basis_amount: null, stated_basis_unit: null,
+    }],
+  });
+  todayItemsFixture = [{ id: 55, day_seq: 5, food_name: "avocado", quantity: 0.5, kcal: 80 }];
+  rowsBySeqFixture = [{ id: 55, day_seq: 5, food_name: "avocado", quantity: 0.5, kcal: 80 }];
+  replaceMealAtomicImpl = async (_from, corrected) => {
+    const item = corrected.items[0];
+    const row = {
+      food_name: "avocado", quantity: item.quantity, unit: "piece",
+      kcal: 80, protein: 5, carbs: 4, fat: 7, fiber: 3, day_seq: 5,
+    };
+    realApplyStatedNutrition(item, row);
+    return {
+      rows: [row],
+      totals: {
+        kcal: row.kcal, protein: row.protein, carbs: row.carbs,
+        fat: row.fat, fibre: row.fiber, meals: [row],
+      },
+    };
+  };
+  reply = await handleMessage(phone, "Half avocado was 160 calories");
+  assert.match(reply, /avocado.*×0\.5.*160 kcal/is,
+    "the named correction route stores the stated total for the consumed half");
+  assert.deepStrictEqual(
+    calls.find(c => c.name === "replaceMealAtomic").args[2],
+    [55],
+    "the route still replaces exactly the selected log row",
+  );
+
+  // Replacement remains atomic: a failed insert leaves the original row in
+  // place and the reply must not claim that the correction succeeded.
+  phone = reset({ tdee_profile: {}, conversation_state: {} }, {
+    intent: "replace_last",
+    replace_target: "avocado",
+    items: [{ food_name: "avocado", quantity: 0.5, stated_kcal: 160 }],
+  });
+  todayItemsFixture = [{ id: 56, day_seq: 5, food_name: "avocado", quantity: 0.5, kcal: 80 }];
+  rowsBySeqFixture = [{ id: 56, day_seq: 5, food_name: "avocado", quantity: 0.5, kcal: 80 }];
+  replaceMealAtomicImpl = async () => { throw new Error("forced insert failure"); };
+  reply = await handleMessage(phone, "Half avocado was 160 calories");
+  assert.match(reply, /original entry is unchanged/i);
+  assert.strictEqual(called("replaceMealAtomic"), 1);
+  assert.strictEqual(called("deleteBySeq"), 0,
+    "a failed correction never deletes outside the atomic RPC");
 
   // Saved corrections are inspectable without spending an LLM call, and the
   // numbered forget action removes the same deterministically ordered row.

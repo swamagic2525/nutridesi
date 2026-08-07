@@ -337,6 +337,13 @@ these is in the open work items below.
     variants; a Chocolate correction must never reach Mango. New correction-memory
     code is migration-first: apply `correction-memory-basis.sql` before restart.
 
+15. **Basis-less user nutrition is a consumed total.** If the parser supplies a
+    calorie or protein value without an explicit basis, `statedBasisScale()` uses
+    scale 1. Only explicit `each`, `per piece`, `per scoop`, `per 100g`, or
+    `per 100ml` bases scale proportionally. Keep `npm run test:ref`,
+    `npm run test:routing`, and `npm run test:corrlog` green when touching this
+    contract. The change has no schema migration; rollback is a code revert.
+
 ---
 
 ## 8. Supabase schema
@@ -508,3 +515,11 @@ That needs WABA templates.
    batch with the same food. Corrections now carry exact row ids
    (`logRowsByExactIds` / `deleteLogRowsByExactIds`) and are gated on the batch
    actually being recent.
+
+9. **Basis-less stated values apply once** (7 Aug): A half-avocado correction
+   returned the unchanged 80 kcal after the user stated 160 kcal. The historical
+   correction record did not capture enough basis/provider detail to distinguish a
+   missing basis from an incorrectly inferred one. The safe deterministic fallback
+   is now scale 1, while explicit bases keep proportional scaling. Accepted parses
+   also record provider and basis in the gitignored correction log so any recurrence
+   identifies the actual structured input without exposing it in the public repo.

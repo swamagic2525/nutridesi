@@ -266,8 +266,7 @@ function statedBasisScale(item, row) {
   const basisUnit = String(item.stated_basis_unit || "").toLowerCase();
   const quantity = Number(row.quantity) > 0 ? Number(row.quantity) : 1;
   if (!(basisAmount > 0) || !basisUnit) {
-    return { scale: /\d\s*(g|ml)$/.test(String(row.unit || "")) ? 1 : quantity,
-      basisAmount: 1, basisUnit: row.unit || "serving" };
+    return { scale: 1, basisAmount: 1, basisUnit: row.unit || "serving" };
   }
   if (["g", "ml"].includes(basisUnit)) {
     const portionAmount = Number(row.portionAmount || item.grams);

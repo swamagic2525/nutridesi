@@ -66,6 +66,32 @@ assert.notStrictEqual(weightedRow.kcal, 999,
 assert.strictEqual(weightedRow.sourceKind, "reference");
 assert.strictEqual(weightedRow.sourceRef, "AIS0129");
 
+const halfPortion = {
+  food_name: "avocado", quantity: 0.5, unit: "piece",
+  kcal: 80, protein: 5, carbs: 4, fat: 7, fiber: 3,
+};
+applyStatedNutrition({ stated_kcal: 160 }, halfPortion);
+assert.strictEqual(halfPortion.kcal, 160,
+  "a basis-less correction is the total for the consumed half portion");
+
+const pluralTotal = {
+  food_name: "samosa", quantity: 2, unit: "piece",
+  kcal: 500, protein: 10, carbs: 50, fat: 28, fiber: 4,
+};
+applyStatedNutrition({ stated_kcal: 500 }, pluralTotal);
+assert.strictEqual(pluralTotal.kcal, 500,
+  "a plural statement without each/per remains a consumed total");
+
+const explicitEach = {
+  food_name: "roti", quantity: 2, unit: "piece",
+  kcal: 180, protein: 6, carbs: 36, fat: 2, fiber: 4,
+};
+applyStatedNutrition({
+  stated_kcal: 90, stated_basis_amount: 1, stated_basis_unit: "piece",
+}, explicitEach);
+assert.strictEqual(explicitEach.kcal, 180,
+  "an explicit per-piece basis still scales by consumed quantity");
+
 // --- Negation blindness (2026-07-20: "2 eggs" -> 988 kcal of mayonnaise) ---
 assert.deepStrictEqual([...extractGroups("Mayonnaise without eggs")], [],
   "a recipe that excludes eggs is not an egg food");
