@@ -30,6 +30,7 @@ const {
   repeatedMealCandidate,
   repeatMealCandidateBody,
   resolvePendingChoice,
+  isAmbiguousChoiceReply,
   persistConversationState,
   executeClaimedAction,
 } = require("./src/conversationMemory.js");
@@ -504,6 +505,20 @@ async function handleMessage(from, body, opts = {}) {
       : "That pending update expired or was already handled, so nothing was changed. Please send your request again.";
   }
   if (conversationState.awaiting && isExplicitIndependentMutation(trimmed)) {
+    const cancelled = await claimConversationState(from, conversationState.nonce);
+    if (!cancelled) {
+      return "That pending update expired or was already handled, so nothing changed. Please send your request again.";
+    }
+    conversationState = {};
+  }
+  // An unanswered repeat choice must not trap the next message (product rule
+  // 2). The pending meal duplicates one already logged, so clearing it loses
+  // nothing; only a bare "yes" is ambiguous enough to re-ask.
+  if (
+    conversationState.awaiting === "repeat_meal_choice"
+    && !resolvePendingChoice(trimmed, conversationState, now)
+    && !isAmbiguousChoiceReply(trimmed)
+  ) {
     const cancelled = await claimConversationState(from, conversationState.nonce);
     if (!cancelled) {
       return "That pending update expired or was already handled, so nothing changed. Please send your request again.";

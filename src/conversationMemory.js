@@ -330,8 +330,15 @@ function resolvePendingChoice(text, state, now = Date.now()) {
   const negated = /\b(?:don'?t|do not|not|no)\b.{0,20}\b(?:correction|correct|fix|replace|new|another)\b/.test(value);
   if (negated || (correctionCue && newCue)) return null;
   if (/^(?:please\s+)?(?:correction|correct(?:\s+(?:the\s+)?first(?:\s+one)?|\s+(?:this|it))?|fix(?:\s+(?:this|it))?|replace(?:\s+(?:this|it))?|first\s+one)$/.test(value)) return "correction";
-  if (/^(?:please\s+)?(?:new|another)\s+meal$|^log\s+(?:a\s+)?(?:new|another)\s+meal$/.test(value)) return "new";
+  if (/^(?:please\s+)?(?:new(?:\s+one)?|another\s+one|(?:new|another)\s+meal|log(?:\s+it)?)$|^log\s+(?:a\s+)?(?:new|another)\s+meal$/.test(value)) return "new";
   return null;
+}
+
+// A bare affirmative answers neither option, so it keeps the choice open.
+// Anything else is a new message and preempts the choice (product rule 2).
+function isAmbiguousChoiceReply(text) {
+  const value = normaliseText(text).toLowerCase().replace(/[.!]+$/, "").trim();
+  return /^(?:yes|yeah|yep|yup|ok|okay|haan|han|ha|sure|hmm+)$/.test(value);
 }
 
 async function persistConversationState({
@@ -395,6 +402,7 @@ module.exports = {
   repeatedMealCandidate,
   repeatMealCandidateBody,
   resolvePendingChoice,
+  isAmbiguousChoiceReply,
   persistConversationState,
   executeClaimedAction,
 };

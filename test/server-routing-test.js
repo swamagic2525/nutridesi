@@ -708,6 +708,40 @@ const midCollection = () => ({
       "a non-logging reply is never replayed");
   }
 
+  // A pending repeat choice never holds an unrelated message hostage
+  // (CLAUDE.md rule 2). Production, Sept 2026: after "correction or new
+  // meal?", "Kadhi", "Log" and "Report for the day" all got the same prompt
+  // back for up to six hours.
+  const repeatPending = () => ({
+    tdee_profile: {},
+    conversation_state: conversationState("repeat_meal_choice", {
+      candidateBody: "chapati kheema kadhi gulab jamun",
+    }),
+  });
+  phone = reset(repeatPending(), { intent: "log", items: [{ food_name: "kadhi", quantity: 1, unit: "bowl" }] });
+  reply = await handleMessage(phone, "Kadhi");
+  assert.doesNotMatch(String(reply), /correction or new meal/i, "an unrelated food escapes the pending choice");
+  assert.strictEqual(called("claimConversationState"), 1, "the stale choice is cleared exactly once");
+  assert.strictEqual(called("parseMeal"), 1, "the new message is parsed normally");
+  assert.strictEqual(called("logMeal"), 1, "and logged");
+
+  phone = reset(repeatPending(), { intent: "chitchat", chitchat_reply: "Here's your day." });
+  reply = await handleMessage(phone, "Report for the day");
+  assert.doesNotMatch(String(reply), /correction or new meal/i, "a report request is not answered with the prompt");
+
+  // "Log" is an answer: log the pending meal as new.
+  phone = reset(repeatPending(), { intent: "log", items: [{ food_name: "chapati", quantity: 1, unit: "piece" }] });
+  reply = await handleMessage(phone, "Log");
+  assert.doesNotMatch(String(reply), /correction or new meal/i, "'Log' resolves the choice");
+  assert.strictEqual(called("logMeal"), 1, "and logs the pending meal");
+
+  // A bare "yes" is genuinely ambiguous, so the choice stays open.
+  phone = reset(repeatPending());
+  reply = await handleMessage(phone, "yes");
+  assert.match(String(reply), /correction or new meal/i, "an ambiguous yes re-asks");
+  assert.strictEqual(called("claimConversationState"), 0, "and keeps the choice open");
+  assert.strictEqual(called("logMeal"), 0);
+
   console.log("server-routing-test: all passed");
 })().catch((err) => {
   console.error(err);

@@ -20,6 +20,7 @@ const {
   repeatedMealCandidate,
   repeatMealCandidateBody,
   resolvePendingChoice,
+  isAmbiguousChoiceReply,
   persistConversationState,
   executeClaimedAction,
 } = require("../src/conversationMemory.js");
@@ -770,6 +771,18 @@ assert.strictEqual(resolvePendingChoice("not a correction, log another meal", pe
 assert.strictEqual(resolvePendingChoice("correct it and log a new meal", pending, now), null);
 assert.strictEqual(resolvePendingChoice("yes", pending, now), null);
 assert.strictEqual(resolvePendingChoice("new meal", null, now), null);
+// Production users answered the prompt with exactly these words and got the
+// prompt back. They are unambiguous answers, not new messages.
+assert.strictEqual(resolvePendingChoice("Log", pending, now), "new");
+assert.strictEqual(resolvePendingChoice("log it", pending, now), "new");
+assert.strictEqual(resolvePendingChoice("new", pending, now), "new");
+assert.strictEqual(resolvePendingChoice("new one", pending, now), "new");
+// Only a bare affirmative stays ambiguous; anything else preempts the choice.
+assert.strictEqual(isAmbiguousChoiceReply("yes"), true);
+assert.strictEqual(isAmbiguousChoiceReply("Ok!"), true);
+assert.strictEqual(isAmbiguousChoiceReply("haan"), true);
+assert.strictEqual(isAmbiguousChoiceReply("Kadhi"), false);
+assert.strictEqual(isAmbiguousChoiceReply("yes, 2 roti"), false);
 
 assert.doesNotThrow(() => {
   const throwing = { toString() { throw new Error("nope"); } };
