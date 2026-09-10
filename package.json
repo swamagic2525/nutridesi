@@ -29,6 +29,7 @@
     "test:memory": "node test/conversation-memory-test.js",
     "test:midnight": "node test/cross-midnight-correction-test.js",
     "test:signature": "node test/twilio-signature-test.js",
+    "test:timeout": "node test/llm-timeout-test.js",
     "outcomes": "node scripts/outcome-report.js"
   },
   "dependencies": {

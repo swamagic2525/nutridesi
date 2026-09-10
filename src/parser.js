@@ -12,6 +12,43 @@ const CHAIN = [PROVIDER, ...["gemini", "groq", "claude"].filter(p => p !== PROVI
   .filter(p => KEY_ENV[p] && process.env[KEY_ENV[p]]);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Time budgets. Twilio abandons the webhook at 15s; the parse chain, one
+// parallel rerank round and the Supabase work must all fit inside it.
+const PARSE_BUDGET_MS = 9000;
+const PARSE_CALL_MS = 6500;
+const RERANK_BUDGET_MS = 3500;
+
+// Try each provider in turn until one succeeds. Each attempt gets at most
+// perCallMs and the whole chain at most budgetMs; a timed-out request is
+// aborted, not left running. Returns { name, value } or null.
+async function runChain(names, attempt, { budgetMs, perCallMs, minAttemptMs = 1000, label = "LLM" }) {
+  const deadline = Date.now() + budgetMs;
+  for (const name of names) {
+    const remaining = deadline - Date.now();
+    if (remaining < minAttemptMs) {
+      console.error(`${label}: time budget spent, skipped ${name}`);
+      break;
+    }
+    const ms = Math.min(perCallMs, remaining);
+    const controller = new AbortController();
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        controller.abort();
+        reject(new Error(`timed out after ${ms}ms`));
+      }, ms);
+    });
+    try {
+      return { name, value: await Promise.race([attempt(name, controller.signal), timeout]) };
+    } catch (e) {
+      console.error(`${label} ${name} failed:`, String(e.message).slice(0, 300));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return null;
+}
+
 // Strip WhatsApp markdown (*, _, ~, >) but keep emojis (contextual anchors).
 function preprocess(text) {
   return String(text || "")
@@ -33,11 +70,11 @@ function extractJson(text) {
 // Shared fetch, lean retries: the provider chain is the real retry mechanism.
 // 429 (quota) fails over to the next provider instantly; 5xx gets one quick retry.
 // Budget: 3 providers must fit inside Twilio's 15s webhook window.
-async function fetchWithRetry(url, opts) {
+async function fetchWithRetry(url, opts, signal) {
   const RETRYABLE = new Set([500, 502, 503, 504]);
   let lastErr = "";
   for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await fetch(url, opts);
+    const res = await fetch(url, { ...opts, signal });
     if (res.ok) return res;
     lastErr = `${res.status}: ${await res.text()}`;
     if (RETRYABLE.has(res.status) && attempt < 1) { await sleep(1000); continue; }
@@ -47,7 +84,7 @@ async function fetchWithRetry(url, opts) {
 }
 
 // ---- Groq (OpenAI-compatible, free tier) ----
-async function callGroq(userText, system = SYSTEM_PROMPT) {
+async function callGroq(userText, system = SYSTEM_PROMPT, signal) {
   const key = process.env.GROQ_API_KEY;
   const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
   const res = await fetchWithRetry("https://api.groq.com/openai/v1/chat/completions", {
@@ -63,13 +100,13 @@ async function callGroq(userText, system = SYSTEM_PROMPT) {
         { role: "user", content: userText },
       ],
     }),
-  });
+  }, signal);
   const data = await res.json();
   return data.choices?.[0]?.message?.content || "{}";
 }
 
 // ---- Gemini (Google AI Studio) ----
-async function callGemini(userText, system = SYSTEM_PROMPT) {
+async function callGemini(userText, system = SYSTEM_PROMPT, signal) {
   const key = process.env.GEMINI_API_KEY;
   const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
@@ -81,13 +118,13 @@ async function callGemini(userText, system = SYSTEM_PROMPT) {
       contents: [{ role: "user", parts: [{ text: userText }] }],
       generationConfig: { temperature: 0, responseMimeType: "application/json", maxOutputTokens: 4096 },
     }),
-  });
+  }, signal);
   const data = await res.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
 }
 
 // ---- Claude (Anthropic) ----
-async function callClaude(userText, system = SYSTEM_PROMPT) {
+async function callClaude(userText, system = SYSTEM_PROMPT, signal) {
   const Anthropic = require("@anthropic-ai/sdk");
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const model = process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001";
@@ -97,7 +134,7 @@ async function callClaude(userText, system = SYSTEM_PROMPT) {
     // ~5 min -> cheaper + faster, especially under bursty reel traffic.
     system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: userText }],
-  });
+  }, { signal, maxRetries: 0 }); // SDK default is 2 retries + 10 min timeout
   return resp.content?.[0]?.text || "{}";
 }
 
@@ -107,14 +144,9 @@ const CALLERS = { groq: callGroq, gemini: callGemini, claude: callClaude };
 // caller-supplied system prompt. Returns raw text ("{}" on total failure).
 // Used by the reference reranker (src/rerank.js) — a different, tiny prompt.
 async function askLLM(userText, system) {
-  for (const name of CHAIN) {
-    try {
-      return await CALLERS[name](userText, system);
-    } catch (e) {
-      console.error(`askLLM ${name} failed:`, String(e.message).slice(0, 200));
-    }
-  }
-  return "{}";
+  const result = await runChain(CHAIN, (name, signal) => CALLERS[name](userText, system, signal),
+    { budgetMs: RERANK_BUDGET_MS, perCallMs: RERANK_BUDGET_MS, label: "askLLM" });
+  return result ? result.value : "{}";
 }
 
 // Deterministic pizza normalization. Two ambiguities the LLM resolves
@@ -216,18 +248,13 @@ async function parseMeal(rawMessage, recentLogContext = "") {
   if (!cleaned) return { items: [], meal_time_inferred: "snack", parse_notes: "empty" };
   const contextualMessage = buildContextualMessage(cleaned, recentLogContext);
 
-  for (const name of CHAIN) {
-    try {
-      const raw = await CALLERS[name](contextualMessage);
-      const parsed = extractJson(raw);
-      if (name !== CHAIN[0]) console.warn(`parser: ${CHAIN[0]} down, served by ${name}`);
-      const normalized = pinPizzaSlices(rawMessage, parsed);
-      return annotateParserProvider(normalized, name);
-    } catch (e) {
-      console.error(`LLM ${name} failed:`, String(e.message).slice(0, 300));
-    }
-  }
-  return { items: [], meal_time_inferred: "snack", parse_notes: "llm_error" };
+  // Unparseable JSON counts as a provider failure, so it falls through too.
+  const result = await runChain(CHAIN,
+    async (name, signal) => extractJson(await CALLERS[name](contextualMessage, SYSTEM_PROMPT, signal)),
+    { budgetMs: PARSE_BUDGET_MS, perCallMs: PARSE_CALL_MS, label: "LLM" });
+  if (!result) return { items: [], meal_time_inferred: "snack", parse_notes: "llm_error" };
+  if (result.name !== CHAIN[0]) console.warn(`parser: ${CHAIN[0]} down, served by ${result.name}`);
+  return annotateParserProvider(pinPizzaSlices(rawMessage, result.value), result.name);
 }
 
-module.exports = { parseMeal, preprocess, pinPizzaSlices, buildContextualMessage, annotateParserProvider, askLLM, PROVIDER, CHAIN };
+module.exports = { parseMeal, preprocess, pinPizzaSlices, buildContextualMessage, annotateParserProvider, askLLM, runChain, PROVIDER, CHAIN };
