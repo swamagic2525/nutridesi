@@ -28,6 +28,7 @@
     "test:undoall": "node test/undo-all-test.js",
     "test:memory": "node test/conversation-memory-test.js",
     "test:midnight": "node test/cross-midnight-correction-test.js",
+    "test:signature": "node test/twilio-signature-test.js",
     "outcomes": "node scripts/outcome-report.js"
   },
   "dependencies": {

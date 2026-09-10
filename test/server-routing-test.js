@@ -125,7 +125,7 @@ stubModule("../src/parser.js", {
   CHAIN: ["stub"],
 });
 
-const { handleMessage, handleMessageOnce, duplicateReplay, rememberBody, DUP_WINDOW_MS } = require("../server.js");
+const { app, handleMessage, handleMessageOnce, duplicateReplay, rememberBody, DUP_WINDOW_MS } = require("../server.js");
 assert.strictEqual(typeof handleMessage, "function", "server.js must export handleMessage");
 assert.strictEqual(typeof handleMessageOnce, "function", "server.js must export handleMessageOnce");
 
@@ -741,6 +741,57 @@ const midCollection = () => ({
   assert.match(String(reply), /correction or new meal/i, "an ambiguous yes re-asks");
   assert.strictEqual(called("claimConversationState"), 0, "and keeps the choice open");
   assert.strictEqual(called("logMeal"), 0);
+
+  // POST /whatsapp signature gate. `From` is a form field, so an unsigned
+  // request could act as any user; enforce must reject it before any work.
+  {
+    const twilio = require("twilio");
+    const saved = {
+      TWILIO_SIGNATURE_MODE: process.env.TWILIO_SIGNATURE_MODE,
+      TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
+      PUBLIC_URL: process.env.PUBLIC_URL,
+    };
+    process.env.TWILIO_AUTH_TOKEN = "test_auth_token_not_real";
+    process.env.PUBLIC_URL = "https://example-tunnel.test";
+    const server = app.listen(0);
+    const port = server.address().port;
+    const post = async (form, signature) => {
+      const headers = { "Content-Type": "application/x-www-form-urlencoded" };
+      if (signature) headers["X-Twilio-Signature"] = signature;
+      const res = await fetch(`http://127.0.0.1:${port}/whatsapp`, {
+        method: "POST", headers, body: new URLSearchParams(form),
+      });
+      return { status: res.status, text: await res.text() };
+    };
+    const form = (from, sid) => ({ From: `whatsapp:${from}`, Body: "2 roti", NumMedia: "0", MessageSid: sid });
+    const sign = (f) => twilio.getExpectedTwilioSignature(
+      "test_auth_token_not_real", "https://example-tunnel.test/whatsapp", f);
+    const rotiLog = { intent: "log", items: [{ food_name: "roti", quantity: 2, unit: "piece" }] };
+    try {
+      process.env.TWILIO_SIGNATURE_MODE = "enforce";
+      reset({ tdee_profile: {}, conversation_state: {} }, rotiLog);
+      let r = await post(form("+0000000190", "SMforged1"), "forged");
+      assert.strictEqual(r.status, 403, "enforce rejects a forged signature");
+      assert.strictEqual(called("parseMeal"), 0, "and does no work for it");
+      r = await post(form("+0000000190", "SMunsigned1"));
+      assert.strictEqual(r.status, 403, "enforce rejects an unsigned request");
+      const good = form("+0000000190", "SMgood1");
+      r = await post(good, sign(good));
+      assert.strictEqual(r.status, 200, "enforce accepts a genuine Twilio request");
+      assert.strictEqual(called("parseMeal"), 1, "and processes it");
+
+      process.env.TWILIO_SIGNATURE_MODE = "log";
+      reset({ tdee_profile: {}, conversation_state: {} }, rotiLog);
+      r = await post(form("+0000000191", "SMlog1"), "forged");
+      assert.strictEqual(r.status, 200, "log mode never blocks");
+      assert.strictEqual(called("parseMeal"), 1, "log mode still processes the message");
+    } finally {
+      server.close();
+      for (const [k, v] of Object.entries(saved)) {
+        if (v === undefined) delete process.env[k]; else process.env[k] = v;
+      }
+    }
+  }
 
   console.log("server-routing-test: all passed");
 })().catch((err) => {

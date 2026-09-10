@@ -35,6 +35,7 @@ const {
   executeClaimedAction,
 } = require("./src/conversationMemory.js");
 const { validateSignature, extractMessages, sendMessage, markRead } = require("./src/meta.js");
+const { signatureMode, twilioSignatureDecision } = require("./src/twilioSignature.js");
 const { logCorrectionEvent } = require("./src/correctionLogger.js");
 const { parseReminderRequest, confirmSetReply, CONFIRM_OFF_REPLY } = require("./src/reminders.js");
 const {
@@ -1133,6 +1134,19 @@ app.post("/whatsapp", async (req, res) => {
   const hasMedia = Number(req.body.NumMedia || 0) > 0;
   const t0 = Date.now();
 
+  // Signature before dedup, so a forged request can't claim a MessageSid.
+  const sig = twilioSignatureDecision({
+    mode: process.env.TWILIO_SIGNATURE_MODE,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    publicUrl: process.env.PUBLIC_URL,
+    signature: req.get("X-Twilio-Signature"),
+    params: req.body,
+  });
+  if (sig.mode === "log" || !sig.allow) {
+    console.log(`twilio-signature: ${sig.status} (${sig.mode}) ${maskPhone(from)}`);
+  }
+  if (!sig.allow) return res.status(403).end();
+
   if (isDuplicate(req.body.MessageSid)) {
     return res.type("text/xml").send(twiml.toString());
   }
@@ -1299,7 +1313,8 @@ const PORT = process.env.PORT || 3000;
 // listening, so handleMessage's routing can be exercised behaviourally instead
 // of asserted by grepping this file.
 if (require.main === module) {
-  app.listen(PORT, () => console.log(`NutriDesi listening on :${PORT}`));
+  app.listen(PORT, () => console.log(
+    `NutriDesi listening on :${PORT} (twilio signature: ${signatureMode(process.env.TWILIO_SIGNATURE_MODE)})`));
 }
 
 module.exports = {
