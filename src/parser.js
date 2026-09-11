@@ -12,10 +12,12 @@ const CHAIN = [PROVIDER, ...["gemini", "groq", "claude"].filter(p => p !== PROVI
   .filter(p => KEY_ENV[p] && process.env[KEY_ENV[p]]);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Time budgets. Twilio abandons the webhook at 15s; the parse chain, one
-// parallel rerank round and the Supabase work must all fit inside it.
-const PARSE_BUDGET_MS = 9000;
-const PARSE_CALL_MS = 6500;
+// Time budgets. These only cut off a true hang. On the Mac Mini's stalling
+// Wi-Fi a healthy Gemini parse can exceed 6.5s, and a 6.5s cap turned those
+// slow successes into "Couldn't read" replies (11 Sep). 12.5s still ends a
+// hang long before the SDK's own 10-minute default would.
+const PARSE_BUDGET_MS = 12500;
+const PARSE_CALL_MS = 11000;
 const RERANK_BUDGET_MS = 3500;
 
 // Try each provider in turn until one succeeds. Each attempt gets at most
